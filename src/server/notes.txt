@@ -1,0 +1,28 @@
+
+  "type" : "module", ?? or ???
+
+expo install url
+expo install readable-stream
+yarn add mqtt
+
+npm install --save-dev @types/node
+
+npm install mqtt
+
+npm i --save-dev @types/mqtt
+
+npx ts-node server/index.tsx  // checks everything
+
+
+# Or globally with TypeScript.
+npm install -g typescript
+npm install -g ts-node
+
+
+node --loader ts-node/esm src/src_stuff.tsx
+
+ts-node src/src_stuff.tsx
+
+npm install mqtt --save
+
+npm install --save-dev mocha

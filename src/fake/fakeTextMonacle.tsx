@@ -1,0 +1,52 @@
+
+export {}
+
+// https://www.blindtextgenerator.com/text.php?textname=EN-kafka
+// https://www.blindtextgenerator.com/text.php?textname=ANY-cicero
+// https://www.blindtextgenerator.com/text.php?textname=EN-pangram// 
+
+// http://www.cupcakeipsum.com/
+
+export var fakeText = `
+
+Monocle ipsum dolor sit amet scandinavian soft power sophisticated concierge intricate flat white, hub exquisite Porter global the best Beams smart elegant. Uniforms ANA Winkreative premium delightful airport, Nordic intricate signature espresso the highest quality quality of life bureaux sleepy emerging. Izakaya vibrant the best flat white the highest quality alluring exclusive. Tsutaya the highest quality espresso, concierge international pintxos Toto punctual Helsinki exclusive Gaggenau first-class craftsmanship Melbourne impeccable. Efficient tote bag remarkable Ettinger pintxos. Destination Swiss smart exclusive Washlet ryokan. First-class elegant sharp extraordinary airport remarkable hub K-pop punctual business class artisanal.
+
+Essential Fast Lane boulevard, Tsutaya conversation alluring craftsmanship handsome the highest quality. Helsinki airport vibrant sophisticated, Washlet punctual the highest quality espresso ryokan. Intricate smart Swiss lovely business class Helsinki. Ginza delightful pintxos smart bespoke concierge Comme des Garçons. Soft power K-pop classic Washlet Asia-Pacific uniforms carefully curated Scandinavian Muji Boeing 787 exclusive essential.
+
+Nordic charming uniforms, craftsmanship exquisite hand-crafted elegant punctual sophisticated essential boulevard the best Scandinavian Ettinger. Washlet bureaux Ettinger destination, premium Baggu pintxos lovely. Concierge boulevard Baggu exclusive Boeing 787 international St Moritz Singapore the best. Alluring signature Porter Gaggenau delightful premium. Smart artisanal Porter ryokan sophisticated. Sophisticated Zürich tote bag, remarkable Ettinger sleepy delightful Helsinki concierge liveable efficient St Moritz espresso quality of life vibrant. Exquisite destination sophisticated, punctual classic quality of life airport vibrant.
+
+The highest quality Nordic bureaux, sleepy lovely K-pop ryokan ANA Zürich hub hand-crafted. Fast Lane Airbus A380 Shinkansen izakaya flat white Boeing 787. Destination Marylebone Winkreative flat white craftsmanship Helsinki. Izakaya global punctual Helsinki Comme des Garçons Zürich pintxos Sunspel remarkable hub Marylebone charming. Ginza extraordinary wardrobe, sophisticated perfect Melbourne Airbus A380 Ettinger Fast Lane Singapore Helsinki cutting-edge alluring. The highest quality Ginza Porter flat white boutique soft power, intricate ryokan cosy perfect Washlet. Cosy craftsmanship Toto, liveable remarkable delightful intricate sophisticated Shinkansen K-pop espresso.
+
+K-pop Sunspel wardrobe Gaggenau exquisite Boeing 787 St Moritz Ettinger ANA. Winkreative uniforms the best alluring, Muji elegant extraordinary izakaya. Baggu uniforms sleepy delightful remarkable hub Shinkansen Porter Scandinavian cosy Ginza concierge Nordic. Helsinki Airbus A380 Fast Lane flat white, alluring sharp wardrobe extraordinary elegant classic intricate signature Muji.
+
+Ryokan conversation Zürich, eclectic pintxos essential charming. Joy soft power Lufthansa flat white delightful hub Tsutaya global elegant. Sophisticated Fast Lane Gaggenau classic the highest quality extraordinary, finest tote bag charming boulevard Boeing 787 Muji concierge izakaya Winkreative. Business class exclusive Gaggenau lovely Washlet.
+
+Hub business class Porter Washlet, the best charming efficient St Moritz bureaux exclusive Ginza Helsinki. Ettinger Beams craftsmanship Sunspel joy. Sophisticated St Moritz Ettinger extraordinary Muji destination quality of life Sunspel bureaux. Bureaux Lufthansa Airbus A380 bulletin boutique. Hand-crafted global joy boulevard hub classic sharp liveable tote bag Lufthansa.
+
+Emerging business class global essential ANA, Comme des Garçons efficient destination. Ginza Winkreative concierge the best premium efficient Nordic emerging international discerning Boeing 787 the highest quality quality of life Swiss. Comme des Garçons Singapore hand-crafted Lufthansa intricate charming. Shinkansen perfect signature premium impeccable the best craftsmanship vibrant.
+
+Espresso pintxos Sunspel Asia-Pacific Ettinger, intricate alluring emerging handsome classic ryokan. Nordic efficient sophisticated Zürich perfect iconic Swiss sharp exclusive ryokan Sunspel. Sleepy bureaux bulletin Melbourne Marylebone first-class Swiss lovely uniforms Comme des Garçons liveable K-pop. Charming ANA cutting-edge Scandinavian Fast Lane iconic, cosy sophisticated extraordinary emerging soft power.
+
+Quality of life Melbourne delightful business class Asia-Pacific Sunspel. Sophisticated izakaya finest destination, remarkable exquisite airport first-class signature Comme des Garçons sleepy Zürich. Punctual cutting-edge Scandinavian exclusive Lufthansa. Emerging Ginza tote bag, global sleepy essential Beams Zürich bespoke business class izakaya charming delightful Muji.
+
+Remarkable sharp Shinkansen Tsutaya finest smart Singapore ANA conversation exquisite handsome Nordic. Sharp joy airport classic Nordic Beams exquisite Comme des Garçons. Liveable punctual Helsinki classic, finest Baggu Singapore Swiss Melbourne pintxos. Zürich concierge Swiss sleepy exquisite finest lovely Fast Lane.
+
+Joy Beams pintxos St Moritz remarkable bulletin. Ettinger Lufthansa soft power delightful smart Marylebone. Perfect tote bag boutique Winkreative Tsutaya bespoke the best. The highest quality soft power Singapore exquisite essential boutique Nordic Helsinki premium artisanal Lufthansa punctual carefully curated Comme des Garçons Porter. K-pop pintxos craftsmanship, Ginza bespoke remarkable wardrobe boutique lovely Swiss. Bespoke punctual Helsinki, the highest quality tote bag Ginza carefully curated izakaya cosy boulevard.
+
+Ettinger destination quality of life the best smart. Premium espresso global first-class bespoke Zürich. Airbus A380 alluring vibrant izakaya uniforms Singapore first-class. Classic bespoke pintxos, elegant quality of life cutting-edge izakaya liveable uniforms boulevard. Delightful discerning Airbus A380 handsome wardrobe. First-class ANA flat white, perfect Airbus A380 Marylebone Boeing 787 delightful elegant international boutique Melbourne efficient destination. Joy cutting-edge Airbus A380 iconic extraordinary classic hand-crafted Singapore concierge boutique ryokan Melbourne sophisticated K-pop delightful.
+
+Vibrant conversation craftsmanship Winkreative sleepy premium boulevard Marylebone emerging Toto pintxos Scandinavian lovely intricate. Exquisite espresso airport remarkable, uniforms discerning bespoke boutique vibrant Washlet Marylebone. Boutique quality of life destination Marylebone uniforms classic bureaux craftsmanship Melbourne cosy cutting-edge izakaya. Signature Nordic Scandinavian punctual Sunspel craftsmanship iconic Airbus A380. Uniforms bureaux conversation Ginza Scandinavian Toto artisanal sleepy essential Lufthansa bulletin.
+
+Boeing 787 cosy quality of life Muji Toto joy Melbourne smart Ettinger. Eclectic signature classic, concierge St Moritz Boeing 787 sophisticated tote bag Tsutaya. Beams Scandinavian Muji bureaux flat white remarkable alluring the best vibrant pintxos Marylebone espresso extraordinary conversation. Izakaya Shinkansen pintxos Ettinger craftsmanship intricate Washlet soft power hub Swiss exquisite the best carefully curated alluring. Liveable Marylebone sophisticated flat white. Extraordinary sleepy Fast Lane bespoke Washlet tote bag global Nordic hub airport first-class. Exquisite uniforms carefully curated joy.
+
+Ginza concierge the highest quality uniforms. Boeing 787 the best Scandinavian flat white quality of life St Moritz Airbus A380 Nordic Lufthansa extraordinary joy vibrant. Craftsmanship bespoke exquisite alluring ryokan, Gaggenau Toto vibrant delightful Tsutaya. Tote bag Helsinki Scandinavian Ginza premium sharp. Destination exclusive wardrobe discerning carefully curated punctual hub elegant.
+
+Sleepy bespoke artisanal, sharp elegant classic smart Melbourne Porter Marylebone wardrobe espresso boutique Singapore bulletin. Helsinki essential cosy, global artisanal airport Scandinavian Winkreative Beams Singapore signature charming handsome iconic ryokan. Sleepy alluring bespoke eclectic Nordic. ANA bulletin Comme des Garçons Swiss airport.
+
+The best essential hand-crafted Boeing 787 delightful impeccable, the highest quality Toto exclusive ANA Tsutaya Sunspel. Scandinavian ANA wardrobe, smart concierge Melbourne eclectic. First-class Nordic bespoke Zürich, boutique conversation flat white intricate tote bag lovely Singapore Shinkansen. Delightful first-class Ginza, business class global Melbourne emerging destination sophisticated quality of life. Hand-crafted sophisticated Washlet artisanal. Sunspel Toto Tsutaya St Moritz Marylebone.
+
+Airport Gaggenau Lufthansa remarkable soft power finest the best Marylebone wardrobe first-class Muji izakaya Shinkansen handsome. Boutique Shinkansen discerning, signature uniforms ANA artisanal carefully curated conversation Airbus A380 premium Scandinavian cutting-edge elegant. Artisanal Toto St Moritz the best, bureaux Melbourne alluring. Airport Marylebone Porter extraordinary finest Boeing 787 vibrant punctual bureaux pintxos cosy destination signature concierge remarkable. Beams Gaggenau pintxos Toto Boeing 787 Washlet bureaux Comme des Garçons Baggu impeccable flat white perfect business class sophisticated. Discerning charming K-pop Sunspel extraordinary, sleepy alluring quality of life Beams Zürich Winkreative Swiss liveable. Flat white punctual bureaux uniforms, exquisite Scandinavian exclusive boutique charming concierge.
+
+Zürich St Moritz perfect airport smart Ginza quality of life Airbus A380 the highest quality uniforms ryokan Beams eclectic. Destination discerning izakaya Ginza. Baggu Toto extraordinary carefully curated quality of life. Hub sleepy Ginza airport soft power Nordic, espresso alluring Ettinger handsome Airbus A380 tote bag Marylebone. Vibrant emerging Scandinavian global, Porter Marylebone sharp Singapore. Tote bag premium first-class boutique sleepy ANA lovely Muji vibrant boulevard St Moritz artisanal. Sharp extraordinary exclusive joy.
+
+`

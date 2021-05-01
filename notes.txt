@@ -1,0 +1,52 @@
+
+adding the server:
+
+copy paste the whole folder
+
+add this to package.json
+    "server": "node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings server/index.tsx",
+
+yarn add ts-node
+
+add "type": "module", to package.json
+
+yarn add express
+
+yarn add mqtt
+
+yarn add crypto-js
+npm i --save-dev @types/crypto-js
+banned now add: declare module 'crypto-js/sha256' etc to react-app.d.ts
+
+npm remove material-ui-image
+
+npm i npm-run-all
+
+npm install mime - types
+npm upgrade mime
+
+yarn add react-router-dom
+
+yarn add tweetnacl-ts
+
+older notes:
+older notes:
+older notes: 4/13/21 aka 21-04-13-12:07:00.123  aka 210413120700123
+older notes:
+older notes:
+
+package is pretty small
+yarn start
+
+npm install @material-ui/core @material-ui/icons @types/material-ui
+npm install material-ui-image 
+
+add these to public/index.html in the head section
+
+    <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+
+    NOT  add "type":"module", to package.json
+
+yarn add -D npm-run-all@4.1.5  ??
