@@ -36,7 +36,7 @@ export type Post = {
     likes: PersonAlias[],
     retweets: string[], // what type ? 
     comments : Reference[],
-    from?: string; // who sent it if not us
+    postedByName : string; // who sent it. including us. a username
     editable? :boolean,
     more?: any
     //replyingTo? : Reference // if this is a comment then this is the parent

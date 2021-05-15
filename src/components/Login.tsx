@@ -23,7 +23,7 @@ import * as app from '../App';
 // join_red_this_string_plain_does_quart_simple_buy_line_fun_look_original_deal 
 // [My_token_expires:_2021-12-31,{exp:1641023999,iss:_9sh,jti:amXYKIuS4uykvPem9Fml371o,in:32,out:32,su:4,co:2,url:knotfree.net},eyJhbGciOiJFZDI1NTE5IiwidHlwIjoiSldUIn0.eyJleHAiOjE2NDEwMjM5OTksImlzcyI6Il85c2giLCJqdGkiOiJhbVhZS0l1UzR1eWt2UGVtOUZtbDM3MW8iLCJpbiI6MzIsIm91dCI6MzIsInN1Ijo0LCJjbyI6MiwidXJsIjoia25vdGZyZWUubmV0In0.7ElPyX1Vju8Q5uDOEfgAblwvE2gxT78Jl68JPlqLRcFeMJ7if39Ppl2_Jr_JTky371bIXAn6S-pghtWSqTBwAQ]
 
-export function MakeLogin(tokenState: tok.TokenState, setAppHasPassword: (passCb: State) => any) {
+export function MakeLogin(tokenState: tok.State, setAppHasPassword: (passCb: State) => any) {
 
   var myloginProps: LoginProps = {
     setAppHasPassword: setAppHasPassword ,
@@ -31,7 +31,7 @@ export function MakeLogin(tokenState: tok.TokenState, setAppHasPassword: (passCb
   }
   return (
     <>
-      <Header title={app.getProfileName() + " Profile Page."} />
+      <Header title={app.getProfileName() } username = {app.getProfileName()} />
       <Login {...myloginProps} ></Login>
     </>
   );
@@ -158,8 +158,8 @@ const Login: FC<LoginProps> = (props: LoginProps) => {
   const makeTokenDisplay = () => {
     return (
       <React.Fragment>
-        <div>Caution:</div>
-        <div className = {classes.sometext}  >Only put your password here if the name is YOU.</div>
+        {/* <div>Caution:</div>
+        <div className = {classes.sometext}  >Only put your password here if the name is YOU.</div> */}
         {/* <div>It should be the same as in the url.</div> */}
       </React.Fragment>
     )
@@ -330,7 +330,7 @@ export const initialState: State = {
 
 export type LoginProps = {
   setAppHasPassword: (pass: State) => any,
-  tokenState: tok.TokenState // has the token and the host 
+  tokenState: tok.State // has the token and the host 
 }
 
 // type Action = { type: 'setUsername', payload: string }
@@ -388,7 +388,8 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     loginBtn: {
       marginTop: theme.spacing(2),
-      flexGrow: 0 // 1
+      flexGrow: 0, // 1
+      textTransform: 'capitalize'
     },
     header: {
       textAlign: 'center',

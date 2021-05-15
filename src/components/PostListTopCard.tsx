@@ -5,7 +5,7 @@ import * as social from '../server/SocialTypes'
 
 export {}
 
-export function makeTopCard() : social.Post {
+export function makeTopCard( username: string ) : social.Post {
 
     var apost : social.Post = {
         id : 210101010000000,
@@ -13,12 +13,13 @@ export function makeTopCard() : social.Post {
         theText: "No posts loaded yet.",
         likes: [],
         retweets : [],
-        comments: []     
+        comments: [] ,
+        postedByName : username
     }
     return apost
 }
 
-export function makeEditCard() : social.Post {
+export function makeEditCard(username: string) : social.Post {
 
     var apost : social.Post = {
         id : 210101010000000,
@@ -27,7 +28,9 @@ export function makeEditCard() : social.Post {
         likes: [],
         retweets : [],
         comments: []    , 
-        editable : true
+        editable : true,
+        postedByName : username
+
     }
     return apost
 }

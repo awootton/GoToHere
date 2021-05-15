@@ -1,15 +1,12 @@
 
-
-//import base64url from 'base64url'
 import fs from 'fs'
 import * as nacl from 'tweetnacl-ts'
-//import * as naclsign from 'tweetnacl-ts/sign'
-
-// crypto-js/sha256 is banned for life for not using uin8array import sha256 from 'crypto-js/sha256';
+ 
+// crypto-js/sha256 is banned for life for not using uint8array import sha256 from 'crypto-js/sha256';
 
 import * as config from "./Config"
 import * as util from "./Util"
-import * as c_util from "../components/CryptoUtil"
+//import * as c_util from "../components/CryptoUtil"
 
 export function readServerConfig(specialpath?: string): config.ServerConfigList {
 
@@ -34,8 +31,8 @@ export function readServerConfig(specialpath?: string): config.ServerConfigList 
     const userName = item.name
     const phrase = item.passphrase
     const keypair: nacl.BoxKeyPair = util.getBoxKeyPairFromPassphrase(userName, phrase)
-    item.publicLey = Buffer.from(keypair.publicKey)
-    item.privateKey = Buffer.from(keypair.secretKey)
+    //item.publicLey = Buffer.from(keypair.publicKey)
+    //item.privateKey = Buffer.from(keypair.secretKey)
   };
 
   for (let item of itemsList.items) {
@@ -47,26 +44,26 @@ export function readServerConfig(specialpath?: string): config.ServerConfigList 
     }
   }
 
-  c_util.cleanContexts()
+  util.cleanContexts()
 
-  console.log(" BEFORE config fills in the c_util len = ", c_util.contexts.length)
+  console.log(" BEFORE config fills in the c_util len = ", util.contexts.length)
   for (let item of itemsList.items) { // init the c_util
-    var con: c_util.Context = {
-      ...c_util.emptyContext,
-      usernameFromApp: item.name,
-      passwordFromApp: item.passphrase,
+    var con: util.Context = {
+      ...util.emptyContext,
+      username: item.name,
+      password: item.passphrase,
       profileNameFromApp: item.name,
       tokenFromApp: itemsList.token,
       config: item
     }
-    c_util.initContext(con)
-    c_util.contexts.push(con)
+    util.initContext(con)
+    util.contexts.push(con)
   }
-  c_util.setCurrentIndex(0)  
+  util.setCurrentIndex(0)  
   // we probably need some maps and hefre would ab a gppd place
 
 
-  console.log(" AFTER config fills in the c_util len = ", c_util.contexts.length)
+  console.log(" AFTER config fills in the c_util len = ", util.contexts.length)
 
   return itemsList
 }
@@ -102,6 +99,7 @@ const sampleItemsList: config.ServerConfigList =
 
 export function saveSample() {
   var str = JSON.stringify( sampleItemsList, null, 2) // indented json pretty
+  console.log(str)
   fs.writeFileSync("sample_server_config.json", str)
 }
 
@@ -109,14 +107,3 @@ export function saveSample() {
 
 readServerConfig()
 
-
-
-// we don't use the http API anymore. It's all knotfree
-// export var API = "something"
-// if (process.env.NODE_ENV == 'development') {
-//   API = 'http://localhost:3000'; // has a proxy to move requests to 3010
-//   console.log("process.env.NODE_ENV sets dev API as ", API)
-// } else {
-//     API = 'http://localhost:3010';
-//     console.log("process.env.NODE_ENV sets release API as ", API)
-// }

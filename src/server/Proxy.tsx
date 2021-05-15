@@ -102,7 +102,7 @@ export class ProxyPortInstance {
             }
             dataparts.push(datatmp.slice(0, pos))
             datatmp = datatmp.slice(pos)
-            if (datatmp.length == 0) {
+            if (datatmp.length === 0) {
                 break
             }
         }
@@ -110,7 +110,7 @@ export class ProxyPortInstance {
             // console.log('atw data Received: ' + data);  HTTP/1.1 200 OK 
             // this.caller.
 
-            if (this.packetSentCount == 0) {
+            if (this.packetSentCount === 0) {
                 // the first one. Should be a reply.
                 var linePos = data.indexOf(Buffer.from("\n"))
                 this.firstline = data.slice(0, linePos).toString('utf8')

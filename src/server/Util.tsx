@@ -4,10 +4,11 @@
 
 import * as nacl from 'tweetnacl-ts'
 import * as crypto from 'crypto'
+import base64url from 'base64url'
 
 import * as social from './SocialTypes'
+import * as config from "./Config"
 
-import base64url from 'base64url';
 
 // the first return is the hostname from **inside** the token
 // the 2nd return is a string with an error
@@ -68,13 +69,15 @@ export function getBoxKeyPairFromPassphrase( username: string , phrase: string )
 
     const seedKeyPair3 = nacl.box_keyPair_fromSecretKey(hashBytes)
 
-    console.log("getBoxKeyPairFromPassphrase making keypair from ", username, base64url.encode(Buffer.from(seedKeyPair3.publicKey)))
+    //console.log("getBoxKeyPairFromPassphrase making keypair from ", username, base64url.encode(Buffer.from(seedKeyPair3.publicKey)))
 
     return seedKeyPair3
 }
 
+var thedate = new Date()
 export function getMilliseconds() : number {
-    return new Date().getTime()
+    //return new Date().getTime()
+    return thedate.getTime()
 }
 
 export function getCurrentDateNumber() : number {
@@ -97,6 +100,143 @@ export function randomString(len:number) {
     }
     return randomString;
 }
+
+export type Context = {
+    username: string  // the username and password go together
+    password: string  // 
+    // usually username and profileNameFromApp will match.
+    // sometimes from a topic when messages received
+    profileNameFromApp: string   // this is from the url
+
+    tokenFromApp: string
+    serverPubKeyFromApp: string
+
+    initialized: boolean
+
+    ourPublicKey: Buffer
+    ourSecretKey: Buffer
+    profileHash: string
+    serversPubKey: Buffer
+
+    config?: config.ServerConfigItem
+}
+export const emptyContext = {
+    username: "",
+    password: "",
+    profileNameFromApp: "",
+    tokenFromApp: "",
+    serverPubKeyFromApp: "",
+
+    initialized: false,
+
+    ourPublicKey: Buffer.from(""),
+    ourSecretKey: Buffer.from(""),
+    profileHash: "", // starts with = and has exactly 43 following
+    serversPubKey: Buffer.from(""),// as obtained by TokenScreen using profileName
+}
+
+export var contexts: Context[] = []
+contexts.push(emptyContext)
+export var currentIndex = 0
+
+export function getCurrentContext(): Context {
+    return contexts[currentIndex]
+}
+
+export function getMatchingNamedContext(username: string): Context {
+    // FIXME: use a map
+    var found = contexts[currentIndex] // a bad default 
+    contexts.forEach(context => {
+        initContext(context)
+        if (context.username === username) {
+            found = context
+        }
+    });
+    return found
+}
+
+
+export function getMatchingContext(topic: string): Context {
+    // FIXME: use a map
+    var found = contexts[currentIndex] // a bad default 
+    contexts.forEach(context => {
+        initContext(context)
+        if (context.profileHash === topic) {
+            found = context
+        }
+    });
+    return found
+}
+
+
+export function setCurrentIndex(i: number) {
+    currentIndex = i
+}
+
+export function cleanContexts() {
+    contexts = []
+    currentIndex = 0
+}
+
+export function initContext(context: Context) {
+    if (context.initialized) {
+        return
+    }
+    const keypair: nacl.BoxKeyPair = getBoxKeyPairFromPassphrase(context.username, context.password)
+    context.ourPublicKey = Buffer.from(keypair.publicKey)
+    context.ourSecretKey = Buffer.from(keypair.secretKey)
+    context.profileHash = "=" + KnotNameHash(context.profileNameFromApp)
+    context.serversPubKey = fromBase64Url(context.serverPubKeyFromApp)
+    context.initialized = true
+}
+export function SetUsernameFromApp(str: string) {
+    contexts[currentIndex].username = str
+}
+export function SetPasswordFromApp(str: string) {
+    contexts[currentIndex].password = str
+}
+export function SetProfileNameFromApp(str: string) {
+    contexts[currentIndex].profileNameFromApp = str
+}
+export function SetTokenFromApp(str: string) {
+    contexts[currentIndex].tokenFromApp = str
+}
+
+export function SetServerPubKeyFromApp(str: string) {
+    contexts[currentIndex].serverPubKeyFromApp = str
+}
+
+// base64 convert base64 encode base64
+export function toBase64Url(buf: Uint8Array): string {
+    const buffer = Buffer.from(buf)
+    return base64url.encode(buffer)
+}
+
+export function fromBase64Url(str: string): Buffer {
+    var buf: Buffer = Buffer.from(base64url.decode(str))
+    return buf
+}
+
+//  
+export function BoxItItUp(message: Buffer, nonce: Buffer, theirPublicKey: Buffer, ourSecretKey: Buffer): Buffer {
+    const mySecretKey = ourSecretKey
+    const rtmp = nacl.box(message, nonce, theirPublicKey, mySecretKey)
+    const result = Buffer.from(rtmp)
+    return result
+}
+
+export function UnBoxIt(message: Buffer, nonce: Buffer, theirPublicKey: Buffer, ourSecretKey: Buffer): Buffer {
+    var publicKey = theirPublicKey
+    const mySecretKey = ourSecretKey
+    const rtmp = nacl.box_open(message, nonce, publicKey, mySecretKey)
+    const result = Buffer.from(rtmp || Buffer.from(""))
+    return result
+}
+
+
+
+
+
 
 
 var theLastOne: social.DateNumber = 0

@@ -2,8 +2,6 @@
 
 import * as api1 from '../api1/Api';
 import * as mqtt_stuff from './MqttClient';
-import * as c_util from '../components/CryptoUtil';
-
 
 export function HandleApi1PacketIn( mqttThing: mqtt_stuff.MqttTestServerTricks,
                  isApi:string,
@@ -48,7 +46,7 @@ export function HandleApi1PacketIn( mqttThing: mqtt_stuff.MqttTestServerTricks,
 
     } else {
 
-      console.log("ERROR had api1 but didn't recongnize ", isApi)
+      console.log("ERROR had api1 but unknown cmd. did you forget to 'load up the api with handlers for the various'", isApi) 
 
     }
 }

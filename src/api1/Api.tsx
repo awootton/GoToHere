@@ -2,7 +2,7 @@
 import * as mqttserver from '../server/MqttClient';
 import * as util from '../server/Util';
 
-import * as c_util from '../components/CryptoUtil';
+//import * as c_util from '../components/CryptoUtil';
  
 // we have a map from api1 names to these structs:
 // 
@@ -27,7 +27,7 @@ export type WaitingRequest = {
     // only Ping should EVER set this 
     skipCryptoForThisOne?: boolean // NEVER set this
 
-    context? : c_util.Context
+    context? : util.Context
 }
 
 //  export const emptyWaitingRequest : WaitingRequest = {
@@ -100,14 +100,8 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
             }
         }
     };
-
-    // console.log("api1 posting box usernameFromApp  ", c_util.getCurrentContext().usernameFromApp)
-    // console.log("api1 posting box passwordFromApp  ", c_util.getCurrentContext().passwordFromApp)
-    // console.log("api1 posting box profileNameFromApp  ", c_util.getCurrentContext().profileNameFromApp)
-    // //console.log("api1 posting box tokenFromApp  ",  c_util.getCurrentContext().tokenFromApp )
-    // console.log("api1 posting box serverPubKeyFromApp   ", c_util.getCurrentContext().serverPubKeyFromApp)
-
-    // console.log("sending out api1 call to", topic, " with " + message)
+    
+    //console.log("sending out api1 call to", topic, " with " + message)
 
     if (waitingRequest.skipCryptoForThisOne === true) {
 
@@ -119,14 +113,13 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
         //var nonce = random24 // Buffer.from(util.randomString(24))
         // client is anon aka me
 
-        var context = c_util.getCurrentContext()
-        c_util.initContext(context) 
+        var context = util.getCurrentContext()
+        util.initContext(context) 
         // set publicKey aka pubk in options
         // replace message
 
     }
     mqttserver.mqttServerThing.client.publish(topic, message, options)
-
 }
 
 export interface ApiCommand {

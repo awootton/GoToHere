@@ -15,8 +15,9 @@ import { WaitingRequest } from '../api1/Api';
 
 import * as mqtt_util from "./MqttClient2"
 
-import * as c_util from "../components/CryptoUtil"
+//import * as c_util from "../components/CryptoUtil"
 import * as pingapi from '../api1/Ping'
+import * as friendsapi from '../api1/GetFriends'
 
 type MqttServerPropsType = {
 
@@ -118,9 +119,10 @@ export class MqttTestServerTricks {
         this.hashed2name.set(k2, key)
       })
 
-      // load up the api
+      // load up the api with handlers for the various api's
       get_posts.InitApiHandler(this.returnsWaitingMap)
       pingapi.InitApiHandler(this.returnsWaitingMap)
+      friendsapi.InitApiHandler(this.returnsWaitingMap)
 
       //console.log(" returnsWaitingMap initialised to ", this.returnsWaitingMap)
 
@@ -137,7 +139,7 @@ export class MqttTestServerTricks {
     console.log("initializing ping setInterval")
     haveWeEverInitialisedThatPingTimer = true
     //this.timerID = 
-    var ourPubKey64: string = c_util.toBase64Url(c_util.getCurrentContext().ourPublicKey)
+    var ourPubKey64: string = util.toBase64Url(util.getCurrentContext().ourPublicKey)
     setInterval(() => { this.sendAPing() }, timeout);
 
     this.client = null
@@ -330,14 +332,14 @@ export class MqttTestServerTricks {
         this.CloseTheConnect()
       });
       this.client.on("reconnect", () => {
-        console.log(" Reconnecting ")
+        console.log(" Reconnecting " + new Date())
         // repeat the subscriptions
         this.subscribeFunc(this.myReplyChannel)
         this.topic2port.forEach((value: string, key: string) => { this.subscribeFunc(key) })
 
       });
       this.client.on("message", (topic: any, message: any, packet: any) => {
-
+        // this is where the deliveries arrive fresh from mqtt
         //console.log("mqtt_stuff have on message ", topic)
         // see notes console.log("have on  message packet ", packet)
         // console.log("have user data ", packet.properties.userProperties)
@@ -351,7 +353,7 @@ export class MqttTestServerTricks {
         var gotOptions: Map<string, string> = mqtt_util.UnpackMqttOptions(packet)
 
         var isApi = gotOptions.get("api1")
-        //console.log("found user val for api1 ", isApi) // should be a big key
+        //console.log("found user val for api1 ", isApi) // should be a big key, or short api name
 
         if (isApi !== undefined) {
 
@@ -383,6 +385,8 @@ export class MqttTestServerTricks {
             var gotOptions: Map<string, string> = mqtt_util.UnpackMqttOptions(packet)
             console.log("failed to find topic. Options:", gotOptions)
             console.log("failed to find topic. Message:", Buffer.from(message).toString('utf8') )
+
+            // FIXME: systemErrorReceiver( Buffer.from(message).toString('utf8') )
 
           } else {
             var portStr = this.topic2port.get(realname)

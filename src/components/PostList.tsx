@@ -21,7 +21,8 @@ import PostItem from '../components/PostItem'
 type PostListProps = {
     // using `interface` is also ok
     message: string;
-    folder: string; // 
+    folder: string;
+    username: string
 };
 type PostListState = {
     //count: number; // like this
@@ -31,8 +32,8 @@ type PostListState = {
     loading: boolean
 };
 
-function getDefaultList(error: string): social.Post[] {
-    var anarr: social.Post[] = [cards.makeTopCard()]
+function getDefaultList(username: string, error: string): social.Post[] {
+    var anarr: social.Post[] = [cards.makeTopCard(username)]
     var somedata: number = 210101010000000
     anarr.forEach((val: social.Post, index: Number, postslist: social.Post[]) => {
         val.id = somedata
@@ -46,24 +47,27 @@ export class PostList extends Component<PostListProps, PostListState> {
     state: PostListState = {// do we use this?
         start: 210413164940943,
         end: 210414194940943,
-        postslist: getDefaultList(""),
+        postslist: getDefaultList("someusername",""),
         loading: true
     };
 
     componentDidMount() {
-        console.log("componentDidMount in PostList")
+        //console.log("componentDidMount in PostList")
         this.getPosts();
     }
 
     async fetchPosts() {
-        //console.log("calling fetchPosts in PostList")
+        //
+        // console.log("calling fetchPosts in PostList")
         //
         const top = "" + util.getCurrentDateNumber()
         const fold = "lists/posts/"
         const count = 6
         const old = ""
 
-        getpostsapi.IssueTheCommand(top, fold, count, old, (postslist: social.Post[], error: any) => {
+        // this could be a different username
+
+        getpostsapi.IssueTheCommand(this.props.username, top, fold, count, old, (postslist: social.Post[], error: any) => {
             //console.log("just got back from issueTheCommand ")
             if (error) {
                 console.log("getpostsapi.IssueTheCommand had an error ", error)
@@ -92,10 +96,10 @@ export class PostList extends Component<PostListProps, PostListState> {
     getListToUse() {
         console.log("typeof this.state.list ", typeof this.state.postslist)
         if (this.state.postslist === undefined) {
-            return getDefaultList("")
+            return getDefaultList(this.props.username,"")
         }
         if (this.state.postslist.length === 0) {
-            return getDefaultList("")
+            return getDefaultList(this.props.username,"")
         }
         return this.state.postslist
     }
@@ -103,7 +107,7 @@ export class PostList extends Component<PostListProps, PostListState> {
     returnPostsListDom() {
         const postsListDom = this.state.postslist.map((aPost) => (
             <Fragment key={aPost.id} >
-                <PostItem key={aPost.id} post={aPost}></PostItem>
+                <PostItem key={aPost.id} post={aPost} username = {this.props.username} ></PostItem>
             </Fragment>
         ));
         //console.log("PostsList DOM is=" , postsListDom )

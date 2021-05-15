@@ -2,7 +2,7 @@
 import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
 import * as api1 from './Api';
 import * as util from '../server/Util';
-import * as c_util from '../components/CryptoUtil';
+//import * as c_util from '../components/CryptoUtil';
 
 
 export interface PingCmd extends api1.ApiCommand {
@@ -13,11 +13,11 @@ export type PingReceiver = (cmd: PingCmd, error: any) => any
 
 export function IssueTheCommand(receiver: PingReceiver) {
 
-    var context: c_util.Context = c_util.getCurrentContext()
+    var context: util.Context = util.getCurrentContext()
 
     var cmd: PingCmd = {
         cmd: "ping",
-        pub: c_util.toBase64Url(context.ourPublicKey)
+        pub: util.toBase64Url(context.ourPublicKey)
     }
     const jsonstr = JSON.stringify(cmd)
     //console.log("jsonstr of cmd ", jsonstr,)
@@ -64,13 +64,13 @@ export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
 
 export function handlePingApi(wr: WaitingRequest, err: any) {
 
-    var context: c_util.Context = c_util.getCurrentContext()
+    var context: util.Context = util.getCurrentContext()
 
     //console.log("in the handlePingApi with ", wr.topic, wr.message.toString())
 
     var pingCmd: PingCmd = JSON.parse(wr.message.toString())
 
-    pingCmd.pub = c_util.toBase64Url(context.ourPublicKey)
+    pingCmd.pub = util.toBase64Url(context.ourPublicKey)
     const cmdBytes = JSON.stringify(pingCmd)
     handleSendReplyCallback(wr, Buffer.from(cmdBytes), null)
 }

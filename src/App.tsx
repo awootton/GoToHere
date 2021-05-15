@@ -2,22 +2,30 @@ import  { useState } from 'react';
 
 import './App.css';
 import Header from './components/Header';
-import { createMuiTheme, createStyles } from '@material-ui/core/styles'; // makeStyles,
+import { createStyles } from '@material-ui/core/styles'; 
+
+import { unstable_createMuiStrictModeTheme } from '@material-ui/core/styles'; // makeStyles,
+
+//import   unstable_createMuiStrictModeTheme as createMuiTheme  from '@material-ui/core';
+
+
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
-import SimpleTabs from './components/TabPanel'
+import SimpleTabs from './components/SimpleTabs'
 
  import * as login from './components/Login';
 import * as util from "./server/Util" 
 import * as tok from "./components/TokenScreen"
-import * as c_util from "./components/CryptoUtil"
+//import * as c_util from "./components/CryptoUtil"
 import * as getpostsapi from "./api1/GetPosts"
 import * as pingapi from "./api1/Ping"
 import * as social from "./server/SocialTypes"
 
+import * as profile from "./components/ProfileMain"
+
 // eslint-disable-next-line 
-export const theme = createMuiTheme({
+export const theme = unstable_createMuiStrictModeTheme({
   breakpoints: {
     values: {
       xs: 0,
@@ -29,12 +37,12 @@ export const theme = createMuiTheme({
   },
 })
 
-const appStyles = (theme: any) => createStyles({
+const useStyles = (theme: any) => createStyles({
   root: {
     flexGrow: 1,
   },
   paper: {
-    padding: 66, // theme.spacing(30),
+    padding: 16, // theme.spacing(30),
     textAlign: 'center',
     color: theme.palette.text.secondary,
   },
@@ -60,18 +68,17 @@ export function App() {
 
   const [hasPassword, setIsPassVerified] = useState( login.initialState )//globalAppLoginState ); // is Login State
   
-  const [hasToken, setHasToken] = useState(  tok.initialTokenState ); // is TokenState
+  const [hasToken, setHasToken] = useState(  tok.initialState ); // is TokenState
 
   //console.log("in App returning page pub key = " , globalAppTokenState.serverPublicKeyB64 )
   console.log("in App returning page pub key2 = " , hasToken.serverPublicKeyB64 )
   //console.log("c ", process.env.NODE_ENV) // eg. development
 
-  const someAppStypes = appStyles(theme)
+  const someAppStypes = useStyles(theme)
   const paperStrStyles = someAppStypes.paper.toString()
 
   console.log("typeof someAppStypes ", someAppStypes)
   console.log("paperStrStyles ", paperStrStyles)
-
 
   if ( hasToken.theToken === undefined || hasToken.theToken.length === 0) {
     //console.log("in App about to render TokenScreen")
@@ -110,7 +117,7 @@ export function App() {
   }
 
   // Having weird side effects in a call back is weird TODO: find better way
-  function setAppHasToken( tokState : tok.TokenState ) {
+  function setAppHasToken( tokState : tok.State ) {
     console.log("App localTokenHook setting token ", tokState)
     console.log("   current pass state ", hasPassword)
 
@@ -137,11 +144,11 @@ export function App() {
       counter : hasPassword.counter + 1
     }
     if ( newPassState.isVerified ){
-      c_util.SetUsernameFromApp(newPassState.username)
-      c_util.SetPasswordFromApp(newPassState.password )
-      c_util.SetProfileNameFromApp(getProfileName() )
-      c_util.SetTokenFromApp(  hasToken.theToken )
-      c_util.SetServerPubKeyFromApp( hasToken.serverPublicKeyB64)
+      util.SetUsernameFromApp(newPassState.username)
+      util.SetPasswordFromApp(newPassState.password )
+      util.SetProfileNameFromApp(getProfileName() )
+      util.SetTokenFromApp(  hasToken.theToken )
+      util.SetServerPubKeyFromApp( hasToken.serverPublicKeyB64)
       console.log("App sending values to crypto   ", passState)
       // TODO: app should forget the password now
       // newPassState.password = "erased"
@@ -171,7 +178,7 @@ export function App() {
       const count = 4
       const old = ""
 
-      getpostsapi.IssueTheCommand(top, fold, count, old,   ( posts:social.Post[] , error:any) => {
+      getpostsapi.IssueTheCommand("alice_vociferous_mcgrath",top, fold, count, old,   ( posts:social.Post[] , error:any) => {
         console.log("just got back from issueTheCommand with ", posts)
     })
 
@@ -199,36 +206,51 @@ export function App() {
 
     const profileName = getProfileName()
 
+    // fixme: use ProfileMain
     return (
       <>
-        <Header title={ profileName + " Profile Page."}  />
-        <Grid container spacing={0}>
-          <Grid item xs={4} >
-            {/* <Image src="http://loremflickr.com/300/200" /> */}
-            <img src="http://loremflickr.com/300/200" width="250" alt="sample here" />
-            <Paper className={paperStrStyles} >About Me:</Paper>
-            <Paper >
-              "Sed illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
-             
-            </Paper>
-            <Button onClick={pushMeAction} >push me</Button>
-            <Button onClick={pushMeAction2} >push me2</Button>
-          </Grid>
-          <Grid item xs={8}>
-            {/* <Paper className={styles().paper}>  className={someAppStypes.paper}
-          " sunt in culpa qui officia deserunt mollit anim id est laborum."
-        </Paper> */}
-            <SimpleTabs></SimpleTabs>
-          </Grid>
-        </Grid>
-       
-
+         <profile.ProfileMain tokenState = {hasToken} username={profileName} hasHeader={true} ></profile.ProfileMain>
       </>
     );
   }
+
+  function xxxmakeApp() {
+
+    const profileName = getProfileName()
+
+    // fixme: use ProfileMain
+    return (
+      <>
+        <Header title={ profileName } username = {profileName} />
+
+       
+        <Grid container spacing={0}>
+        <Grid item xs={4} >
+          {/* <Image src="http://loremflickr.com/300/200" /> */}
+          <img src="http://loremflickr.com/300/200" width="250" alt="sample here" />
+          <Paper className={paperStrStyles} >About Me:</Paper>
+          <Paper >
+            "Sed illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
+          
+          </Paper>
+          {/* <Button onClick={pushMeAction} >push me</Button>
+          <Button onClick={pushMeAction2} >push me2</Button> */}
+        </Grid>
+        <Grid item xs={8}>
+          <SimpleTabs username={profileName} ></SimpleTabs>
+        </Grid>
+        </Grid>
+      </>
+    );
+  }
+
+
+
 }
 
 export default App;
+
+
 
 // export function startMqtt() {
 //     var server_config: config.ServerConfigList = {
@@ -290,7 +312,7 @@ export function getProfileName(): string {
   return profileName
 }
 
-// eg knotfree.net
+// eg knotfree2.com
 export function getServerName(): string {
   var serverName = "unknown"
   var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotfree2.com:3000/

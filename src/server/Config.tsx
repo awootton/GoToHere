@@ -1,7 +1,7 @@
 
 
  
-import * as nacl from 'tweetnacl-ts'
+//import * as nacl from 'tweetnacl-ts'
 
 // crypto-js/sha256 is banned for life for not using uin8array import sha256 from 'crypto-js/sha256';
 
@@ -24,8 +24,8 @@ export type ServerConfigItem = {
 
   passphrase: string,
 
-  publicLey?: Buffer,
-  privateKey?: Buffer
+ // publicLey?: Buffer, these are in Context
+ // privateKey?: Buffer
 }
 
 export const EmptyServerConfigItem : ServerConfigItem = {

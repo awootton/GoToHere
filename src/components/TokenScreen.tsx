@@ -18,7 +18,7 @@ import { getServerName } from '../App';
 import * as nacl from 'tweetnacl-ts'
 
 
-export type TokenState = {
+export type State = {
     complaints: string
     serverName: string
     theToken: string
@@ -28,7 +28,7 @@ export type TokenState = {
     isVerified: boolean
 }
 
-export const initialTokenState: TokenState = {
+export const initialState: State = {
     complaints: "", // aka messages
     serverName: "",
     theToken: "",
@@ -39,19 +39,8 @@ export const initialTokenState: TokenState = {
 }
 
 type TokenProps = {
-    setAppHasToken: (s: TokenState) => any
+    setAppHasToken: (s: State) => any
 }
-// this KnotFree stuff glommed from go in that project
-// KnotFreeContactStats is the numeric part of the token claims
-// it is floats to compress numbers and allow fractions in json
-// these don't count above 2^24 or else we need more bits.
-// type KnotFreeContactStats = {
-//     //
-//     in: number //`json:"in"`  // bytes per sec
-//     out: number //`json:"out"` // bytes per sec
-//     su: number          //`json:"su"`  // Subscriptions seconds per sec
-//     co: number        //`json:"co"`  // Connections seconds per sec
-// }
 
 type KnotFreeTokenPayload = {
     //
@@ -59,7 +48,6 @@ type KnotFreeTokenPayload = {
     iss: string //`json:"iss"`           // Issuer first 4 bytes (or more) of base64 public key of issuer
     jti: string //`json:"jti,omitempty"` // JWTID a unique serial number for this Issuer
 
-    //KnotFreeContactStats // limits on what we're allowed to do.
     in: number //`json:"in"`  // bytes per sec
     out: number //`json:"out"` // bytes per sec
     su: number          //`json:"su"`  // Subscriptions seconds per sec
@@ -80,9 +68,9 @@ type TokenReply = {
 	nonce :  string                 // `json:"nonce"`
 }
 
-export class TokenScreen extends Component<TokenProps, TokenState> {
+export class TokenScreen extends Component<TokenProps, State> {
 
-    state = initialTokenState  
+    state = initialState  
 
     haveChecked: boolean = false
 
@@ -95,7 +83,7 @@ export class TokenScreen extends Component<TokenProps, TokenState> {
         if (this.state.theToken.length === 0) {
             if (savedToken !== undefined) {
                 goodToken = savedToken || ""
-                const newState: TokenState = {
+                const newState: State = {
                     ...this.state,
                     theToken: savedToken || "",
                 }
@@ -129,7 +117,7 @@ export class TokenScreen extends Component<TokenProps, TokenState> {
         } else {
             // there was complaints and or no server
             console.log("token verify was bad ", complaints)
-            const newState: TokenState = {
+            const newState: State = {
                 ...this.state,
                 theToken: aToken,
                 complaints: complaints,
@@ -148,7 +136,7 @@ export class TokenScreen extends Component<TokenProps, TokenState> {
             console.log("dont restart mqtt unnecessarily")
             console.log("mqtt success in TokenScreen")
             // success, tell ourselves
-            const newState: TokenState = {
+            const newState: State = {
                 ...this.state,
                 theToken: aToken,
                 complaints: "",
@@ -169,7 +157,7 @@ export class TokenScreen extends Component<TokenProps, TokenState> {
                     console.log("mqtt has err here ", errmsg)
                     // failed
                     // tell ourselves 
-                    const newState: TokenState = {
+                    const newState: State = {
                         ...this.state,
                         theToken: aToken,
                         complaints: "mqtt has err here " + errmsg,
@@ -181,7 +169,7 @@ export class TokenScreen extends Component<TokenProps, TokenState> {
                 } else {
                     console.log("mqtt success in TokenScreen")
                     // success, tell ourselves
-                    const newState: TokenState = {
+                    const newState: State = {
                         ...this.state,
                         theToken: aToken,
                         complaints: "",
@@ -200,10 +188,7 @@ export class TokenScreen extends Component<TokenProps, TokenState> {
 
     tryToStartMqtt = (aToken: string, serverName: string) => {
 
-        //const hoststr = "http://" + getProfileName() + "." + serverName + "/api1/getPublicKey"
         const hoststr = "http://" +  serverName + "/api1/getPublicKey"
-        //const hoststr = "http://alice_vociferous_mcgrath.knotfree2.com:3000/robots.txt"
-        //const hoststr = "http://" + serverName + "/api1/getPublicKey"
 
         console.log("calling GetPublicKey at  ", hoststr)
 
@@ -295,7 +280,7 @@ export class TokenScreen extends Component<TokenProps, TokenState> {
                     } else {
                         const asciiTok = Buffer.from(gotTok).toString("utf8")
                         console.log("have decoded free token  fetch result ", asciiTok)
-                        const newState : TokenState = { ...this.state, complaints: "Got Free Token... " + asciiTok, theToken: asciiTok }
+                        const newState : State = { ...this.state, complaints: "Got Free Token... " + asciiTok, theToken: asciiTok }
                         localStorage.setItem('knotfree_access_token_v1', asciiTok);
                         this.setState(newState)
                         this.props.setAppHasToken(newState)// tell the app 
@@ -388,7 +373,7 @@ export class TokenScreen extends Component<TokenProps, TokenState> {
 
     retryHandler = (event: any) => {
         // force a refresh   
-        const newState: TokenState = {
+        const newState: State = {
             ...this.state,
             counter: this.state.counter + 1
         }
