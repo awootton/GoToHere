@@ -10,6 +10,23 @@ import * as social from './SocialTypes'
 import * as config from "./Config"
 
 
+var theLastOne: social.DateNumber = 0
+export function getUniqueId() : social.DateNumber {
+
+    //const startDate = new Date()
+    //const start = startDate.getTime()
+    const s2 = new Date().getTime()
+    var nnn =  ConvertFromMsToDateNumber(s2)
+    if (nnn <= theLastOne) {
+        // this is when less than 1 ms has elapsed since the last time we were here
+        nnn = theLastOne + 1
+        // TODO: watch for roll over from 59 to 60 sec which should increment minute
+    }
+    theLastOne = nnn
+    return nnn
+}
+
+
 // the first return is the hostname from **inside** the token
 // the 2nd return is a string with an error
 export function VerifyToken(myToken :string) : [  string,string ] {
@@ -234,26 +251,6 @@ export function UnBoxIt(message: Buffer, nonce: Buffer, theirPublicKey: Buffer, 
 }
 
 
-
-
-
-
-
-var theLastOne: social.DateNumber = 0
-export function getUniqueId() : social.DateNumber {
-
-    const startDate = new Date()
-    const start = startDate.getTime()
-    var nnn =  ConvertFromMsToDateNumber(start)
-    if (nnn <= theLastOne) {
-        // this is when less than 1 ms has elapsed since the last time we were here
-        nnn = theLastOne + 1
-        // TODO: watch for roll over from 59 to 60 sec which should increment minute
-    }
-    theLastOne = nnn
-    return nnn
-}
-
 export function KnotNameHash(name: string): string {
     //var result: Uint8Array
 
@@ -310,6 +307,72 @@ export function ConvertFromMsToDateNumber( millis : number ) : social.DateNumber
     return result
 }
 
+export function DateFromDateNumber ( dn : social.DateNumber ) : Date  {
+
+    var tmp = dn
+    const millis : number = tmp % 1000
+    tmp = Math.floor(tmp / 1000)
+
+    const secs : number = tmp % 100
+    tmp = Math.floor(tmp / 100)
+
+    const mins : number = tmp % 100
+    tmp = Math.floor(tmp / 100)
+
+    const hours : number = tmp % 100
+    tmp = Math.floor(tmp / 100)
+
+    const day : number = tmp % 100
+    tmp = Math.floor(tmp / 100)
+
+    const month : number = tmp % 100
+    tmp = Math.floor(tmp / 100)
+
+    const year : number = tmp % 100
+    //tmp = tmp / 100
+
+
+    var res : Date = new Date()
+    res.setMilliseconds(millis)
+    res.setSeconds(secs)
+    res.setMinutes(mins)
+    res.setHours(hours)
+    res.setFullYear(2000 + year, month,day)
+    // does it know it's supposed to be in gmt ?
+    return res
+}
+
+export function FormatDateNumber ( dn : social.DateNumber ) : string  { 
+    //var date: Date = DateFromDateNumber(dn)
+
+    var tmp = dn
+    const millis : number = tmp % 1000
+    tmp = Math.floor(tmp / 1000)
+
+    const secs : number = tmp % 100
+    tmp = Math.floor(tmp / 100)
+
+    const mins : number = tmp % 100
+    tmp = Math.floor(tmp / 100)
+
+    const hours : number = tmp % 100
+    tmp = Math.floor(tmp / 100)
+
+    const day : number = tmp % 100
+    tmp = Math.floor(tmp / 100)
+
+    const month : number = tmp % 100
+    tmp = Math.floor(tmp / 100)
+
+    const year : number = tmp % 100
+    //tmp = tmp / 100
+
+    return "" + month + "/" + day + "/" + year + " " + hours + ":" + secs 
+  
+    //return "" + date
+
+}
+
 // ZeroPadLeft2 adds '0' on the left, as needed, to make the result have 2 length === 2
 export function ZeroPadLeft2( sss : (number|string) ) : string {
     var tmp = "00"+sss
@@ -325,3 +388,5 @@ export function ZeroPadLeft3( sss : (number|string) ) : string {
     tmp = tmp.substr(x-3,x-1)
     return tmp
 }
+
+

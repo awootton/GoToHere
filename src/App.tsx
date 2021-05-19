@@ -24,6 +24,8 @@ import * as social from "./server/SocialTypes"
 
 import * as profile from "./components/ProfileMain"
 
+// for react-native import Device from "react-native-device-detection"
+
 // eslint-disable-next-line 
 export const theme = unstable_createMuiStrictModeTheme({
   breakpoints: {
@@ -36,6 +38,12 @@ export const theme = unstable_createMuiStrictModeTheme({
     },
   },
 })
+// or these?
+// xs: 0,
+// sm: 600,
+// md: 960,
+// lg: 1280,
+// xl: 1920,
 
 const useStyles = (theme: any) => createStyles({
   root: {
@@ -72,7 +80,9 @@ export function App() {
 
   //console.log("in App returning page pub key = " , globalAppTokenState.serverPublicKeyB64 )
   console.log("in App returning page pub key2 = " , hasToken.serverPublicKeyB64 )
+  console.log("in App window.innerWidth = " , window.innerWidth )
   //console.log("c ", process.env.NODE_ENV) // eg. development
+
 
   const someAppStypes = useStyles(theme)
   const paperStrStyles = someAppStypes.paper.toString()
@@ -299,7 +309,7 @@ export default App;
 // eg alice_vociferous_mcgrath
 export function getProfileName(): string {
   var profileName = "unknown"
-  var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotfree2.com:3000/
+  var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotlocal.com:3000/
   var ind = locationhref.indexOf("//")
   if (ind > 0) {
     locationhref = locationhref.substring(ind + 2)
@@ -315,7 +325,7 @@ export function getProfileName(): string {
 // eg knotfree2.com
 export function getServerName(): string {
   var serverName = "unknown"
-  var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotfree2.com:3000/
+  var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotlocal.com:3000/
   var ind = locationhref.indexOf("//")
   if (ind > 0) {
     locationhref = locationhref.substring(ind + 2)

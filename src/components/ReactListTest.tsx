@@ -7,7 +7,7 @@ import * as getpostsapi from "../api1/GetPosts"
 
 import * as social from "../server/SocialTypes"
 import * as postitem from "../components/PostItem"
-import * as cards from "../components/PostListTopCard"
+import * as cards from "./CardUtil"
 import * as util from "../server/Util"
 
 const useStyles = makeStyles((theme: Theme) =>

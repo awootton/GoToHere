@@ -13,7 +13,7 @@ import * as getpostsapi from "../api1/GetPosts"
 
 //import * as api1 from "../api1/Api"
 
-import * as cards from "../components/PostListTopCard"
+import * as cards from "./CardUtil"
 import * as util from "../server/Util"
 
 import PostItem from '../components/PostItem'

@@ -11,11 +11,14 @@ import SimpleTabs from './SimpleTabs'
 import FriendTabs from './FriendTabs'
 import Header from './Header'
 
+import * as util from '../server/Util'
+
 //import { unstable_createMuiStrictModeTheme as createMuiTheme } from '@material-ui/core';
 
 
 import * as tok from "./TokenScreen"
 import { Typography } from '@material-ui/core';
+import { updateWhile } from 'typescript';
 //import * as login from "./Login"
 //import * as app from "../App"
 
@@ -34,33 +37,31 @@ const useStyles = makeStyles((theme: Theme) =>
       flexGrow: 1,
       minWidth : theme.spacing(16),
     },
-    xxxpaper: {
-      padding: 66, // theme.spacing(30),
-      textAlign: 'center',
-      color: theme.palette.text.secondary,
-    },
 
-    avatar: {
-      width: theme.spacing(16),
-      height: theme.spacing(16),
+    avatar: {  
+      flexGrow: 1,
+      width: 200,// theme.spacing(window.innerWidth * 16 / 450),
+      height: 200, //theme.spacing(window.innerWidth * 16 / 450),
+      justifyContent: 'center',
+      alignItems: 'center',
     },
 
     leftDivTop: {
-      width: "98%",
+      width: "100%",
       height: theme.spacing(50) ,
       minWidth : 200,
       borderRadius : 16
     },
     
     leftDivBot: {
-      width: "98%",
+      width: "100%",
       height: theme.spacing(50) ,
       minWidth : theme.spacing(16),
       borderRadius : 16
     },
     
     rightDiv: {
-      width: "98%",
+      width: "100%",
       height: theme.spacing(100),
       minWidth : theme.spacing(16),
       borderRadius : 16
@@ -75,31 +76,32 @@ export const ProfileMain: FC<ProfileProps> = (props: ProfileProps) => {
   const classes = useStyles();
 
   //  <Header title={ profileName + " Profile Page."}  />
-  var was = (
-    <>
+  // var was = (
+  //   <>
 
-      <Grid container spacing={0}>
+  //     <Grid container spacing={0}>
 
-        <Grid item xs={4} >
-          <Avatar alt="Example Alt" src="http://loremflickr.com/300/200" className={classes.avatar} />
-          <Paper >About Me:</Paper>
-          <Paper >
-            { getAbout() }
-          </Paper>
-        </Grid>
+  //       <Grid item xs={4} >
+  //         <Avatar alt="Example Alt" src="http://loremflickr.com/300/200" className={classes.avatar} />
+  //         <Paper >About Me:</Paper>
+  //         <Paper >
+  //           { getAbout() }
+  //         </Paper>
+  //       </Grid>
 
-        <Grid item xs={8}>
-          <SimpleTabs username={props.username} ></SimpleTabs>
-        </Grid>
+  //       <Grid item xs={8}>
+  //         <SimpleTabs username={props.username} ></SimpleTabs>
+  //       </Grid>
 
-      </Grid>
+  //     </Grid>
 
-    </>
-  );
+  //   </>
+  // );
 
   function getHeader() {
     if ( props.hasHeader === true ){
-      return (<Header title={  " Profile Page."} username={props.username} />)
+      var ourName = util.getCurrentContext().username
+      return (<Header title={"Viewing " + props.username + " as " + ourName } username={props.username} />)
     } 
     return ( <></> )
     
@@ -113,11 +115,11 @@ export const ProfileMain: FC<ProfileProps> = (props: ProfileProps) => {
         <Grid item xs={4}  >
 
         <Paper className={classes.leftDivTop}> 
+        <div className={classes.avatar}>
             <Avatar alt="Example Alt" src="http://loremflickr.com/300/200" className={classes.avatar} />
+            </div>
             <Typography>
-            about me: about me:about me: about me:about me: about me:about me: about me:about me: about me:
-            about me: about me:about me: about me:about me: about me:about me: about me:about me: about me:
-            about me: about me:about me: about me:about me: about me:about me: about me:about me: about me:
+            { getAbout() }
             </Typography>
          </Paper>  
                
@@ -147,8 +149,7 @@ export const ProfileMain: FC<ProfileProps> = (props: ProfileProps) => {
 function getAbout () {
   var str = "bone. Airport Gaggenau Lufthansa remarkable soft power finest the best Marylebone wardrobe first-class Muji iz"
   str += "Sed illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
-  str += "Sed illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
-  str += "Sed illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
+  
   return str
 }
 

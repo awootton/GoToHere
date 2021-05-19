@@ -14,12 +14,17 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
 import MenuIcon from '@material-ui/icons/Menu';
 
-import { SimpleDialog } from './SimpleDialog'
-import * as dialog2 from './DialogScreens'
+import Paper from '@material-ui/core/Paper';
+
+import { SimpleDialog } from '../dialogs/SimpleDialog'
+ 
+import * as dialogs_apptest from '../dialogs/AppTest'
 
 import * as api from '../api1/GetFriends'
+import * as util from "../server/Util"
 
 const useStyles = makeStyles((theme) => ({
+    
     root: {
         flexGrow: 1,
         height: 12,
@@ -31,10 +36,18 @@ const useStyles = makeStyles((theme) => ({
 
     },
 
-    showing: {
+    showingstyle: {
         textTransform: 'capitalize',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        fontSize: 16,
+        fontWeight: "bold",
+
+        boxShadow : "0",
+
+        margin: "24 0px",
+        border: "24 0px",
+        
     },
 
     friendItem: {
@@ -85,14 +98,17 @@ export const LinkedName: FC<NameProps> = (props: NameProps) => {
         setOpenAppDialog(true)
     }
 
+    var ourName = util.getCurrentContext().username
+
     const getTitle = () => {
         return (
             <div>
                 <Button onClick = {handleDialogClose} ><ArrowBackIosIcon/></Button>
-                {props.name}
+                Viewing {props.name} as {ourName}
             </div>
         )
     }
+    
 
     const item = (
         <>
@@ -101,14 +117,14 @@ export const LinkedName: FC<NameProps> = (props: NameProps) => {
                     onClick={showTheAppDialog}
                     className={classes.friendItem}
                 >
-                    {props.name}
+                {props.name}
                 </Button>
 
                 <SimpleDialog selectedValue={"dummy"}
-                    // style = {someAppStyles}
-                    className={classes.root}
+                    
+                   // className={classes.root}
                     open={openAppDialog}
-                    fillme={dialog2.fillAppTestDialog}
+                    fillme={dialogs_apptest.FillAppTest}
                     title={getTitle()}
                     onClose={handleDialogClose}
                     username={props.name} />
@@ -156,8 +172,8 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
         setShowing('friends')
         handleClose()
     };
-    const handleClickOpenRelatives = () => {
-        setShowing('relatives')
+    const handleClickOpenFollowers = () => {
+        setShowing('followers')
         handleClose()
     };
     const handleClickOpenFollowing = () => {
@@ -168,8 +184,6 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
         setShowing('blocked')
         handleClose()
     };
-
-    var whoIsShowing: string = showing
 
     const getPanel = () => {
 
@@ -190,9 +204,9 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
                 index += 1
             }
         }
-        if (showing === "relatives") {
+        if (showing === "followers") {
             var index = 0
-            for (const pubk of friendsData.relatives) {
+            for (const pubk of friendsData.followers) {
                 const name = friendsData.key2name.get(pubk) || "noname"
                 const item = (
                     <>
@@ -218,7 +232,7 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
         }
         if (showing === "blocked") {
             var index = 0
-            for (const pubk of friendsData.following) {
+            for (const pubk of friendsData.blocked) {
                 const name = friendsData.key2name.get(pubk) || "noname"
                 const item = (
                     <>
@@ -240,8 +254,9 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
         <div className={classes.root}>
 
             <Button aria-controls="simple-menu" aria-haspopup="true" onClick={handleClick}>
-                <MenuIcon />
-                <div className={classes.showing} >{whoIsShowing}</div>
+                {/* <MenuIcon />
+                <div className={classes.showing} >{ "   " + whoIsShowing}</div> */}
+                <MenuIcon /><Paper elevation={0} className={classes.showingstyle} >{showing}</Paper>
             </Button>
 
             <Menu
@@ -253,7 +268,7 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
             >
 
                 <MenuItem onClick={handleClickOpenFriends}>Friends</MenuItem>
-                <MenuItem onClick={handleClickOpenRelatives}>Relatives</MenuItem>
+                <MenuItem onClick={handleClickOpenFollowers}>Followers</MenuItem>
                 <MenuItem onClick={handleClickOpenFollowing}>Following</MenuItem>
                 <MenuItem onClick={handleClickOpenBlocked}>Blocked</MenuItem>
 
@@ -277,7 +292,7 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
 
         <TabPanel value={value} index={1} username = {props.username}>
         
-          relatives
+          followers
         </TabPanel> 
 
         <TabPanel value={value} index={2} username = {props.username}>

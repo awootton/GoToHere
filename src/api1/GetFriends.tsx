@@ -16,7 +16,7 @@ export  interface GetFriendsCmd extends ApiCommand {
 export  interface GetFriendsReply extends ApiCommand {
     
     friends: string [] 
-    relatives: string [] 
+    followers: string [] 
     following: string [] 
     blocked: string [] 
     key2name: Map<string,string> // maps pubk to  name
@@ -26,7 +26,7 @@ export const GetFriendsReplyEmpty : GetFriendsReply = {
 
     cmd: "getFriends",
     friends:   [] ,
-    relatives:   [] ,
+    followers:   [] ,
     following:   [] ,
     blocked:   [] ,
     key2name:  new Map()
@@ -120,11 +120,11 @@ function handleGetFriendsApi(wr: WaitingRequest, err: any) {
             checkDone()
         })
         expecting += 1
-        fs.readFile( path + "relatives.txt", (err, data) => {
+        fs.readFile( path + "followers.txt", (err, data) => {
             if (err) {
-                console.log(" read relatives error " + path , err)
+                console.log(" read followers error " + path , err)
             } else {
-                reply.relatives = data.toString('utf8').split("\n")
+                reply.followers = data.toString('utf8').split("\n")
             }
             checkDone()
         })
@@ -142,7 +142,7 @@ function handleGetFriendsApi(wr: WaitingRequest, err: any) {
             if (err) {
                 console.log(" read blocked error " + path , err)
             } else {
-                reply.relatives = data.toString('utf8').split("\n")
+                reply.blocked = data.toString('utf8').split("\n")
             }
             checkDone()
         })

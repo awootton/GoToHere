@@ -19,6 +19,7 @@ import * as  social from '../server/SocialTypes'
 import * as config from "../server/Config"
 
 import Rand32 from './Rand32'
+import { NamePairs } from './namePairs'
 
 
 // to run this file :
@@ -161,7 +162,7 @@ type FakeProfileProfile = {
     theme: string
     blocks: string []   // of pubk64
     friends: string []  // of pubk64
-    relatives: string [] // of pubk64
+    followers: string [] // of pubk64
     following: string [] // of pubk64
     key : string [] // pub key followed by space then name
 }
@@ -193,7 +194,7 @@ function initPeople() {
                 theme: "fixme",
                 blocks: [],
                 friends:   [] ,
-                relatives:   [],
+                followers:   [],
                 following:   [],
                 key :   []
             }
@@ -204,7 +205,7 @@ function initPeople() {
                 nameReservationToken: "nonameReservationToken",
                 port: "3010",  // for forwarding http
                 directory: theName,  // where the data lives
-                passphrase: makeRandName(rand, 4)
+                passphrase: makeRandWords(rand, 4)
             }
             localConfig.items.push(item)
             pro = {
@@ -213,7 +214,7 @@ function initPeople() {
                 theme: "fixme",
                 blocks: [],
                 friends:   [] ,
-                relatives:   [],
+                followers:   [],
                 following:   [],
                 key :   []
             }
@@ -314,19 +315,19 @@ function initPeople() {
     }// people loop
 
     for (var pro of profileList) {
-        // make relatives 
+        // make followers 
         for ( let i = 0; i < 5; i ++ ){
             while( true ){
                 var other = profileList[ Math.floor(rand.next() * profileList.length)]
-                if ( other.item.name != pro.item.name && pro.relatives.find(x => x === other.pubk64) == undefined){
-                    pro.relatives.push(other.pubk64 )
+                if ( other.item.name != pro.item.name && pro.followers.find(x => x === other.pubk64) == undefined){
+                    pro.followers.push(other.pubk64 )
                     break
                 }
             }
          }
          // write it 
-         const str = pro.relatives.join("\n")
-         fs.writeFileSync("data/" + pro.item.directory + "/relatives.txt", str)
+         const str = pro.followers.join("\n")
+         fs.writeFileSync("data/" + pro.item.directory + "/followers.txt", str)
 
     }// people loop
 
@@ -353,7 +354,7 @@ function initPeople() {
         
         pro.blocks.forEach(item => mySet.add(item))
         pro.friends.forEach(item => mySet.add(item))
-        pro.relatives.forEach(item => mySet.add(item))
+        pro.followers.forEach(item => mySet.add(item))
         pro.following.forEach(item => mySet.add(item))
 
         mySet.forEach( item => {
@@ -412,7 +413,41 @@ function initPeople() {
 
 }
 
+var namesList : string[] | undefined
+
+
 function makeRandName(rand: Rand32, size: number): string {
+
+    if ( namesList == undefined){
+        namesList = []
+        var ddd = NamePairs // in csv
+        const rows = ddd.split("\n")
+        for (const row of rows) {
+             const parts = row.split("\t")
+             namesList.push(parts[1])
+             namesList.push(parts[3])
+        }
+    }
+
+    var result = ""
+    var firstBit: number|undefined = undefined
+    for (var i = 0; i < size; i++) {
+        if (i != 0) {
+            result += "_"
+        }
+        const r = rand.next()
+        var which: number = Math.floor(r * namesList.length)
+        if ( firstBit === undefined){
+            firstBit = which & 1
+        }
+        which = which & (-2)
+        which += firstBit
+        result += namesList[which]
+    }
+    return result
+}
+
+function makeRandWords(rand: Rand32, size: number): string {
     var result = ""
     for (var i = 0; i < size; i++) {
         if (i != 0) {
@@ -424,6 +459,7 @@ function makeRandName(rand: Rand32, size: number): string {
     }
     return result
 }
+
 
 function writeServerConfig( path : string, con : config.ServerConfigList)  {
 

@@ -18,6 +18,7 @@ import * as mqtt_util from "./MqttClient2"
 //import * as c_util from "../components/CryptoUtil"
 import * as pingapi from '../api1/Ping'
 import * as friendsapi from '../api1/GetFriends'
+import * as savepostapi from '../api1/SavePost'
 
 type MqttServerPropsType = {
 
@@ -97,8 +98,12 @@ export class MqttTestServerTricks {
 
   cleanerIntervalID: NodeJS.Timeout
 
-  constructor(props: MqttServerPropsType) {
+  restartCallback:() => any
 
+  constructor(props: MqttServerPropsType, restartCallback:() => any) {
+
+    this.restartCallback = restartCallback
+ 
     this.server_config = props.config
     this.cleanerIntervalID = setInterval(cleaner, 1000);
 
@@ -123,6 +128,8 @@ export class MqttTestServerTricks {
       get_posts.InitApiHandler(this.returnsWaitingMap)
       pingapi.InitApiHandler(this.returnsWaitingMap)
       friendsapi.InitApiHandler(this.returnsWaitingMap)
+      friendsapi.InitApiHandler(this.returnsWaitingMap)
+      savepostapi.InitApiHandler(this.returnsWaitingMap)
 
       //console.log(" returnsWaitingMap initialised to ", this.returnsWaitingMap)
 
@@ -249,9 +256,13 @@ export class MqttTestServerTricks {
     }
     this.client = undefined
     clearInterval(this.cleanerIntervalID)
+    // and restart:: 
+    const timeout = 1000
+    setInterval(() => {mqttServerThing.restartCallback()}, timeout); 
+   
   }
 
-     subscribeFunc = (key: string) => {
+  subscribeFunc = (key: string) => {
     //console.log(key, value);
     const qos = 0
     //var topic = "atw/xsgournklogc/house/bulb1/client-001"
@@ -270,7 +281,7 @@ export class MqttTestServerTricks {
 
   handleMqttConnect = (host: string,
     mqttOptions: MqttOptionsType,
-    successCallback: (err: string) => any) => {
+    successCallback: (err: string) => any ) => {
 
     console.log("have handleMqttConnect", host)
 
@@ -326,8 +337,8 @@ export class MqttTestServerTricks {
         this.CloseTheConnect()
       });
       this.client.on("failure", (message: any) => {
-        console.error("MQTT fail: ", message);
-        successCallback("MQTT fail: " + message)
+        console.error("MQTT failure: ", message);
+        successCallback("MQTT failure: " + message)
         successCallback = () => { } // nothing
         this.CloseTheConnect()
       });
@@ -379,12 +390,12 @@ export class MqttTestServerTricks {
           const realname = this.hashed2name.get(topic)
           if (!realname) {
             console.log("failed to find topic in map", topic, this.hashed2name)
-            if ( topic == this.myReplyChannel ){
+            if (topic == this.myReplyChannel) {
               console.log("myReplyChannel has a proxy request??", topic, this.hashed2name)
             }
             var gotOptions: Map<string, string> = mqtt_util.UnpackMqttOptions(packet)
             console.log("failed to find topic. Options:", gotOptions)
-            console.log("failed to find topic. Message:", Buffer.from(message).toString('utf8') )
+            console.log("failed to find topic. Message:", Buffer.from(message).toString('utf8'))
 
             // FIXME: systemErrorReceiver( Buffer.from(message).toString('utf8') )
 
@@ -456,19 +467,40 @@ export function StartClientMqtt(aToken: string, aServer: string, successCb: (msg
 
   console.log("StartClientMqtt called")
 
-  var ourConfig: config.ServerConfigList = {
-    token: aToken,
-    items: []
+  const start = () => {
+    var ourConfig: config.ServerConfigList = {
+      token: aToken,
+      items: []
+    }
+    const props: MqttServerPropsType = {
+      config: ourConfig,
+      isClient: true
+    }
+    mqttServerThing = new MqttTestServerTricks(props , () => {
+      console.log("RE-StartClientMqtt called")
+      start()
+    })
+  
+    const options = SomeMqttOptions
+  
+    mqttServerThing.handleMqttConnect(aServer, options, successCb)
   }
-  const props: MqttServerPropsType = {
-    config: ourConfig,
-    isClient: true
-  }
-  mqttServerThing = new MqttTestServerTricks(props)
 
-  const options = SomeMqttOptions
+  start()
 
-  mqttServerThing.handleMqttConnect(aServer, options, successCb)
+  // var ourConfig: config.ServerConfigList = {
+  //   token: aToken,
+  //   items: []
+  // }
+  // const props: MqttServerPropsType = {
+  //   config: ourConfig,
+  //   isClient: true
+  // }
+  // mqttServerThing = new MqttTestServerTricks(props)
+
+  // const options = SomeMqttOptions
+
+  // mqttServerThing.handleMqttConnect(aServer, options, successCb)
 
 }
 
@@ -480,23 +512,31 @@ export function StartServerMqtt(ourConfig: config.ServerConfigList) {
 
   isClient = isClient_
 
-  const props: MqttServerPropsType = {
-    config: ourConfig,
-    isClient: isClient_
+  const start = () => {
+    const props: MqttServerPropsType = {
+      config: ourConfig,
+      isClient: isClient_
+    }
+    mqttServerThing = new MqttTestServerTricks(props , () => {
+      console.log("RE-StartServerMqtt called")
+      start()
+    })
+  
+    const options = SomeMqttOptions
+  
+    // we'll have to glom the servername from the token
+    var server: string
+    var complaint: string
+    [server, complaint] = util.VerifyToken(ourConfig.token)
+    if (complaint.length !== 0) {
+      console.log("ERROR tartServerMqtt util.VerifyToken has complaint ", complaint)
+    }
+  
+    mqttServerThing.handleMqttConnect(server, options, (msg: string) => {
+      console.log(" handleMqttConnect complete with:", msg)
+    })
+  
   }
-  mqttServerThing = new MqttTestServerTricks(props)
+  start()
 
-  const options = SomeMqttOptions
-
-  // we'll have to glom the servername from the token
-  var server: string
-  var complaint: string
-  [server, complaint] = util.VerifyToken(ourConfig.token)
-  if (complaint.length !== 0) {
-    console.log("ERROR tartServerMqtt util.VerifyToken has complaint ", complaint)
-  }
-
-  mqttServerThing.handleMqttConnect(server, options, (msg: string) => {
-    console.log(" handleMqttConnect complete with:", msg)
-  })
 }

@@ -122,8 +122,11 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
     mqttserver.mqttServerThing.client.publish(topic, message, options)
 }
 
-export interface ApiCommand {
+export class ApiCommand {
     cmd: string
+    constructor(cmd: string){
+        this.cmd = cmd
+    }
 }
 
 // the buff is the reply already serialized

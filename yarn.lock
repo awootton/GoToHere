@@ -10197,6 +10197,11 @@
     "unified" "^9.0.0"
     "unist-util-visit" "^2.0.0"
 
+"react-native-device-detection@^0.2.1":
+  "integrity" "sha512-0ErWdxoB4DPLuzzjgS3nUyzauo1YoJ0QjQJZMjx0dr3MGdF3SE9T3Lb2lKj3kPsTQYy5qnlWZ24DmQkHZlIjgw=="
+  "resolved" "https://registry.npmjs.org/react-native-device-detection/-/react-native-device-detection-0.2.1.tgz"
+  "version" "0.2.1"
+
 "react-refresh@^0.8.3", "react-refresh@>=0.8.3 <0.10.0":
   "integrity" "sha512-X8jZHc7nCMjaCqoU+V2I0cOhNW+QMBwSUkeXnTi8IPe6zaRWfn60ZzvFDZqWPfmSJfjub7dDW1SP0jaHWLu/hg=="
   "resolved" "https://registry.npmjs.org/react-refresh/-/react-refresh-0.8.3.tgz"

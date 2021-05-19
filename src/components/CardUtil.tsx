@@ -8,7 +8,7 @@ export {}
 export function makeTopCard( username: string ) : social.Post {
 
     var apost : social.Post = {
-        id : 210101010000000,
+        id : 0,
         title : "Waiting...",
         theText: "No posts loaded yet.",
         likes: [],
@@ -22,7 +22,7 @@ export function makeTopCard( username: string ) : social.Post {
 export function makeEditCard(username: string) : social.Post {
 
     var apost : social.Post = {
-        id : 210101010000000,
+        id : 0,
         title : "",
         theText: "",//  You can edit this one and save.  You can edit this one and save.",
         likes: [],
@@ -34,3 +34,18 @@ export function makeEditCard(username: string) : social.Post {
     }
     return apost
 }
+
+export function makeEmptyCard( username: string ) : social.Post {
+
+    var apost : social.Post = {
+        id : 0,
+        title : "",
+        theText: "",
+        likes: [],
+        retweets : [],
+        comments: [] ,
+        postedByName : username
+    }
+    return apost
+}
+
