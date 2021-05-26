@@ -1,6 +1,10 @@
 
+import fs from 'fs'
+
 import * as social from '../server/SocialTypes';
-import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
+import { WaitingRequest, handleSendReplyCallback } from './Api';
+import ApiCommand from "./Api"
+
 import * as fsApi from './FsUtil';
 import * as util from '../server/Util';
 import * as api1 from "./Api"
@@ -19,9 +23,9 @@ export default interface GetPostsCmd extends ApiCommand {
     old: string // or, if no count, collect posts back to this time
 }
 
-export type PostsListReceiver = (postslist: social.Post[], error: any) => any
+export type PostsListReceiver = (postslist: social.Post[], countRequested:number, error: any) => any
 
-export function IssueTheCommand(username: string, top: string, fold: string, count: number, old: string, receiver: PostsListReceiver, retries? : number) {
+export function IssueTheCommand(username: string, top: string, fold: string, count: number, old: string, receiver: PostsListReceiver) {
 
     var cmd: GetPostsCmd = {
         cmd: "getPosts",
@@ -30,33 +34,33 @@ export function IssueTheCommand(username: string, top: string, fold: string, cou
         count: count,
         old: old
     }
-
-    if ( retries === undefined ){
-        retries = 0
-    }
-    var nextRetryNumber = retries + 1
  
     const jsonstr = JSON.stringify(cmd)
     // topic:string , jsonstr: string, cb: ( data:Uint8Array, error: any ) => {} ) {
     //console.log("jsonstr of cmd ", jsonstr,)
 
     var wr: WaitingRequest = getPostsWaitingRequest
-    //var topic = c_util.getCurrentContext().profileNameFromApp
+
+    //console.log("GtePosts SendApiCommandOut calling with user", username )
 
     api1.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
 
         var strdata = new TextDecoder().decode(data)
-        //console.log("App is  back from SendApiCommandOut with data ", strdata)
+        
+        //console.log("GtePosts SendApiCommandOut ", error )
 
         var postslist: social.Post[] = strdata.length>0 ? JSON.parse(strdata) : []
 
-        if ( error !== undefined && nextRetryNumber < 20 ){
+        if ( error !== undefined  ){
+            console.log("GtePosts SendApiCommandOut have error,user " ,error, username, util.getSecondsDisplay())
             // try again, in a sec.
-            setTimeout(()=>{
-                IssueTheCommand(username, top, fold, count, old, receiver, nextRetryNumber)
-            },1000)
+            // setTimeout(()=>{
+            //     console.log("GtePosts SendApiCommandOut timer done. IssueTheCommand AGAIN. " )
+            //     IssueTheCommand(username, top, fold, count, old, receiver)
+            // },9000 )
         } else {
-            receiver(postslist, error)
+            //console.log("GtePosts SendApiCommandOut receiver " )
+            receiver(postslist, count ,error)
         }
     })
 }
@@ -71,7 +75,7 @@ const getPostsWaitingRequest: WaitingRequest = {
     waitingCallbackFn: handleGetPostApi,
     options: new Map<string, string>(),
     returnAddress: "unused now",
-    callerPublicKey : "unknown" 
+    callerPublicKey64 : "unknown+now" 
 }
 
 export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
@@ -83,7 +87,8 @@ export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
 
 function handleGetPostApi(wr: WaitingRequest, err: any) {
 
-    // console.log("in the handleGetPostApi with ", wr.topic, wr.message.toString())
+    //console.log("in the handleGetPostApi with ", util.getTopicName(wr.topic), wr.message.toString(), " by ",util.getPubkToName(wr.callerPublicKey))
+    console.log("in the handleGetPostApi with ", util.getTopicName(wr.topic), " key id ", wr.options.get("nonc") , util.getSecondsDisplay())
 
     var getPostCmd: GetPostsCmd = JSON.parse(wr.message.toString())
 
@@ -94,6 +99,11 @@ function handleGetPostApi(wr: WaitingRequest, err: any) {
     var cryptoContext = util.getMatchingContext( wr.topic )
     var configItem = cryptoContext.config || config.EmptyServerConfigItem
     var path = "data/" + configItem.directory  + folder
+
+    // make the directories if missing.
+    if (!fs.existsSync(path)){
+        fs.mkdirSync(path);
+    }
 
     if (count !== 0) {
         // add end date ? 
@@ -110,6 +120,7 @@ function handleGetPostApi(wr: WaitingRequest, err: any) {
 
             if (items.length >= count && done === false) {
                 var listBytes = JSON.stringify(items)
+                //console.log("GetPosts calling handleSendReplyCallback with",listBytes )
                 handleSendReplyCallback(wr, Buffer.from(listBytes), null)
                 // and, we're done here
                 done = true

@@ -1,5 +1,5 @@
 
-import React, { ReactElement, FC } from "react";
+import {FC } from "react";
 
 
 
@@ -16,7 +16,7 @@ import * as profile from "../components/ProfileMain"
 import * as tok from '../components/TokenScreen';
 
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-import classes from "*.module.css";
+
 //import { FormatColorResetTwoTone } from "@material-ui/icons";
 
 const useStyles = makeStyles((theme: Theme) =>

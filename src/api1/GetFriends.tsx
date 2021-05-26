@@ -1,8 +1,9 @@
 
 import fs from 'fs'
 
-import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
+import { WaitingRequest, handleSendReplyCallback } from './Api';
 import * as util from '../server/Util';
+import ApiCommand from "./Api"
 import * as api1 from "./Api"
 import * as config from "../server/Config"
 
@@ -53,19 +54,19 @@ export function IssueTheCommand(username: string, count:number, offset:number, r
 
     var wr: WaitingRequest = getFriendsWaitingRequest
 
+
     api1.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
 
         var strdata = new TextDecoder().decode(data)
-        //console.log("App is  back from SendApiCommandOut with data ", strdata)
-
-        var reply: GetFriendsReply = strdata.length>0 ? JSON.parse(strdata,reviver ) : {}
+        //console.log("App is  back from GetGriends SendApiCommandOut from user ", username)
 
         if ( error !== undefined && nextRetryNumber < 20 ){
             // try again, in a sec.
             setTimeout(()=>{
                 IssueTheCommand(username, count, offset, receiver, nextRetryNumber)
-            },1000)
+            },5000)
         } else {
+            var reply: GetFriendsReply = strdata.length>0 ? JSON.parse(strdata,reviver ) : {}
             receiver(reply, error)
         }
     })
@@ -81,7 +82,7 @@ const getFriendsWaitingRequest: WaitingRequest = {
     waitingCallbackFn: handleGetFriendsApi,
     options: new Map<string, string>(),
     returnAddress: "unused now",
-    callerPublicKey : "unknown" 
+    callerPublicKey64 : "unknown"
 }
 
 export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
@@ -93,12 +94,12 @@ export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
 
 function handleGetFriendsApi(wr: WaitingRequest, err: any) {
 
-    console.log("in the handleGetfriendsApi with ", wr.topic, wr.message.toString())
+    //console.log("in the handleGetfriendsApi with ", util.getTopicName(wr.topic), wr.message.toString())
 
     var cmd: GetFriendsCmd = JSON.parse(wr.message.toString())
 
     const count = cmd.count
-    const offset = cmd.offset
+    //const offset = cmd.offset
     
     var cryptoContext = util.getMatchingContext( wr.topic )
     var configItem = cryptoContext.config || config.EmptyServerConfigItem

@@ -1,12 +1,12 @@
 
-
+import { ReactElement} from "react";
 
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Dialog from '@material-ui/core/Dialog';
 
-import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-import { FullscreenExitTwoTone } from '@material-ui/icons';
+import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'; 
 
+// TODO: get rid of this. just use dialog directly
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -24,54 +24,59 @@ const useStyles = makeStyles((theme: Theme) =>
       maxHeight: "100%",
       maxWidth: "100%",
       minWidth: "85%",
-   //   alignItems: "right",
       margin: '4 4px',
     },
     paperScrollPaper: {
       maxHeight: "100%",
       maxWidth: "100%",
       minWidth: "85%",
-   //   alignItems: "right",
       margin: '4 4px',
     },
     paper: {
       margin: "2 2px",
-      maxHeight: "100%",
-      maxWidth: "100%",
+      padding: "2 2px",
+      maxHeight: "85%",
+      maxWidth: "85%",
       minWidth: "85%",
-     // position: "relative"
     },
   })
 );
 
-export type PropType = {
-  onClose: (value: any) => {},
+export type Props = {
+  onClose: (value: any) => any,
   open: boolean,
-  title: string
-  //  selectedValue: PropTypes.string.isRequired,
+  title: string,
+  fillme: (props: any)   => any
 };
 
-
+// yikes ! 
+// help export const SimpleDialog: FC<Props> = ( props: Props ): ReactElement => {
+// props: any? really  !?!  wtf
 export function SimpleDialog(props: any) {
 
   const classes = useStyles();
 
-  //const { onClose, selectedValue, open } = props;
+  //console.log("SimpleDialog props", props)
 
-  const handleClose = () => {
-    props.onClose("selectedValue");
+  const handleClose = ( value: any ) => {
+    props.onClose(value);
   };
-
-  //   const handleListItemClick = (value : any) => {
-  //     props.onClose("value");
-  //   };
 
   const fillDialog = (props: any) => {
     return props.fillme(props)
   }
 
+  function addDialogerHeader():ReactElement  {
+    if ( props.title.length === 0 ){
+      return ( <></>)
+    }
+    return (
+      <DialogTitle >{props.title}</DialogTitle>
+    )
+  }
   return (
-    <Dialog onClose={handleClose}
+    <Dialog 
+      onClose={handleClose}
       open={props.open}
       className={classes.root}
       classes={{
@@ -81,9 +86,10 @@ export function SimpleDialog(props: any) {
         paper: classes.paper
       }}
     >
-      <DialogTitle >{props.title}</DialogTitle>
+      {addDialogerHeader()}
       {fillDialog(props)}
     </Dialog>
   );
 }
 
+export default SimpleDialog

@@ -91,11 +91,23 @@ export function getBoxKeyPairFromPassphrase( username: string , phrase: string )
     return seedKeyPair3
 }
 
-var thedate = new Date()
+ 
 export function getMilliseconds() : number {
-    //return new Date().getTime()
-    return thedate.getTime()
+    return new Date().getTime()
 }
+
+ 
+export function getSecondsDisplay() : string {
+    var ms =  getMilliseconds()
+    var tmp = ms
+    const millis : number = tmp % 1000
+    tmp = Math.floor(tmp / 1000)
+
+    const secs : number = tmp % 60
+    
+    return ":" + secs + "." + millis
+}
+
 
 export function getCurrentDateNumber() : number {
     var millis = getMilliseconds()
@@ -123,7 +135,7 @@ export type Context = {
     password: string  // 
     // usually username and profileNameFromApp will match.
     // sometimes from a topic when messages received
-    profileNameFromApp: string   // this is from the url
+    profileNameFromApp: string   // this is from the url, on the server it's == username 
 
     tokenFromApp: string
     serverPubKeyFromApp: string
@@ -149,15 +161,18 @@ export const emptyContext = {
     ourPublicKey: Buffer.from(""),
     ourSecretKey: Buffer.from(""),
     profileHash: "", // starts with = and has exactly 43 following
-    serversPubKey: Buffer.from(""),// as obtained by TokenScreen using profileName
+    serversPubKey: Buffer.from(""),// as obtained by TokenScreen using profileName, client
 }
 
-export var contexts: Context[] = []
+// not public
+var contexts: Context[] = []
 contexts.push(emptyContext)
-export var currentIndex = 0
+var currentIndex = 0
 
 export function getCurrentContext(): Context {
-    return contexts[currentIndex]
+    var cx = contexts[currentIndex]
+    initContext(cx)
+    return cx
 }
 
 export function getMatchingNamedContext(username: string): Context {
@@ -172,16 +187,56 @@ export function getMatchingNamedContext(username: string): Context {
     return found
 }
 
-
-export function getMatchingContext(topic: string): Context {
+export function getMatchingTopicContext( hashedtopic: string): Context {
     // FIXME: use a map
     var found = contexts[currentIndex] // a bad default 
     contexts.forEach(context => {
         initContext(context)
-        if (context.profileHash === topic) {
+        if (context.profileHash === hashedtopic) {
             found = context
         }
     });
+    return found
+}
+
+// used by logging
+export function getTopicName( topic: string ) : string {
+    if ( ! topic.startsWith("=")) {
+        return topic
+    }
+    return getMatchingTopicContext(topic).username
+}
+
+// pubkToName is useful for logging
+export function getPubkToName( pubk: Buffer ) : string {
+     // FIXME: use a map
+    for ( var i = 0 ; i < contexts.length; i ++ ){
+        const context = contexts[i]
+        initContext(context)
+        //const pubk64 = toBase64Url(pubk)
+        //const ourPublicKey64 = toBase64Url(context.ourPublicKey)
+        if (context.ourPublicKey === pubk) {
+            return context.username
+        }
+    }
+    return toBase64Url(pubk)
+}
+
+
+export function getMatchingContext(topic: string): Context {
+    // FIXME: use a map
+    var found = contexts[currentIndex] // a bad default 
+    var wasFound = false
+    contexts.forEach(context => {
+        initContext(context)
+        if (context.profileHash === topic) {
+            found = context
+            wasFound = true
+        }
+    });
+    if ( ! wasFound ){
+        console.log("ERROR context not found for topic ", topic, contexts )
+    }
     return found
 }
 
@@ -193,6 +248,10 @@ export function setCurrentIndex(i: number) {
 export function cleanContexts() {
     contexts = []
     currentIndex = 0
+}
+
+export function pushContext(context: Context) {
+    contexts.push(context)
 }
 
 export function initContext(context: Context) {
@@ -265,27 +324,24 @@ export function KnotNameHash(name: string): string {
    hash.end() 
    var  hbytes = hash.digest()
    var tmp = base64url.encode(hbytes).substring(0,32)
-
-    tmp = tmp.replace("/","_")
-    tmp = tmp.replace("+","-")
     return tmp
 }
 
 // deprecate me
-export function xxxxxConvertFromMsToDateString( millis : number ) : string{
-    const startDate = new Date(millis)
-    var date = startDate.getDate(); //returns date (1 to 31) you can getUTCDate() for UTC date
-    var month = startDate.getMonth() + 1 ; // returns 1 less than month count since it starts from 0
-    var year = startDate.getFullYear(); //returns year 
-    year = year % 100
-    var hours = startDate.getHours();
-    var minutes = startDate.getMinutes();
-    var seconds = startDate.getSeconds();
-    millis = millis % 1000
-    var result = year + ZeroPadLeft2(month) + ZeroPadLeft2(date) + ZeroPadLeft2(hours) + ZeroPadLeft2(minutes) + ZeroPadLeft2(seconds) + millis
+// export function xxxxxConvertFromMsToDateString( millis : number ) : string{
+//     const startDate = new Date(millis)
+//     var date = startDate.getDate(); //returns date (1 to 31) you can getUTCDate() for UTC date
+//     var month = startDate.getMonth() + 1 ; // returns 1 less than month count since it starts from 0
+//     var year = startDate.getFullYear(); //returns year 
+//     year = year % 100
+//     var hours = startDate.getHours();
+//     var minutes = startDate.getMinutes();
+//     var seconds = startDate.getSeconds();
+//     millis = millis % 1000
+//     var result = year + ZeroPadLeft2(month) + ZeroPadLeft2(date) + ZeroPadLeft2(hours) + ZeroPadLeft2(minutes) + ZeroPadLeft2(seconds) + millis
 
-    return result
-}
+//     return result
+//}
 
 export function ConvertFromMsToDateNumber( millis : number ) : social.DateNumber{
     const startDate = new Date(millis)
@@ -346,10 +402,10 @@ export function FormatDateNumber ( dn : social.DateNumber ) : string  {
     //var date: Date = DateFromDateNumber(dn)
 
     var tmp = dn
-    const millis : number = tmp % 1000
+    //const millis : number = tmp % 1000
     tmp = Math.floor(tmp / 1000)
 
-    const secs : number = tmp % 100
+    //const secs : number = tmp % 100
     tmp = Math.floor(tmp / 100)
 
     const mins : number = tmp % 100
@@ -367,7 +423,7 @@ export function FormatDateNumber ( dn : social.DateNumber ) : string  {
     const year : number = tmp % 100
     //tmp = tmp / 100
 
-    return "" + month + "/" + day + "/" + year + " " + hours + ":" + secs 
+    return "" + month + "/" + day + "/" + year + " " + hours + ":" + mins 
   
     //return "" + date
 

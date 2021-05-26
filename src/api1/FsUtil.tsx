@@ -24,6 +24,8 @@ export function fsGetPostsCounted( c: fsGetContext )  {
     var newFolderDayName = c.newer.substr(0, 6) // year month day
     const theDir = c.basePath // "./data/lists/" + folder + "/"
 
+    //console.log("fsGetPostsCounted dir is ", theDir)
+
     // we should cache this
     fs.readdir(theDir, function (err, items) {
         if (err) {
@@ -62,10 +64,24 @@ function readFilesInDirList( c: fsGetContext, daysList: string[] )  {
             console.log("readFilesInDirList readdir error ", err,adirName)
             return
         }
+        
+        // these are the posts
+        // we only want the ones < c.newer
+        var newList : string[] = []
+       
         itemsList.sort()
-        itemsList.reverse()
+        for ( var i = 0; i < itemsList.length; i ++ ){
+            const item = itemsList[i]
+            if ( item < c.newer ){
+                newList.push(item)
+            } else {
+                break
+            }
+        }
+        newList.reverse()
+
         // now we have some file names
-        readFilesInFileList( c, itemsList, daysList  )
+        readFilesInFileList( c, newList, daysList  )
     })
 }
 
@@ -89,7 +105,7 @@ function readFilesInFileList( c : fsGetContext,
         if (err) {
             //var uint8array = new TextEncoder().encode("[]");
             // FIXME: onCompletion(wr, uint8array, err)
-            console.log(" read file error " + aFileMame , err)
+            console.log("readFilesInFileList read file error " + aFileMame , err)
             return
         }
         var currentCount = c.haveOne(data)

@@ -15,6 +15,7 @@ export function HandleApi1PacketIn( mqttThing: mqtt_stuff.MqttTestServerTricks,
         ourParams.permanent = returnHandler.permanent
         ourParams.replydata = returnHandler.replydata
         ourParams.waitingCallbackFn = returnHandler.waitingCallbackFn // the main thing !
+        ourParams.callerPublicKey64 =  ourParams.options.get("pubk") || "unfound"
         
       // const hadReturnHandler = returnHandler
       // it's a return. Just dispatch it,
@@ -39,14 +40,13 @@ export function HandleApi1PacketIn( mqttThing: mqtt_stuff.MqttTestServerTricks,
         // FIXME unbox it now. we're on the server seeing an api1 request
         // figure out which c_util.context to use 
         
-
         //console.log("calling return handler callbask")
         ourParams.waitingCallbackFn(ourParams)
       }
 
     } else {
-
-      console.log("ERROR had api1 but unknown cmd. did you forget to 'load up the api with handlers for the various'", isApi) 
+      // no returnHandler found
+      console.log("ERROR had api1 but unknown cmd. did you forget to 'load up the api with handlers for the various'? cmd was:", isApi) 
 
     }
 }

@@ -1,15 +1,15 @@
 import React , { FC }from 'react';
-import PropTypes from 'prop-types';
+//import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box';
+//import Box from '@material-ui/core/Box';
 
-import PostList from './PostList';
+//import PostList from './PostList';
 
-import * as reactlisttest from  './ReactListTest';
+import * as reactlisttest from  './PostListManager2';
 
 export interface TabPropsType {
   username: string,
@@ -47,13 +47,8 @@ const TabPanel: FC<TabPropsType> = (props: TabPropsType) => {
   );
 }
 
-// TabPanel.propTypes = {
-//   username: PropTypes.string,
-//   children: PropTypes.node,
-//   index: PropTypes.any.isRequired,
-//   value: PropTypes.any.isRequired,
-// };
-
+// I don't even know what this is. It sets an id.
+// wtf is aria?
 function a11yProps(index: number) {
   return {
     id: `simple-tab-${index}`,
@@ -89,31 +84,25 @@ export const  SimpleTabs : FC<SimpleTabsProps> = (props: SimpleTabsProps) => {
     setValue(newValue);
   };
 
+  //console.log("rendering SimpleTabs window.innerWidth = " , window.innerWidth )
+
   return (
     <div className={classes.root}>
       <AppBar position="static">
         <Tabs value={value} onChange={handleChange} aria-label="simple tabs example">
-          <Tab label={<span className={classes.tabLabel}>Posts</span>} {...a11yProps(1)} />
-          <Tab label={<span className={classes.tabLabel}>Notices</span>} {...a11yProps(0)} />
+          <Tab label={<span className={classes.tabLabel}>Posts</span>} {...a11yProps(0)} />
+          <Tab label={<span className={classes.tabLabel}>Notices</span>} {...a11yProps(1)} />
           {/* <Tab label={<span className={classes.tabLabel}>Media</span>} {...a11yProps(2)} /> */}
         </Tabs>
       </AppBar>
-      <TabPanel value={value} index={0} username = {props.username}  >
-        {/* <PostList message="from App" folder="timeline" username = { props.username}  ></PostList> */}
-        <reactlisttest.PostListManager2 message={"none"} folder = {"lists/posts/"} username = {props.username}  ></reactlisttest.PostListManager2>
-      </TabPanel>
-      <TabPanel value={value} index={1} username = {props.username}>
-        {/* <PostList message="from App2" folder="posts"  username = {props.username}  ></PostList> */}
-      </TabPanel>
-      <TabPanel value={value} index={2} username = {props.username}  >
-        <>
-        {/* <reactlisttest.PostListManager2 message={"none"} folder = {"lists/posts/"} username = {props.username}  ></reactlisttest.PostListManager2> */}
-        </>
+
+      <TabPanel value={value} index={0} username = {props.username}>
+      <reactlisttest.PostListManager2 message={"none"} folder = {"lists/posts/"} username = {props.username}  ></reactlisttest.PostListManager2>
       </TabPanel>
 
-      {/* <TabPanel value={value} index={3}>
-        compose a new post here. 
-      </TabPanel> */}
+      <TabPanel value={value} index={1} username = {props.username}  >
+        <reactlisttest.PostListManager2 message={"none"} folder = {"lists/events/"} username = {props.username}  ></reactlisttest.PostListManager2>
+      </TabPanel>
 
     </div>
   );

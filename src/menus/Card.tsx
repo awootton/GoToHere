@@ -1,16 +1,16 @@
 
-import React, { ReactElement, FC, useState } from "react";
+import React, { ReactElement, FC } from "react";
 
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 
-import Box from "@material-ui/core/Box";
+// import Box from "@material-ui/core/Box";
 
-import Card from '@material-ui/core/Card'
-import CardContent from '@material-ui/core/CardContent'
+// import Card from '@material-ui/core/Card'
+// import CardContent from '@material-ui/core/CardContent'
 
-import Typography from '@material-ui/core/Typography';
-import ReactMarkdown from 'react-markdown'
-import CardActions from '@material-ui/core/CardActions'
+// import Typography from '@material-ui/core/Typography';
+// import ReactMarkdown from 'react-markdown'
+//import CardActions from '@material-ui/core/CardActions'
 import Button from '@material-ui/core/Button'
 
 import MenuItem from '@material-ui/core/MenuItem';
@@ -18,11 +18,12 @@ import Menu from '@material-ui/core/Menu';
 import MenuIcon from '@material-ui/icons/Menu';
 
 //import TextField from '@material-ui/core/TextField';
-import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
+//import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
 
 import { SimpleDialog } from '../dialogs/SimpleDialog'
  
 import * as postedit from '../dialogs/EditPost'
+import * as postdelete from '../dialogs/DeletePost'
 import * as social from "../server/SocialTypes"
 
 
@@ -75,6 +76,7 @@ export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement 
 
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [openEdit, setOpenEdit] = React.useState(false);
+    const [openDelete, setOpenDelete] = React.useState(false);
 
     const handleClick = (event: any) => {
         setAnchorEl(event.currentTarget);
@@ -86,6 +88,7 @@ export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement 
 
     const handleDialogClose = (value: any) => {
         setOpenEdit(false);
+        setOpenDelete(false);
     };
 
     const handleClickDoSomething = () => {
@@ -96,6 +99,14 @@ export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement 
         setOpenEdit(true);
         handleClose()
     };
+
+    // savepostapi.IssueTheCommand(props.username, newPost, savePostReceiver, 10 )
+    const handleClickDelete = () => {
+        setOpenDelete(true);
+        handleClose()
+    };
+
+
 
     //const selectedValue = 'dummy'
     //const testUsernameTest = "building_bob_bottomline_boldness"
@@ -117,13 +128,13 @@ export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement 
                 <MenuItem onClick={handleClickDoSomething}>Show Comments</MenuItem>
                 <MenuItem onClick={handleClickDoSomething}>New Comment</MenuItem>
                 <MenuItem onClick={handleClickEdit}>Edit</MenuItem>
-                <MenuItem onClick={handleClickDoSomething}>Delete</MenuItem>
+                <MenuItem onClick={handleClickDelete}>Delete</MenuItem>
 
             </Menu>
 
             {/* // I hate to put a dialog in every post!  */}
 
-            <SimpleDialog selectedValue={"dummy"}
+            <SimpleDialog  
                 // style = {someAppStyles}
                // className={classes.root}
                 open={openEdit}
@@ -133,6 +144,19 @@ export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement 
                 cancel = {handleDialogClose}
                 
                 title={"Edit " + props.post.title}
+                onClose={handleDialogClose}
+            />
+
+            <SimpleDialog  
+                // style = {someAppStyles}
+               // className={classes.root}
+                open={openDelete}
+                fillme={postdelete.FillDeletePost}
+                post={props.post}
+                username={props.username}
+                cancel = {handleDialogClose}
+                
+                title={"delete " + props.post.title + "?"}
                 onClose={handleDialogClose}
             />
 

@@ -1,11 +1,12 @@
 
-import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
+import { WaitingRequest, handleSendReplyCallback } from './Api';
+import ApiCommand from "./Api"
 import * as api1 from './Api';
 import * as util from '../server/Util';
 //import * as c_util from '../components/CryptoUtil';
 
 
-export interface PingCmd extends api1.ApiCommand {
+export interface PingCmd extends ApiCommand {
     pub: string // a public key in base64url
 }
 
@@ -24,7 +25,7 @@ export function IssueTheCommand(receiver: PingReceiver) {
 
     var wr: WaitingRequest = pingsWaitingRequest
     var topic = context.profileNameFromApp
-    // console.log(" Ping IssueTheCommand using topic ", topic )
+    console.log(" Ping IssueTheCommand using topic ", topic )
     // "alice_vociferous_mcgrath" // double FIXME:
 
     api1.SendApiCommandOut(wr, topic, jsonstr, (data: Uint8Array, error: any) => {
@@ -38,7 +39,6 @@ export function IssueTheCommand(receiver: PingReceiver) {
             var gotcmd: PingCmd = JSON.parse(strdata)
             receiver(gotcmd, error)
         }
-      
     })
 }
 
@@ -53,7 +53,7 @@ const pingsWaitingRequest: WaitingRequest = {
     options: new Map<string, string>(),
     returnAddress: "unused now",
     skipCryptoForThisOne: true, // NEVER DO THIS
-    callerPublicKey : "unknown"
+    callerPublicKey64 : "unknown"
 }
 
 export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {

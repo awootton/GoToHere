@@ -1,11 +1,11 @@
-import React, {FC, useState } from "react";
+import {FC } from "react";
 
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 
 import * as social from "../server/SocialTypes"
 
 import Card from '@material-ui/core/Card'
-import CardContent from '@material-ui/core/CardContent'
+//import CardContent from '@material-ui/core/CardContent'
 
 import CardActions from '@material-ui/core/CardActions'
 import Button from '@material-ui/core/Button'
@@ -13,13 +13,14 @@ import Button from '@material-ui/core/Button'
 //import Container from "@material-ui/core/Container";
 
 //import Menu from '@material-ui/core/Menu'
-import TextField from '@material-ui/core/TextField';
+//import TextField from '@material-ui/core/TextField';
 
 //import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
 
-import * as savepostapi from '../api1/SavePost'
-import * as cardutil from '../components/CardUtil'
+import * as deletepostapi from '../api1/DeletePost'
+//import * as savepostapi from '../api1/SavePost'
+//import * as cardutil from '../components/CardUtil'
 
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -27,27 +28,8 @@ const useStyles = makeStyles((theme: Theme) =>
 
         root: {
            flexGrow: 1,
-            //height: 12,
-          //  backgroundColor: theme.palette.background.paper,
-
-            // padding: "0px 0px",
-            // justifyContent: 'center',
-            // alignItems: 'center',
-
             height:  800, // this also sets the size
-
-           //minWidth: theme.spacing(85),
-
-        //   minWidth: theme.spacing(150),
-
-           //width: 800,
-          // height: 400,
-          //bgcolor: 'blue',
-
-
         },
-
-
     })
 );
 
@@ -57,46 +39,30 @@ type Props = {
     cancel: () => any
 }
 
-export const FillEditPost: FC<Props> = (props: Props) => {
+export const FillDeletePost: FC<Props> = (props: Props) => {
 
-    const [state,setState] = useState(cardutil.makeEmptyCard(props.username))
-
-    const handleTitleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
-        const str: string = event.target.value
-       
-        //console.log("title is now ", str)
-        const newState : social.Post = {
-             ...state,
-             title: str
-         }
-         setState(newState)
-    }
-    const handleBodyChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
-        const str: string = event.target.value
-      
-        //console.log("body is now ", str)
-        const newState : social.Post = {
-            ...state,
-            theText: str
-        }
-        setState(newState)
-    }
+    //const [state,setState] = useState(cardutil.makeEmptyCard(props.username))
 
     const classes = useStyles();
 
-    const onSaveButton = () => {
+    const onDeleteButton = () => {
 
-        const savePostReceiver = ( reply: savepostapi.SavePostReply, error: any) => {
-                console.log(" back from saving with err ", error, " and ", reply )
+        if ( props.post.id === 0 ){
+            props.cancel() // close the dialog
+            return
+        }
+
+        const deletePostReceiver = ( reply: deletepostapi.DeletePostReply, error: any) => {
+                console.log(" back from deleting with err ", error, " and ", reply )
                 if ( error !== undefined ) {
                     //add error to invisible note
-                    console.log("ERROR SavePost ", error, " and ", reply )
+                    console.log("ERROR DeletePost ", error, " and ", reply )
                 } else {
                     props.cancel() // close the dialog
                 }
         }
-        const newPost = state
-        savepostapi.IssueTheCommand(props.username, newPost, savePostReceiver, 10 )
+       // const newPost = state
+        deletepostapi.IssueTheCommand(props.username, props.post.id, deletePostReceiver, 10 )
 
     }
 
@@ -106,7 +72,7 @@ export const FillEditPost: FC<Props> = (props: Props) => {
         return (
             <Box  className={classes.root} borderRadius={64}  borderColor="secondary.main"  >
                 <Card elevation={2} key={post.id} >
-                    <TextField
+                {/*    <TextField
                         fullWidth
                         id="titleeditor"
                         type="text"
@@ -116,8 +82,8 @@ export const FillEditPost: FC<Props> = (props: Props) => {
                         onChange={handleTitleChange}
                         defaultValue={post.title}
                         multiline={true}
-                    />
-                    <CardContent>
+                    /> */}
+                    {/* <CardContent>
                         <TextField
                             //style={{maxHeight: 200, overflow: 'auto'}}
                             fullWidth
@@ -130,12 +96,10 @@ export const FillEditPost: FC<Props> = (props: Props) => {
                             defaultValue={post.theText}
                             multiline={true}
                         />
-                        {/* <Typography variant="body2" color="textSecondary" component="div">
-                            <ReactMarkdown>{post.theText}</ReactMarkdown>
-                        </Typography> */}
-                    </CardContent>
+                       
+                    </CardContent> */}
                     <CardActions>
-                        <Button variant="contained" onClick={onSaveButton} >Save</Button>
+                        <Button variant="contained" onClick={onDeleteButton} >Delete</Button>
                         <Button variant="contained" onClick={() => { props.cancel()}} >Cancel</Button>
                     </CardActions>
                 </Card>
@@ -151,4 +115,4 @@ export const FillEditPost: FC<Props> = (props: Props) => {
 
 
 
-export default FillEditPost;
+export default FillDeletePost;

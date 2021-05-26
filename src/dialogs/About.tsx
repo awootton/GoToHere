@@ -1,5 +1,5 @@
 
-import React, { ReactElement, FC } from "react";
+// import React, { ReactElement, FC } from "react";
 
 
 
@@ -8,12 +8,14 @@ import React, { ReactElement, FC } from "react";
 
 //import CSS from 'csstype';
 
-import Typography from '@material-ui/core/Typography';
+// import Typography from '@material-ui/core/Typography';
+
+import DialogTitle from '@material-ui/core/DialogTitle';
 
 import Paper from '@material-ui/core/Paper';
 
-import * as profile from "../components/ProfileMain"
-import * as tok from '../components/TokenScreen';
+// import * as profile from "../components/ProfileMain"
+// import * as tok from '../components/TokenScreen';
 
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 //import { FormatColorResetTwoTone } from "@material-ui/icons";
@@ -21,12 +23,29 @@ import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
 
-    // doesn't work. 
+    // 
     root: {
-        margin : 2,
+
+      //  flexGrow: 1,
+    //  position: 'absolute', 
+    //  left: '50%', 
+    //  top: '50%',
+   //   transform: 'translate(-50%, -50%)',
+
+        margin : "20 20px",
         padding : "20 20px",
-      //  width : 100
-      width: "98%",
+ 
+        width: theme.spacing(50),
+        height: theme.spacing(50),
+
+       minWidth : 200,
+       
+ 
+        justifyContent: 'center',
+        alignItems: 'center', // centers vertically? 
+
+        textAlign: 'center',
+       
       //height: theme.spacing(150),
       //minWidth : theme.spacing(150), 
     }
@@ -38,12 +57,14 @@ export const FillAbout = () => {
     const classes = useStyles();
 
     return (
-        <div  >
-            <div  >
-                <Paper>zBanter project by Alan Wootton</Paper>
-                <Paper>  <a href = "https://github.com/awootton/zBanter" target="_blank" >https://github.com/awootton/zBanter</a> </Paper>
+        <div className = {classes.root} >
+            <div className = {classes.root} >
+            <DialogTitle >About...</DialogTitle>
+                <Paper>GoToHere project by Alan Tracey Wootton</Paper>
+                <Paper>  
+                    <a href = "https://github.com/awootton/zBanter" target="_blank" >https://github.com/awootton/zBanter</a> </Paper>
                 <Paper></Paper>
-                <Paper>in fillAboutDialog</Paper>
+             
             </div>
         </div>
     )

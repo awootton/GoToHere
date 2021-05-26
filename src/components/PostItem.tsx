@@ -1,4 +1,6 @@
-import React, { ReactElement, FC, useState } from "react";
+
+//import React, { ReactElement, FC, useState } from "react";
+import { ReactElement, FC } from "react";
 
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 
@@ -14,21 +16,20 @@ import ReactMarkdown from 'react-markdown'
 import CardActions from '@material-ui/core/CardActions'
 import Button from '@material-ui/core/Button'
 
-import MenuItem from '@material-ui/core/MenuItem';
-import Menu from '@material-ui/core/Menu';
-import MenuIcon from '@material-ui/icons/Menu';
+//import MenuItem from '@material-ui/core/MenuItem';
+//import Menu from '@material-ui/core/Menu';
+//import MenuIcon from '@material-ui/icons/Menu';
 
 //import TextField from '@material-ui/core/TextField';
 import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
 
-import { SimpleDialog } from '../dialogs/SimpleDialog'
+//import { SimpleDialog } from '../dialogs/SimpleDialog'
  
-import * as postedit from '../dialogs/EditPost'
+//import * as postedit from '../dialogs/EditPost'
 
 import * as menus_card from '../menus/Card'
 
 import * as util from '../server/Util'
-
 
 
 // define css-in-js
@@ -83,7 +84,7 @@ export interface Props {
 
 export const PostItem: FC<Props> = (props: Props): ReactElement => {
 
-    const [state, setState] = useState(props.post)
+    //const [state, setState] = useState(props.post)
 
     const classes = useStyles();
 
@@ -105,7 +106,7 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
         //     </Typography>
         // )
 
-        var x2 = (
+        var dom = (
             <Box
                 display="flex"
                 flexDirection="row"
@@ -118,13 +119,16 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
 
                 <b>{post.title}</b>
                 <span className={classes.centered} >
-                    { util.FormatDateNumber(post.id) }
+                    { post.id!==0? util.FormatDateNumber(post.id):"" }
                 </span>
                 <span className={classes.pushedright} >
+                { post.id!==0 ? (
                     <>
                         <Button onClick={handleClickHeart} className={classes.button} > <FavoriteBorderIcon /> </Button>
                         <menus_card.CardMenu post={post}  username={props.username} />
                     </>
+                 ) : (<></>)
+                }
                 </span>
 
             </Box>
@@ -152,7 +156,7 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
         //     </Box>
         // )
 
-        return x2
+        return dom
     }
 
     const handleClickHeart = () => {

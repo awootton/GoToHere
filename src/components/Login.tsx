@@ -10,6 +10,9 @@ import CardHeader from '@material-ui/core/CardHeader';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ExpandLessIcon from '@material-ui/icons/ExpandLess';
+
 import Header from './Header';
 
 //typescript-eslint/no-unused-vars
@@ -23,16 +26,18 @@ import * as app from '../App';
 // join_red_this_string_plain_does_quart_simple_buy_line_fun_look_original_deal 
 // [My_token_expires:_2021-12-31,{exp:1641023999,iss:_9sh,jti:amXYKIuS4uykvPem9Fml371o,in:32,out:32,su:4,co:2,url:knotfree.net},eyJhbGciOiJFZDI1NTE5IiwidHlwIjoiSldUIn0.eyJleHAiOjE2NDEwMjM5OTksImlzcyI6Il85c2giLCJqdGkiOiJhbVhZS0l1UzR1eWt2UGVtOUZtbDM3MW8iLCJpbiI6MzIsIm91dCI6MzIsInN1Ijo0LCJjbyI6MiwidXJsIjoia25vdGZyZWUubmV0In0.7ElPyX1Vju8Q5uDOEfgAblwvE2gxT78Jl68JPlqLRcFeMJ7if39Ppl2_Jr_JTky371bIXAn6S-pghtWSqTBwAQ]
 
-export function MakeLogin(tokenState: tok.State, setAppHasPassword: (passCb: State) => any) {
 
-  var myloginProps: LoginProps = {
-    setAppHasPassword: setAppHasPassword ,
-    tokenState: tokenState
-  }
+//export function MakeLogin(tokenState: tok.State, setAppHasPassword: (passCb: State) => any) {
+ export const MakeLogin: FC<LoginProps> = (props: LoginProps) => {
+
+  // var myloginProps: LoginProps = {
+  //   setAppHasPassword: setAppHasPassword ,
+  //   tokenState: tokenState
+  // }
   return (
     <>
       <Header title={app.getProfileName() } username = {app.getProfileName()} />
-      <Login {...myloginProps} ></Login>
+      <Login {...props} ></Login>
     </>
   );
 }
@@ -42,7 +47,7 @@ var invocations : number = 0
 const Login: FC<LoginProps> = (props: LoginProps) => {
 
   //console.log("top of the Login v"+invocations+" to ya " )
-  invocations++
+  //invocations++
 
   // var tokenisOK = false
   // var complaint = ""
@@ -170,6 +175,7 @@ const Login: FC<LoginProps> = (props: LoginProps) => {
   }
 
   const handleBeAnon = (event: any) => {
+
     var newState : State = {
       ...state,
       username : "Anonymous",
@@ -252,7 +258,7 @@ const Login: FC<LoginProps> = (props: LoginProps) => {
             color="secondary"
             className={classes.loginBtn}
             onClick={ handleIsMore} >
-            {state.isMore ? "^" : "V"}
+            {state.isMore ? <ExpandMoreIcon/> : <ExpandLessIcon/> }
           </Button>
           <Button variant="contained"
             size="small"

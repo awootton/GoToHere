@@ -1,8 +1,15 @@
  
-import * as mqttserver from '../server/MqttClient';
+//import * as mqttserver from '../server/MqttClient';
+import {mqttServerThing} from '../server/MqttClient';
 import * as util from '../server/Util';
+import * as eventapi from '../api1/Event';
 
 //import * as c_util from '../components/CryptoUtil';
+
+export default interface ApiCommand {
+    cmd: string
+}
+
  
 // we have a map from api1 names to these structs:
 // 
@@ -18,7 +25,7 @@ export type WaitingRequest = {
     options: Map<string, string>,
     returnAddress: string,
 
-    callerPublicKey: string,
+    callerPublicKey64: string,
 
     packet?: object, // the mqtt packet received during the reply, try to dep
     replydata: Uint8Array, // during the reply
@@ -30,41 +37,38 @@ export type WaitingRequest = {
     context? : util.Context
 }
 
-//  export const emptyWaitingRequest : WaitingRequest = {
-//     id: "",
-//     when: 0,
-//     permanent: false,
-
-//     topic: "none", // to retry as necessary  
-//     message: Buffer.from(""),// to retry as necessary  
-
-//     options: new Map<string, string>(),
-//     returnAddress: "none",
-
-//     packet?: undefined, // the mqtt packet received during the reply, try to dep
-//     replydata: Buffer.from(""), // during the reply
-
-//     waitingCallbackFn: (req: WaitingRequest, err?: any) => {}} 
-//  }
-
 export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, jsonstr: string, finalCallback: (data: Uint8Array, error: any) => void) {
 
-    if (mqttserver.mqttServerThing === undefined) {
-        // we have to wait for a while
-        console.log("this CANNOT happen mqttserver.mqttServerThing === undefined hardly ever")
-        finalCallback(new Uint8Array(), "ERROR mqttserver.mqttServerThing == undefined")
-        return
-    }
+    // const mqtt = mqttServerThing // getMqttThing()
+    // if (mqtt === undefined) {
+    //     // we may have to wait for a while
+    //     console.log("ERROR SendApiCommandOut with no mqtt")
+    //     finalCallback(new Uint8Array(), "ERROR mqtt undefined")
+    //     return
+    // }
     // the command is in the jsonstr 
+    if ( ! topic.startsWith("=") ){
+        topic = topic.toLowerCase()
+    }
     var destTopic = topic
 
     const random24 = util.randomString(24)
     const timeout = Date.now()
 
+    var context = util.getCurrentContext() // should we do this in caller? It's ambiguous on server
+
+    // const timer = setTimeout(()=>{
+    //     console.log("SendApiCommandOut SendApiCommandOut timeout ",  jsonstr )
+    //     finalCallback(Buffer.from(""), "SendApiCommandOut timeout")
+    // },10 * 1000)
+
     const localcallbackWithFsData = (req: WaitingRequest, error: any) => {
         //console.log("SendApiCommandOut callback message ", req.message)
         //console.log("SendApiCommandOut callback error ", error)
-        //console.log("SendApiCommandOut callback message ")
+        //console.log("SendApiCommandOut clearing timeout ")
+
+        //clearTimeout(timer)
+
         finalCallback(req.message, error)
     }
 
@@ -79,11 +83,12 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
         waitingCallbackFn: localcallbackWithFsData, // when coming back
 
         options: new Map<string, string>(),
-        returnAddress: mqttserver.mqttServerThing.myReplyChannel,
-        callerPublicKey: "unknown"
+        returnAddress: mqttServerThing.myReplyChannel,
+        callerPublicKey64: commandWr.callerPublicKey64
     }
-
-    mqttserver.mqttServerThing.returnsWaitingMap.set(waitingRequest.id, waitingRequest)
+    
+    mqttServerThing.returnsWaitingMap.set(waitingRequest.id, waitingRequest)
+   
     // now send the packet
 
     var message = jsonstr
@@ -93,40 +98,43 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
         retain: false,
         qos: 0,
         properties: {
-            responseTopic: mqttserver.mqttServerThing.myReplyChannel,
+            responseTopic: mqttServerThing.myReplyChannel,
             userProperties: {
                 "api1": commandWr.id,
-                "nonc": random24
+                "nonc": random24,
+                "pubk": util.toBase64Url(context.ourPublicKey),
+                "debg": "12345678"
             }
         }
     };
     
-    //console.log("sending out api1 call to", topic, " with " + message)
-
     if (waitingRequest.skipCryptoForThisOne === true) {
 
+        mqttServerThing.client.publish(topic, message, options)
+        //mqtt.client.publish("dummy", message, options)
+    
+       //mqtt.sendAPing()
+    
+        console.log("sent out api1 skipCryptoForThisOne  topic,id ", topic, random24, " with " + message, "pubk ", util.getPubkToName(context.ourPublicKey), util.getSecondsDisplay())
+    
 
     } else { // in SendApiCommandOut
         // client: 
         // FIXME needs crypto  - box it up
-        // this is client to server api request
+        // this is the client to server api request
         //var nonce = random24 // Buffer.from(util.randomString(24))
         // client is anon aka me
-
-        var context = util.getCurrentContext()
-        util.initContext(context) 
-        // set publicKey aka pubk in options
-        // replace message
-
+        mqttServerThing.client.publish(topic, message, options)
+        //mqtt.client.publish("dummy", message, options)
+    
+        if ( ! message.startsWith('{"cmd":"ping"')){ // what the actual fuck is going on here where this is needed?
+            //mqttServerThing.sendAPing()
+            setTimeout(() => { mqttServerThing.sendAPing() }, 100);
+        }
+        
+        console.log("sent out api1 call topic,id ", topic, random24, " with " + message, "pubk ", util.getPubkToName(context.ourPublicKey), util.getSecondsDisplay())
     }
-    mqttserver.mqttServerThing.client.publish(topic, message, options)
-}
 
-export class ApiCommand {
-    cmd: string
-    constructor(cmd: string){
-        this.cmd = cmd
-    }
 }
 
 // the buff is the reply already serialized
@@ -139,6 +147,7 @@ export const handleSendReplyCallback = (wr: WaitingRequest, replyData: Uint8Arra
     var returnId = wr.options.get("nonc")
     if (returnId === undefined) {
         returnId = wr.id
+        console.log("ERROR returnId === undefined happened")
     }
 
     interface LooseObject {
@@ -158,20 +167,72 @@ export const handleSendReplyCallback = (wr: WaitingRequest, replyData: Uint8Arra
     // TODO copy over options. ?
     for (let entry of Array.from(wr.options.entries())) {
         let key = entry[0];
-        if ( key !== "api1" && key != "nonc"){
+        if ( key !== "api1" && key !== "nonc"){
             let value = entry[1];
             options.properties.userProperties[key] = value 
         }
     }
 
     //console.log("publish api1 reply address:", wr.returnAddress)
-    const topic = wr.returnAddress
+    var topic = wr.returnAddress
+    if ( ! topic.startsWith("=") ){
+        topic = topic.toLowerCase()
+    }
     if (wr.skipCryptoForThisOne === true ) {
        
     } else { // in handleSendReplyCallback
                 // FIXME needs crypto  - box it up
                 // add pubk to options
     }
-    mqttserver.mqttServerThing.client.publish(topic, replyData, options)
+    // var mqtt = getMqttThing()
+    // if ( mqtt ){
+        console.log("Sending mqtt.client.publish REPLY with api1 key", options.properties.userProperties["api1"], util.getSecondsDisplay() )
+        mqttServerThing.client.publish(topic, replyData, options)
+    // } else {
+    //     console.log("ERROR no publish due to missing mqtt")
+    //     console.log("ERROR no publish due to missing mqtt")
+    //     console.log("ERROR no publish due to missing mqtt")
+    //     console.log("ERROR no publish due to missing mqtt")
+    //     console.log("ERROR no publish due to missing mqtt")
+    //     console.log("ERROR no publish due to missing mqtt")
+    //     mqtt = getMqttThing()
+    // }
 }
 
+// Broadcast has no WaitingRequest
+export function Broadcast( context: util.Context, something: ApiCommand ) {
+   
+    var topic = context.username + "_broadcast"
+    if ( ! topic.startsWith("=") ){
+        topic = topic.toLowerCase()
+    }
+    const cmd : eventapi.EventCmd = {
+        cmd:"Event",
+        who: context.username,
+        what: something
+    }
+    var options = {
+        retain: false,
+        qos: 0,
+        properties: {
+            responseTopic: context.username,
+            userProperties: {
+                "api1": "Event",
+                "nonc": util.randomString(24),
+                "pubk": util.toBase64Url(context.ourPublicKey)
+            }
+        }
+    };
+
+    const message = JSON.stringify(cmd)
+
+    console.log("Api Event Broadcast ", options, message  )
+
+    // const mqtt = getMqttThing()
+    // if (mqtt) {
+        mqttServerThing.client.publish(topic, message, options)
+    // } else {
+    //     console.log("ERROR Broadcast fail: no mqtt")
+    // }
+}
+ 

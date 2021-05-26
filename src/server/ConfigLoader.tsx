@@ -10,10 +10,21 @@ import * as util from "./Util"
 
 export function readServerConfig(specialpath?: string): config.ServerConfigList {
 
+  util.cleanContexts()
+
   var path = "data/server_config.json"
   if (specialpath) {
     path = specialpath
   }
+
+  const anonContext : util.Context = {
+    ... util.emptyContext,
+     username: "Anonymous",
+     password: "Anonymous",
+     profileNameFromApp:"Anonymous",
+  }
+  util.initContext(anonContext)
+  util.pushContext(anonContext)
 
   console.log("reading config frm ", path)
 
@@ -44,32 +55,26 @@ export function readServerConfig(specialpath?: string): config.ServerConfigList 
     }
   }
 
-  util.cleanContexts()
-
-  console.log(" BEFORE config fills in the c_util len = ", util.contexts.length)
   for (let item of itemsList.items) { // init the c_util
     var con: util.Context = {
       ...util.emptyContext,
       username: item.name,
       password: item.passphrase,
-      profileNameFromApp: item.name,
+      profileNameFromApp: item.name.toLowerCase(),
       tokenFromApp: itemsList.token,
       config: item
     }
     util.initContext(con)
-    util.contexts.push(con)
+    util.pushContext(con)
   }
   util.setCurrentIndex(0)  
-  // we probably need some maps and hefre would ab a gppd place
-
-
-  console.log(" AFTER config fills in the c_util len = ", util.contexts.length)
+  // we probably need some maps and here would a a good place
+  // TODO: add maps to lookup items
 
   return itemsList
 }
 
-const sampleItemsList: config.ServerConfigList =
-{
+const sampleItemsList: config.ServerConfigList = {
   token: "[My_token_expires:_2021-12-31,{exp:1641023999,iss:_9sh,jti:amXYKIuS4uykvPem9Fml371o,in:32,out:32,su:4,co:2,url:knotfree.net},eyJhbGciOiJFZDI1NTE5IiwidHlwIjoiSldUIn0.eyJleHAiOjE2NDEwMjM5OTksImlzcyI6Il85c2giLCJqdGkiOiJhbVhZS0l1UzR1eWt2UGVtOUZtbDM3MW8iLCJpbiI6MzIsIm91dCI6MzIsInN1Ijo0LCJjbyI6MiwidXJsIjoia25vdGZyZWUubmV0In0.7ElPyX1Vju8Q5uDOEfgAblwvE2gxT78Jl68JPlqLRcFeMJ7if39Ppl2_Jr_JTky371bIXAn6S-pghtWSqTBwAQ]",
   items: [
     {

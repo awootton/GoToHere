@@ -4,7 +4,7 @@ import { makeStyles } from '@material-ui/core/styles';
 // import AppBar from '@material-ui/core/AppBar';
 // import Tabs from '@material-ui/core/Tabs';
 // import Tab from '@material-ui/core/Tab';
-import Typography from '@material-ui/core/Typography';
+// import Typography from '@material-ui/core/Typography';
 //import Box from '@material-ui/core/Box';
 
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
@@ -17,14 +17,14 @@ import MenuIcon from '@material-ui/icons/Menu';
 import Paper from '@material-ui/core/Paper';
 
 import { SimpleDialog } from '../dialogs/SimpleDialog'
- 
+
 import * as dialogs_apptest from '../dialogs/AppTest'
 
 import * as api from '../api1/GetFriends'
 import * as util from "../server/Util"
 
 const useStyles = makeStyles((theme) => ({
-    
+
     root: {
         flexGrow: 1,
         height: 12,
@@ -43,11 +43,11 @@ const useStyles = makeStyles((theme) => ({
         fontSize: 16,
         fontWeight: "bold",
 
-        boxShadow : "0",
+        boxShadow: "0",
 
         margin: "24 0px",
         border: "24 0px",
-        
+
     },
 
     friendItem: {
@@ -100,37 +100,37 @@ export const LinkedName: FC<NameProps> = (props: NameProps) => {
 
     var ourName = util.getCurrentContext().username
 
-    const getTitle = () => {
+    const getTitle = () => { // for the dialog if opened
         return (
             <div>
-                <Button onClick = {handleDialogClose} ><ArrowBackIosIcon/></Button>
+                <Button onClick={handleDialogClose} ><ArrowBackIosIcon /></Button>
                 Viewing {props.name} as {ourName}
             </div>
         )
     }
-    
 
     const item = (
-        <>
-            <div key={props.index} className={classes.friendItem} >
-                <Button
-                    onClick={showTheAppDialog}
-                    className={classes.friendItem}
-                >
+
+        <div key={props.index} className={classes.friendItem} >
+            <Button
+                //key={props.index}
+                onClick={showTheAppDialog}
+                className={classes.friendItem}
+            >
                 {props.name}
-                </Button>
+            </Button>
 
-                <SimpleDialog selectedValue={"dummy"}
-                    
-                   // className={classes.root}
-                    open={openAppDialog}
-                    fillme={dialogs_apptest.FillAppTest}
-                    title={getTitle()}
-                    onClose={handleDialogClose}
-                    username={props.name} />
+            <SimpleDialog
+                // className={classes.root}
+               // key={props.index}
+                open={openAppDialog}
+                fillme={dialogs_apptest.FillAppTest}
+                title={getTitle()}
+                onClose={handleDialogClose}
+                username={props.name} />
 
-            </div>
-        </>
+        </div>
+
 
     )
     return item
@@ -145,17 +145,19 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
 
     const [friendsData, setFriendsData] = React.useState(api.GetFriendsReplyEmpty);
 
-
-    useEffect(() => { reload() }, [])
-
-    const reload = () => {
+    const loadTheData = () => {
         console.log("in useEffect of FriendTabs")
         // call the api for our friends! 
         api.IssueTheCommand(props.username, 9999, 0, gotFriendsReceiver, 3)
     }
 
+    useEffect( () => { loadTheData() }, [] )// once
+
     const gotFriendsReceiver = (reply: api.GetFriendsReply, error: any) => {
-        console.log("have friends data", reply)
+        //console.log("have friends data", reply)
+        if (reply.friends === undefined || error) {
+            reply = api.GetFriendsReplyEmpty
+        }
         setFriendsData(reply)
     }
 
@@ -187,61 +189,31 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
 
     const getPanel = () => {
 
-        //console.log("getPanel  ", showing)
+        //console.log("getPanel of", showing)
 
         const items = []
+        var theList: string[] = []
 
         if (showing === "friends") {
-            var index = 0
-            for (const pubk of friendsData.friends) {
-                const name = friendsData.key2name.get(pubk) || "noname"
-                const item = (
-                    <>
-                        <LinkedName index={index} name={name} ></LinkedName>
-                    </>
-                )
-                items.push(item)
-                index += 1
-            }
+            theList = friendsData.friends
+        } else if (showing === "followers") {
+            theList = friendsData.followers
+        } else if (showing === "following") {
+            theList = friendsData.following
+        } else if (showing === "blocked") {
+            theList = friendsData.blocked
         }
-        if (showing === "followers") {
-            var index = 0
-            for (const pubk of friendsData.followers) {
-                const name = friendsData.key2name.get(pubk) || "noname"
-                const item = (
-                    <>
-                        <LinkedName index={index} name={name} ></LinkedName>
-                    </>
-                )
-                items.push(item)
-                index += 1
-            }
-        }
-        if (showing === "following") {
-            var index = 0
-            for (const pubk of friendsData.following) {
-                const name = friendsData.key2name.get(pubk) || "noname"
-                const item = (
-                    <>
-                        <LinkedName index={index} name={name} ></LinkedName>
-                    </>
-                )
-                items.push(item)
-                index += 1
-            }
-        }
-        if (showing === "blocked") {
-            var index = 0
-            for (const pubk of friendsData.blocked) {
-                const name = friendsData.key2name.get(pubk) || "noname"
-                const item = (
-                    <>
-                        <LinkedName index={index} name={name} ></LinkedName>
-                    </>
-                )
-                items.push(item)
-                index += 1
-            }
+        var index = 0
+        //console.log("FriendTabs getPanel ", friendsData)
+        for (const pubk of theList) {
+            const name = friendsData.key2name.get(pubk) || "noname"
+            const item = (
+                <div key={index}>
+                    <LinkedName index={index} name={name} ></LinkedName>
+                </div>
+            )
+            items.push(item)
+            index += 1
         }
         return (
             <>
@@ -317,25 +289,25 @@ export interface TabPropsType {
     other?: any,
 }
 
-const TabPanel: FC<TabPropsType> = (props: TabPropsType) => {
+// const TabPanel: FC<TabPropsType> = (props: TabPropsType) => {
 
-    const { username, children, value, index, ...other } = props;
+//     const { username, children, value, index, ...other } = props;
 
-    return (
-        <div
-            role="tabpanel"
-            hidden={value !== index}
-            id={`simple-tabpanel-${index}`}
-            {...other}
-        >
-            {value === index && (
-                //   <Box p={2}>
-                <Typography component="div" >{children}</Typography>
-                //   </Box>
-            )}
-        </div>
-    );
-}
+//     return (
+//         <div
+//             role="tabpanel"
+//             hidden={value !== index}
+//             id={`simple-tabpanel-${index}`}
+//             {...other}
+//         >
+//             {value === index && (
+//                 //   <Box p={2}>
+//                 <Typography component="div" >{children}</Typography>
+//                 //   </Box>
+//             )}
+//         </div>
+//     );
+// }
 
 
 export default FriendTabs;
