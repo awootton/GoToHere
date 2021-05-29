@@ -1,24 +1,22 @@
 
 import './App.css';
-import { ReactElement, FC, useState} from "react";
-
+import { ReactElement, FC, useState } from "react";
+import Dialog from '@material-ui/core/Dialog';
 import { unstable_createMuiStrictModeTheme } from '@material-ui/core/styles'; // makeStyles,
-import * as dialogs from './dialogs/SimpleDialog'
+
+//import * as dialogs from './dialogs/SimpleDialog'
 
 // import Paper from '@material-ui/core/Paper';
 // import Grid from '@material-ui/core/Grid';
- 
+
 // import SimpleTabs from './components/SimpleTabs'
 
 import * as login from './components/Login';
-import * as util from "./server/Util" 
+import * as util from "./server/Util"
 import * as tok from "./components/TokenScreen"
  
-// import * as getpostsapi from "./api1/GetPosts"
-// import * as pingapi from "./api1/Ping"
-// import * as social from "./server/SocialTypes"
-
 import * as profile from "./components/ProfileMain"
+
 
 // eslint-disable-next-line 
 export const theme = unstable_createMuiStrictModeTheme({
@@ -53,16 +51,16 @@ export const theme = unstable_createMuiStrictModeTheme({
 interface Props {
 }
 
- 
+
 //export function App() {
-export const App: FC<Props> = ( props: Props ): ReactElement => {
+export const App: FC<Props> = (props: Props): ReactElement => {
 
-  const [loginState, setLoginState] = useState( login.initialState )//globalAppLoginState ); // is Login State
-  
-  const [tokenState, setTokenState] = useState(  tok.initialState ); // is TokenState
+  const [loginState, setLoginState] = useState(login.initialState)//globalAppLoginState ); // is Login State
 
-  const [openTokenScreen,setOpenTokenScreen] = useState(  true ); 
-  const [openLoginScreen,setOpenLoginScreen] = useState(  false ); 
+  const [tokenState, setTokenState] = useState(tok.initialState); // is TokenState
+
+  const [openTokenScreen, setOpenTokenScreen] = useState(true);
+  const [openLoginScreen, setOpenLoginScreen] = useState(false);
 
   //console.log("in App returning page pub key = " , globalAppTokenState.serverPublicKeyB64 )
   //console.log("in App returning page pub key2 = " , tokenState.serverPublicKeyB64 )
@@ -112,7 +110,7 @@ export const App: FC<Props> = ( props: Props ): ReactElement => {
   // }
 
   // Having weird side effects in a call back is weird TODO: find better way
-  function setAppHasToken( tokState : tok.State ) {
+  function setAppHasToken(tokState: tok.State) {
     console.log("App localTokenHook setting token ", tokState)
     console.log("   current pass state ", loginState)
 
@@ -121,8 +119,8 @@ export const App: FC<Props> = ( props: Props ): ReactElement => {
     // }
     // globalAppTokenState = tokState
 
-    if ( tokState.isVerified  && openTokenScreen ) { 
-      setTokenState(tokState) 
+    if (tokState.isVerified && openTokenScreen) {
+      setTokenState(tokState)
       setOpenTokenScreen(false)
       setOpenLoginScreen(true)
     }
@@ -131,24 +129,27 @@ export const App: FC<Props> = ( props: Props ): ReactElement => {
   // Having weird side effects in a call back is weird TODO: find better way
   function setAppHasPassword(passState: login.State) {
     console.log("App localLoginHook has passState  ", passState)
-  
-    if (passState.helperText === "reset the token" ){ // worst hack ever
+
+    if (passState.helperText === "reset the token") { // worst hack ever
       console.log("App localLoginHook RESETTING the token   ", passState)
       //globalAppTokenState =  { ...globalAppTokenState, theToken : ""}
-      var newState =  { ...tokenState, 
-        theToken : ""}
-      setTokenState( newState )
+      var newState = {
+        ...tokenState,
+        theToken: ""
+      }
+      setTokenState(newState)
     }
-    var newPassState : login.State = {
+    var newPassState: login.State = {
       ...passState,
-      counter : loginState.counter + 1
+      counter: loginState.counter + 1
     }
-    if ( newPassState.isVerified ){
-      util.SetUsernameFromApp(newPassState.username)
-      util.SetPasswordFromApp(newPassState.password )
-      util.SetProfileNameFromApp(getProfileName() )
-      util.SetTokenFromApp(  tokenState.theToken )
-      util.SetServerPubKeyFromApp( tokenState.serverPublicKeyB64)
+    if (newPassState.isVerified) {
+      // FIXME: new version of login and token
+      // util.SetUsernameFromApp(newPassState.username)
+      // util.SetPasswordFromApp(newPassState.password)
+      // util.SetProfileNameFromApp(util.getProfileName())
+      // util.SetTokenFromApp(tokenState.theToken)
+      // util.SetKnotServerPubKeyFromApp(tokenState.serverPublicKeyB64)
       console.log("App sending values to crypto   ", passState)
       // TODO: app should forget the password now
       // newPassState.password = "erased"
@@ -158,60 +159,65 @@ export const App: FC<Props> = ( props: Props ): ReactElement => {
     }
   }
 
-//   function pushMeAction2() {
-  
-//     console.log("pushed2")
+  //   function pushMeAction2() {
 
-//     const receiver: pingapi.PingReceiver = (cmd: pingapi.PingCmd, error: any)  => {
-//         console.log("receiver: pingapi.PingReceiver ", cmd, error)
-//     }
-//     pingapi.IssueTheCommand( receiver )
-// }
+  //     console.log("pushed2")
+
+  //     const receiver: pingapi.PingReceiver = (cmd: pingapi.PingCmd, error: any)  => {
+  //         console.log("receiver: pingapi.PingReceiver ", cmd, error)
+  //     }
+  //     pingapi.IssueTheCommand( receiver )
+  // }
 
 
-//   function pushMeAction() {
-  
-//       console.log("pushed")
+  //   function pushMeAction() {
 
-//       //
-//       const top = "" + util.getCurrentDateNumber()
-//       //const fold = "data/alice/lists/posts/" // fixme
-//       const fold = "lists/posts/" // the receiver (the server) will figure out the first part
-//       const count = 4
-//       const old = ""
+  //       console.log("pushed")
 
-//       getpostsapi.IssueTheCommand("alice_vociferous_mcgrath",top, fold, count, old,   ( posts:social.Post[] , error:any) => {
-//         console.log("just got back from issueTheCommand with ", posts)
-//     })
+  //       //
+  //       const top = "" + util.getCurrentDateNumber()
+  //       //const fold = "data/alice/lists/posts/" // fixme
+  //       const fold = "lists/posts/" // the receiver (the server) will figure out the first part
+  //       const count = 4
+  //       const old = ""
 
-      // const cmd: GetPostsCmd = {// for a demo
-      //   cmd: "getPosts",
-      //   top: util.getCurrentDateString(),
-      //   fold: "data/alice/lists/posts/", // FIXME: client doesn't know 'alice/' just knows lists/posts/
-      //   count: 4,
-      //   old: ""
-      // }
-      // const jsonstr = JSON.stringify(cmd)
-      // // topic:string , jsonstr: string, cb: ( data:Uint8Array, error: any ) => {} ) {
-      // console.log("jsonstr of cmd ", jsonstr,)
-      // var destTopic = hasPassword.username
+  //       getpostsapi.IssueTheCommand("alice_vociferous_mcgrath",top, fold, count, old,   ( posts:social.Post[] , error:any) => {
+  //         console.log("just got back from issueTheCommand with ", posts)
+  //     })
 
-      // var wr: WaitingRequest =  getpostsapi
+  // const cmd: GetPostsCmd = {// for a demo
+  //   cmd: "getPosts",
+  //   top: util.getCurrentDateString(),
+  //   fold: "data/alice/lists/posts/", // FIXME: client doesn't know 'alice/' just knows lists/posts/
+  //   count: 4,
+  //   old: ""
+  // }
+  // const jsonstr = JSON.stringify(cmd)
+  // // topic:string , jsonstr: string, cb: ( data:Uint8Array, error: any ) => {} ) {
+  // console.log("jsonstr of cmd ", jsonstr,)
+  // var destTopic = hasPassword.username
 
-      // api1.SendApiCommandOut(wr,destTopic, cmd.cmd, jsonstr, (data: Uint8Array, error: any) => {
-      //   var strdata = new TextDecoder().decode(data)
-      //   console.log("App is  back from SendApiCommandOut with data ", strdata)
-      // })
+  // var wr: WaitingRequest =  getpostsapi
+
+  // api1.SendApiCommandOut(wr,destTopic, cmd.cmd, jsonstr, (data: Uint8Array, error: any) => {
+  //   var strdata = new TextDecoder().decode(data)
+  //   console.log("App is  back from SendApiCommandOut with data ", strdata)
+  // })
   //}
 
   function makeApp() {
 
-    const profileName = getProfileName()
+    const profileName = util.getProfileName()
 
-    if ( openLoginScreen === false && openTokenScreen === false && loginState.isVerified === true) {
+    // tokenState = {tokenState}
+
+    const hhh = util.KnotNameHash('alice_vociferous_mcgrath')
+    console.log( "std  hash of  alice_vociferous_mcgrath is ", hhh)
+
+    if (openLoginScreen === false && openTokenScreen === false && loginState.isVerified === true) {
       return (
         <>
-           <profile.ProfileMain tokenState = {tokenState} username={profileName} hasHeader={true} ></profile.ProfileMain>
+          <profile.ProfileMain username={profileName} hasHeader={true} ></profile.ProfileMain>
         </>
       );
     } else {
@@ -223,12 +229,12 @@ export const App: FC<Props> = ( props: Props ): ReactElement => {
   }
 
   // force anonymous in login. hack.
-  if (loginState.isVerified === false && openLoginScreen ) {
-    var newLoginState : login.State = {
+  if (loginState.isVerified === false && openLoginScreen) {
+    var newLoginState: login.State = {
       ...loginState,
-      username : "Anonymous",
-      password : "Anonymous",
-      isVerified : true
+      username: "Anonymous",
+      password: "Anonymous",
+      isVerified: true
     }
     setAppHasPassword(newLoginState)
   }
@@ -236,31 +242,29 @@ export const App: FC<Props> = ( props: Props ): ReactElement => {
 
   return (
     <>
-    
-    {makeApp()}
 
-    <dialogs.SimpleDialog  
-     open={openTokenScreen}
-     fillme={tok.TokenScreen}
-     title=""
-     onClose={ ()=> {  }  } // nothing! we don't close here
-     username = {"Anonymous"} 
-     setAppHasToken = {setAppHasToken}
-     
-     />
+      {makeApp()}
 
-   <dialogs.SimpleDialog  
-     open={openLoginScreen}
-     fillme={login.MakeLogin}
-     title= ""
-     onClose={ ()=> {  }  } // nothing! we don't close here
-     username = {"Anonymous"} 
-     tokenState = {tokenState}
-     setAppHasPassword = {setAppHasPassword}
-     />
+      <Dialog
+        open={openTokenScreen}
+        //  fillme={tok.TokenScreen}
+        //   title=""
+        onClose={(value: any) => { }} // nothing! we don't close here
+      >
+        <tok.TokenScreen setAppHasToken={setAppHasToken} />
+      </Dialog>
+
+      <Dialog
+        open={openLoginScreen}
+        //    fillme={login.MakeLogin}
+        //  title= ""
+        onClose={(value: any) => { }} // nothing! we don't close here
+      >
+        <login.MakeLogin tokenState={tokenState} setAppHasPassword={setAppHasPassword} />
+      </Dialog>
 
 
-  </>
+    </>
   )
 
   // function xxxmakeApp() {
@@ -272,7 +276,7 @@ export const App: FC<Props> = ( props: Props ): ReactElement => {
   //     <>
   //       <Header title={ profileName } username = {profileName} />
 
-       
+
   //       <Grid container spacing={0}>
   //       <Grid item xs={4} >
   //         {/* <Image src="http://loremflickr.com/300/200" /> */}
@@ -280,7 +284,7 @@ export const App: FC<Props> = ( props: Props ): ReactElement => {
   //         <Paper className={paperStrStyles} >About Me:</Paper>
   //         <Paper >
   //           "Sed illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
-          
+
   //         </Paper>
   //         {/* <Button onClick={pushMeAction} >push me</Button>
   //         <Button onClick={pushMeAction2} >push me2</Button> */}
@@ -342,34 +346,3 @@ export default App;
 //   });
 // }} >push me</Button> */}
 
-// eg alice_vociferous_mcgrath
-export function getProfileName(): string {
-  var profileName = "unknown"
-  var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotlocal.com:3000/
-  var ind = locationhref.indexOf("//")
-  if (ind > 0) {
-    locationhref = locationhref.substring(ind + 2)
-    var parts = locationhref.split(".")
-    if (parts.length <= 0) {
-      console.log("how can we have missing parts here?")
-    }
-    profileName = parts[0]
-  }
-  return profileName
-}
-
-// eg gotohere.com
-export function getServerName(): string {
-  var serverName = "unknown"
-  var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotlocal.com:3000/
-  var ind = locationhref.indexOf("//")
-  if (ind > 0) {
-    locationhref = locationhref.substring(ind + 2)
-    var parts = locationhref.split(".")
-    if (parts.length <= 0) {
-      console.log("how can we have missing parts here?")
-    }
-    serverName = parts[1] + "." + parts[2]
-  }
-  return serverName
-}

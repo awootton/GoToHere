@@ -1,4 +1,9 @@
 
+we have had a problem with sha256 being different in browser. don't use 'crypto'
+
+yarn add fast-sha256
+
+
 adding the server:
 
 copy paste the whole folder

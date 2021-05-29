@@ -1,6 +1,6 @@
 
 
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
@@ -11,20 +11,23 @@ import SimpleTabs from './SimpleTabs'
 import FriendTabs from './FriendTabs'
 import Header from './Header'
 
+import GeneralInfoLayout from '../dialogs/General'
+
 import * as util from '../server/Util'
 
 //import { unstable_createMuiStrictModeTheme as createMuiTheme } from '@material-ui/core';
+//import * as tok from "./TokenScreen"
 
-
-import * as tok from "./TokenScreen"
 import { Typography } from '@material-ui/core';
-import { updateWhile } from 'typescript';
+
+
+//import { updateWhile } from 'typescript';
 //import * as login from "./Login"
 //import * as app from "../App"
 
 export type ProfileProps = {
   // setAppHasPassword: (pass: login.State) => any,
-  tokenState: tok.State // has the token and the host 
+  // tokenState: tok.State // has the token and the host 
   username: string // to identify which context to send it to
   hasHeader: boolean
 }
@@ -35,10 +38,10 @@ const useStyles = makeStyles((theme: Theme) =>
 
     root: {
       flexGrow: 1,
-      minWidth : theme.spacing(16),
+      minWidth: theme.spacing(16),
     },
 
-    avatar: {  
+    avatar: {
       flexGrow: 1,
       width: 200,// theme.spacing(window.innerWidth * 16 / 450),
       height: 200, //theme.spacing(window.innerWidth * 16 / 450),
@@ -48,23 +51,23 @@ const useStyles = makeStyles((theme: Theme) =>
 
     leftDivTop: {
       width: "100%",
-      height: theme.spacing(50) ,
-      minWidth : 200,
-      borderRadius : 16
+      height: theme.spacing(50),
+      minWidth: 200,
+      // borderRadius : 16
     },
-    
+
     leftDivBot: {
       width: "100%",
-      height: theme.spacing(50) ,
-      minWidth : theme.spacing(16),
-      borderRadius : 16
+      height: theme.spacing(50),
+      minWidth: theme.spacing(16),
+      // borderRadius : 16
     },
-    
+
     rightDiv: {
       width: "100%",
       height: theme.spacing(100),
-      minWidth : theme.spacing(16),
-      borderRadius : 16
+      minWidth: theme.spacing(16),
+      //    borderRadius : 16
     },
 
   })
@@ -99,12 +102,18 @@ export const ProfileMain: FC<ProfileProps> = (props: ProfileProps) => {
   // );
 
   function getHeader() {
-    if ( props.hasHeader === true ){
-      var ourName = util.getCurrentContext().username
-      return (<Header title={"Viewing " + props.username + " as " + ourName } username={props.username} />)
-    } 
-    return ( <></> )
-    
+    if (props.hasHeader === true) {
+      var ourName = util.getSignedInContext().username
+      return (<Header title={"Viewing " + props.username + " as " + ourName} username={props.username} />)
+    }
+    return (<></>)
+
+  }
+
+  function getGeneralInfo() {
+    return (
+      <GeneralInfoLayout username={props.username} cancel={() => { }} editing={false} />
+    )
   }
 
   return (
@@ -114,28 +123,28 @@ export const ProfileMain: FC<ProfileProps> = (props: ProfileProps) => {
 
         <Grid item xs={4}  >
 
-        <Paper className={classes.leftDivTop}> 
-        <div className={classes.avatar}>
-            <Avatar alt="Example Alt" src="http://loremflickr.com/300/200" className={classes.avatar} />
+          <Paper className={classes.leftDivTop}>
+            <div className={classes.avatar}>
+              <Avatar alt="Example Alt" src="http://loremflickr.com/300/200" className={classes.avatar} />
             </div>
-            <Typography>
-            { getAbout() }
+            <Typography component="div" >
+              {getGeneralInfo()}
             </Typography>
-         </Paper>  
-               
-         <Paper className={classes.leftDivBot}> 
+          </Paper>
 
-          <FriendTabs username={props.username} ></FriendTabs>
+          <Paper className={classes.leftDivBot}>
 
-         </Paper>         
- 
+            <FriendTabs username={props.username} ></FriendTabs>
+
+          </Paper>
+
         </Grid>
 
         <Grid item xs={8}>
 
-            <Paper className={classes.rightDiv} >
-              <SimpleTabs username={props.username} ></SimpleTabs>
-            </Paper>
+          <Paper className={classes.rightDiv} >
+            <SimpleTabs username={props.username} ></SimpleTabs>
+          </Paper>
 
         </Grid>
 
@@ -145,13 +154,5 @@ export const ProfileMain: FC<ProfileProps> = (props: ProfileProps) => {
   );
 
 }
-
-function getAbout () {
-  var str = "bone. Airport Gaggenau Lufthansa remarkable soft power finest the best Marylebone wardrobe first-class Muji iz"
-  str += "Sed illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
-  
-  return str
-}
-
 
 export default ProfileMain;

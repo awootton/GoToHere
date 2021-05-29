@@ -1,7 +1,14 @@
 
 # GoToHere.com
 
-This is the source code for the GoToHere.com social network profile web pages.
+This is the source code for the GoToHere.com social network. 
+It runs locally on your device. It uses the KnotFree.net network to pass messages.
+
+It's completely distributed and there is no central authority. There's nobody to give your email to. No 'signup'. You simply install it and you run it. 
+
+The code here can also be used to serve ANY webpage from your device (ie. laptop) with a url like: your-page-name.gotohere.com See http://alice_vociferous_mcgrath.gotohere.com/ for an example.
+
+
 
 ## Installation
 

@@ -1,14 +1,7 @@
 
-
- 
-//import * as nacl from 'tweetnacl-ts'
-
-// crypto-js/sha256 is banned for life for not using uin8array import sha256 from 'crypto-js/sha256';
-
 import * as config from "./Config"
-// import * as util from "./Util"
-// import * as c_util from "../components/CryptoUtil"
 
+// TODO: merge this with the loader. Can's because th eloader includes fs and th eclient hates that.
 
 // to run this:
 // node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/server/config
@@ -42,83 +35,18 @@ export type ServerConfigList = {
   items: ServerConfigItem[]
 }
 
-export var empty_server_config: config.ServerConfigList = {
+export var EmptyServerConfigList: config.ServerConfigList = {
   token: "dummy",
   items: []
 }
 
+export var itemsList: config.ServerConfigList = config.EmptyServerConfigList
 
-
-
-// export function readServerConfig(specialpath?: string): ServerConfigList {
-
-//   var path = "data/server_config.json"
-//   if (specialpath) {
-//     path = specialpath
-//   }
-//   var bytes = fs.readFileSync(path)
-
-//   var itemsList: ServerConfigList = JSON.parse(bytes.toString("utf8"))
-
-//   // check the token? 
-
-//   // check the paths
-
-//   // check the private keys how? 
-
-//   for (let item of itemsList.items) {
-//     const userName = item.name
-//     const phrase = item.passphrase
-//     const keypair: nacl.BoxKeyPair = util.getBoxKeyPairFromPassphrase(userName, phrase)
-//     item.publicLey = Buffer.from(keypair.publicKey)
-//     item.privateKey = Buffer.from(keypair.secretKey)
-//   };
-
-//   for (let item of itemsList.items) {
-//     if (!item.directory.endsWith("/")) {
-//       item.directory = item.directory + "/"
-//       if (!fs.existsSync("data/" + item.directory)) {
-//         fs.mkdirSync("data/" + item.directory)
-//       }
-//     }
-//   }
-
-//   c_util.cleanContexts()
-
-//   console.log(" BEFORE config fills in the c_util len = ", c_util.contexts.length)
-//   for (let item of itemsList.items) { // init the c_util
-//     var con: c_util.Context = {
-//       ...c_util.emptyContext,
-//       usernameFromApp: item.name,
-//       passwordFromApp: item.passphrase,
-//       profileNameFromApp: item.name,
-//       tokenFromApp: itemsList.token,
-//       config: item
-//     }
-//     c_util.initContext(con)
-//     c_util.contexts.push(con)
-//   }
-//   c_util.setCurrentIndex(0)  
-//   // we probably need some maps and hefre would ab a gppd place
-
-
-//   console.log(" AFTER config fills in the c_util len = ", c_util.contexts.length)
-
-//   return itemsList
-// }
-
-// //saveSample()
-
-// readServerConfig()
-
-
-
-// we don't use the http API anymore. It's all knotfree
-// export var API = "something"
-// if (process.env.NODE_ENV == 'development') {
-//   API = 'http://localhost:3000'; // has a proxy to move requests to 3010
-//   console.log("process.env.NODE_ENV sets dev API as ", API)
-// } else {
-//     API = 'http://localhost:3010';
-//     console.log("process.env.NODE_ENV sets release API as ", API)
-// }
+export function  GetName2Config( name: string ) : config.ServerConfigItem {
+  for (let item of itemsList.items) {
+     if ( item.name === name ){
+        return item
+     }
+  }
+  return config.EmptyServerConfigItem
+}

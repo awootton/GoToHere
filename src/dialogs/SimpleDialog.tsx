@@ -6,7 +6,7 @@ import Dialog from '@material-ui/core/Dialog';
 
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'; 
 
-// TODO: get rid of this. just use dialog directly
+// TODO: get rid of this. just use dialog directly DEPRECATED
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -52,7 +52,7 @@ export type Props = {
 // yikes ! 
 // help export const SimpleDialog: FC<Props> = ( props: Props ): ReactElement => {
 // props: any? really  !?!  wtf
-export function SimpleDialog(props: any) {
+export function XxxSimpleDialog(props: any) {
 
   const classes = useStyles();
 
@@ -92,4 +92,4 @@ export function SimpleDialog(props: any) {
   );
 }
 
-export default SimpleDialog
+//export default SimpleDialog

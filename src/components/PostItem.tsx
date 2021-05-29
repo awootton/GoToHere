@@ -16,20 +16,14 @@ import ReactMarkdown from 'react-markdown'
 import CardActions from '@material-ui/core/CardActions'
 import Button from '@material-ui/core/Button'
 
-//import MenuItem from '@material-ui/core/MenuItem';
-//import Menu from '@material-ui/core/Menu';
-//import MenuIcon from '@material-ui/icons/Menu';
-
-//import TextField from '@material-ui/core/TextField';
-import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
-
-//import { SimpleDialog } from '../dialogs/SimpleDialog'
+import Tooltip from '@material-ui/core/Tooltip'
  
-//import * as postedit from '../dialogs/EditPost'
+import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
+import FavoriteIcon from '@material-ui/icons/Favorite';
 
 import * as menus_card from '../menus/Card'
-
 import * as util from '../server/Util'
+import * as likesapi from "../api1/IncrementLikes"
 
 
 // define css-in-js
@@ -46,6 +40,14 @@ const useStyles = makeStyles((theme: Theme) =>
         // pos: {
         //     marginBottom: 12,
         // },
+        theText: {
+            display : "flex",
+            padding: "0px 0px",
+            height: 120, // 
+            
+            overflow: 'auto',
+        },
+
         nopadding: {
             padding: "0px 0px",
         },
@@ -91,21 +93,6 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
     // todo: add from  {post.from}: <b>{post.title}</b>   
     const getTitleStuff = (post: social.Post) => {
 
-        // var x = (
-        //     <Typography component="div" className={classes.title} color="textSecondary" gutterBottom>
-        //         <b>{"a" + post.title}</b>
-        //         <span className={classes.centered} >
-        //             {"assd"}
-        //         </span>
-        //         <span className={classes.pushedright} >
-        //             <>
-        //                 <Button onClick={handleClickHeart} className={classes.button} > <FavoriteBorderIcon /> </Button>
-        //                 <menus_card.CardMenu post={post} username={props.username} />
-        //             </>
-        //         </span>
-        //     </Typography>
-        // )
-
         var dom = (
             <Box
                 display="flex"
@@ -119,12 +106,18 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
 
                 <b>{post.title}</b>
                 <span className={classes.centered} >
-                    { post.id!==0? util.FormatDateNumber(post.id):"" }
+                    { post.id !==0 ? util.FormatDateNumber(post.id):"" }
                 </span>
                 <span className={classes.pushedright} >
-                { post.id!==0 ? (
+                { post.id !== 0 ? (
                     <>
-                        <Button onClick={handleClickHeart} className={classes.button} > <FavoriteBorderIcon /> </Button>
+                        <Tooltip title={post.likes.toString() + " likes" }  >
+                        
+                        <Button onClick={handleClickHeart} className={classes.button} > 
+                            {post.likes === 0 ? <FavoriteBorderIcon/> : <FavoriteIcon/> }
+                        </Button>
+                 
+                        </Tooltip>
                         <menus_card.CardMenu post={post}  username={props.username} />
                     </>
                  ) : (<></>)
@@ -161,10 +154,14 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
 
     const handleClickHeart = () => {
 
+        // should be alice, anon
+        console.log("like pushed for ", props.username, " by ", util.getSignedInContext().username)
+        likesapi.IssueTheCommand(props.username,props.post.id, util.getSignedInContext().username, (reply: likesapi.IncrementLikesReply, error: any) => {
+            console.log("nobody really give a shit about the likes return. The action is in the broadcast event")
+        })
     };
 
     const handleCommentClick = () => {
-
     }
 
     const renderPlainCard = (post: social.Post) => {
@@ -174,8 +171,8 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
 
                     <CardContent className={classes.nopadding} >
                         {getTitleStuff(post)}
-                        <Typography variant="body2" color="textSecondary" component="div" className={classes.nopadding}  >
-                            <ReactMarkdown className={classes.nopadding} >{post.theText}</ReactMarkdown>
+                        <Typography variant="body2" color="textSecondary" component="div" className={classes.theText}  >
+                            <ReactMarkdown className={classes.theText} >{post.theText}</ReactMarkdown>
                         </Typography>
                     </CardContent>
                     <CardActions>
@@ -184,14 +181,13 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
                         <Button size="small">Re-post</Button>
                         <Button size="small">Like</Button> */}
 
-
                     </CardActions>
                 </Card>
             </>
         )
     }
 
-    const dummy = () => { }
+    //const dummy = () => { }
 
     // if (props.post.editable) {
     //     return (

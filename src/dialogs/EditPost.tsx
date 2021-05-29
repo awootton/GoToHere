@@ -26,7 +26,25 @@ const useStyles = makeStyles((theme: Theme) =>
     createStyles({
 
         root: {
-           flexGrow: 1,
+
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin : "20 20px",
+            padding : "20 20px",
+     
+            width: theme.spacing(50),
+            height: theme.spacing(50),
+    
+            minWidth : theme.spacing(50),
+           
+     
+        //    justifyContent: 'center',
+         //   alignItems: 'center', // centers vertically? 
+    
+            textAlign: 'center',
+
+      //     flexGrow: 1,
             //height: 12,
           //  backgroundColor: theme.palette.background.paper,
 
@@ -34,7 +52,7 @@ const useStyles = makeStyles((theme: Theme) =>
             // justifyContent: 'center',
             // alignItems: 'center',
 
-            height:  800, // this also sets the size
+     //       height:  800, // this also sets the size
 
            //minWidth: theme.spacing(85),
 
@@ -54,12 +72,14 @@ const useStyles = makeStyles((theme: Theme) =>
 type Props = {
     post: social.Post
     username: string
-    cancel: () => any
+    cancel: (value: any) => any
 }
 
 export const FillEditPost: FC<Props> = (props: Props) => {
 
-    const [state,setState] = useState(cardutil.makeEmptyCard(props.username))
+    //console.log("FillEditPost post ", props.post )
+
+    const [state,setState] = useState(props.post)
 
     const handleTitleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
         const str: string = event.target.value
@@ -92,7 +112,7 @@ export const FillEditPost: FC<Props> = (props: Props) => {
                     //add error to invisible note
                     console.log("ERROR SavePost ", error, " and ", reply )
                 } else {
-                    props.cancel() // close the dialog
+                    props.cancel("") // close the dialog
                 }
         }
         const newPost = state
@@ -100,12 +120,13 @@ export const FillEditPost: FC<Props> = (props: Props) => {
 
     }
 
-    // sx={{ p: 2, border: '1px dashed grey' }} 
+    // sx={{ p: 2, border: '1px dashed grey' }}  borderRadius={64}
 
     const renderEditCard = (post: social.Post) => {
         return (
-            <Box  className={classes.root} borderRadius={64}  borderColor="secondary.main"  >
-                <Card elevation={2} key={post.id} >
+            <Box  className={classes.root}   borderColor="secondary.main"  >
+                <Card elevation={2} key={post.id} > 
+                    <CardContent>
                     <TextField
                         fullWidth
                         id="titleeditor"
@@ -117,7 +138,6 @@ export const FillEditPost: FC<Props> = (props: Props) => {
                         defaultValue={post.title}
                         multiline={true}
                     />
-                    <CardContent>
                         <TextField
                             //style={{maxHeight: 200, overflow: 'auto'}}
                             fullWidth
@@ -135,8 +155,8 @@ export const FillEditPost: FC<Props> = (props: Props) => {
                         </Typography> */}
                     </CardContent>
                     <CardActions>
-                        <Button variant="contained" onClick={onSaveButton} >Save</Button>
-                        <Button variant="contained" onClick={() => { props.cancel()}} >Cancel</Button>
+                        <Button variant="contained" onClick={() => { props.cancel("")}} >Cancel</Button>
+                       <Button variant="contained" onClick={onSaveButton} >Save</Button>
                     </CardActions>
                 </Card>
             </Box>

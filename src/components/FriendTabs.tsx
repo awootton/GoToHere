@@ -16,9 +16,10 @@ import MenuIcon from '@material-ui/icons/Menu';
 
 import Paper from '@material-ui/core/Paper';
 
-import { SimpleDialog } from '../dialogs/SimpleDialog'
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
 
-import * as dialogs_apptest from '../dialogs/AppTest'
+import * as dialogs_apptest from '../dialogs/AppFrame'
 
 import * as api from '../api1/GetFriends'
 import * as util from "../server/Util"
@@ -91,14 +92,13 @@ export const LinkedName: FC<NameProps> = (props: NameProps) => {
 
     const handleDialogClose = (value: any) => {
         setOpenAppDialog(false);
-
     };
 
     const showTheAppDialog = () => {
         setOpenAppDialog(true)
     }
 
-    var ourName = util.getCurrentContext().username
+    var ourName = util.getSignedInContext().username
 
     const getTitle = () => { // for the dialog if opened
         return (
@@ -113,21 +113,21 @@ export const LinkedName: FC<NameProps> = (props: NameProps) => {
 
         <div key={props.index} className={classes.friendItem} >
             <Button
-                //key={props.index}
                 onClick={showTheAppDialog}
                 className={classes.friendItem}
             >
                 {props.name}
             </Button>
 
-            <SimpleDialog
-                // className={classes.root}
-               // key={props.index}
+            <Dialog
                 open={openAppDialog}
-                fillme={dialogs_apptest.FillAppTest}
-                title={getTitle()}
+               // fillme={dialogs_apptest.FillAppFrame}
+                //title={getTitle()}
                 onClose={handleDialogClose}
-                username={props.name} />
+                >
+                <DialogTitle>{getTitle()}</DialogTitle>
+                <dialogs_apptest.FillAppFrame username={props.name} hasHeader = {false}  />
+            </Dialog>
 
         </div>
 
@@ -207,6 +207,7 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
         //console.log("FriendTabs getPanel ", friendsData)
         for (const pubk of theList) {
             const name = friendsData.key2name.get(pubk) || "noname"
+            //util.SetName2Pubk(name, util.fromBase64Url(pubk))
             const item = (
                 <div key={index}>
                     <LinkedName index={index} name={name} ></LinkedName>

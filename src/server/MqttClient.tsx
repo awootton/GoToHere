@@ -12,8 +12,9 @@ import * as config from './Config';
 import * as get_posts from '../api1/GetPosts';
 
 import { WaitingRequest } from '../api1/Api';
+import * as api from '../api1/Api';
 
-import * as mqtt_util from "./MqttClient2"
+//import * as mqtt_util from "./MqttClient2"
 
 //import * as c_util from "../components/CryptoUtil"
 import * as pingapi from '../api1/Ping'
@@ -22,6 +23,8 @@ import * as savepostapi from '../api1/SavePost'
 import * as deletepostapi from '../api1/DeletePost'
 import * as broadcast from '../server/BroadcastDispatcher'
 import * as eventapi from '../api1/Event'
+import * as likesapi from '../api1/IncrementLikes'
+import * as generalapi from '../api1/GeneralApi'
 
 type MqttServerPropsType = {
 
@@ -32,7 +35,7 @@ type MqttServerPropsType = {
 
 export type MqttOptionsType = {
   keepalive: number,
-  reschedulePings : boolean,
+  reschedulePings: boolean,
   protocolId: string,
   protocol: any,
   //protocolVersion: 4,
@@ -56,7 +59,7 @@ export type MqttOptionsType = {
 const SomeMqttOptions: MqttOptionsType = {
 
   keepalive: 30 * 10,
-  reschedulePings : true,
+  reschedulePings: true,
 
   protocolId: "MQTT",
   protocol: "ws", // 
@@ -65,7 +68,7 @@ const SomeMqttOptions: MqttOptionsType = {
 
   clean: true,
   reconnectPeriod: 4000, // try reconnect after 4 sec
-  connectTimeout: 300 * 1000 ,  // 5 minutes
+  connectTimeout: 300 * 1000,  // 5 minutes
 
   // will: {  // atw FIXME: it's not just that we don't implement 'will' it's that it errors. FIXME: fix the go
   //   topic: "WillMsg",
@@ -109,7 +112,7 @@ export class MqttTestServerTricks {
     this.restartCallback = restartCallback
 
     this.server_config = props.config
-    this.cleanerIntervalID = setInterval(cleaner, 1000 * 100 ); // FIXME cleaner is off 
+    this.cleanerIntervalID = setInterval(cleaner, 1000 * 100); // FIXME cleaner is off 
 
     this.myReplyChannel = "=" + util.randomString(32)
     this.topic2port = new Map<string, string>()
@@ -136,6 +139,8 @@ export class MqttTestServerTricks {
       savepostapi.InitApiHandler(this.returnsWaitingMap)
       deletepostapi.InitApiHandler(this.returnsWaitingMap)
       eventapi.InitApiHandler(this.returnsWaitingMap)
+      likesapi.InitApiHandler(this.returnsWaitingMap)
+      generalapi.InitApiHandler(this.returnsWaitingMap)
 
       //console.log(" returnsWaitingMap initialised to ", this.returnsWaitingMap)
 
@@ -154,7 +159,7 @@ export class MqttTestServerTricks {
     console.log("initializing ping setInterval")
     haveWeEverInitialisedThatPingTimer = true
     //this.timerID = 
-    //var ourPubKey64: string = util.toBase64Url(util.getCurrentContext().ourPublicKey)
+    //var ourPubKey64: string = util.toBase64Url(util.getCurr entContext().ourPublicKey)
     setInterval(() => { this.sendAPing() }, timeout);
 
     this.client = null
@@ -169,93 +174,9 @@ export class MqttTestServerTricks {
     console.log("mqtt ping")
 
     const receiver: pingapi.PingReceiver = (cmd: pingapi.PingCmd, error: any) => {
-      console.log("mqtt client receiver")//: pingapi.PingReceiver ", cmd, error)
+      //console.log("mqtt client ping receiver")//: pingapi.PingReceiver ", cmd, error)
     }
-    pingapi.IssueTheCommand(receiver)
-
-    // send ping.
-    //console.log("mqtt ping ing", ourPubKey64)
-    // if (this.client) {
-    //   //this.client.pingreq()
-    //   //console.log("have client ping")
-    //   var topic =  c_util.getCurrentContext().profileNameFromApp
-    //   var message = "ping " + pubKey
-    //   // var options = {
-    //   //   retain: false,
-    //   //   qos: 0,
-    //   //   properties: {
-    //   //     responseTopic: this.myReplyChannel,
-    //   //     userProperties: {
-    //   //     }
-    //   //   }
-    //   // };
-
-    //   var destTopic = topic
-
-    //   const random24 = util.randomString(24)
-    //   const timeout = Date.now()  
-
-    //   var waitingRequest: WaitingRequest = {
-    //     id: random24,
-    //     when: timeout,
-    //     permanent: false,
-    //     topic: destTopic,
-    //     message: new Uint8Array(), // going out
-    //     //packet: undefined, // coming in
-    //     replydata: new Uint8Array(), // when coming back
-    //     waitingCallbackFn: pongCallback, // when coming back
-
-    //     options: new Map<string, string>(),
-    //     returnAddress: this.myReplyChannel
-    // }
-
-    // this.returnsWaitingMap.set(waitingRequest.id, waitingRequest)
-    // // now send the packet
-
-    // var message = "ping " + "skdjkduehbdFIXME"
-    // // packet.properties.userProperties
-    // // let utf8Encode = new TextEncoder();
-    // var options = {
-    //     retain: false,
-    //     qos: 0,
-    //     properties: {
-    //       responseTopic: this.myReplyChannel,
-    //         userProperties: {
-    //             "api1": "pong",
-    //             "id": random24
-    //         }
-    //     }
-    // };
-
-    // // console.log("the c_util public is ",  c_util.toBase64Url(c_util.thePublicKey) )
-    // // console.log("the c_util public is ",   c_util.thePublicKey64)
-
-    // // console.log("the c_util their public is ",  c_util.toBase64Url(c_util.thePublicKey) )
-    // // console.log("the c_util public is ",   c_util.thePublicKey64)
-
-    // console.log("api1 posting box usernameFromApp  ",  c_util.getCurrentContext().usernameFromApp )
-    // console.log("api1 posting box passwordFromApp  ",  c_util.getCurrentContext().passwordFromApp )
-    // console.log("api1 posting box profileNameFromApp  ",  c_util.getCurrentContext().profileNameFromApp )
-    // //console.log("api1 posting box tokenFromApp  ",  c_util.getCurrentContext().tokenFromApp )
-    // console.log("api1 posting box serverPubKeyFromApp   ",  c_util.getCurrentContext().serverPubKeyFromApp )
-
-
-
-    // // client: 
-
-    // // FIXME needs crypto  - box it up
-    // // this is client to server api request
-    // //var nonce = random24 // Buffer.from(util.randomString(24))
-    // // client is anon aka me
-
-    // var context = c_util.getCurrentContext()
-    // c_util.initContext(context)
-
-
-    //   // Ping not needs crypto  - don't box it up / what is the servers public key?
-    //   this.client.publish(topic, message, options)
-
-    // }
+    pingapi.IssueTheCommand("Anonymous", "Anonymous", receiver) // todo: intercept in knotfree, reserve name Anonymous forever.
   }
 
   CloseTheConnect() {
@@ -268,11 +189,11 @@ export class MqttTestServerTricks {
     // and restart:: 
     const timeout = 5000
     //if (mqttServerThing !== undefined) {
-      setInterval(() => { 
-        if (mqttServerThing !== undefined) {
-          mqttServerThing.restartCallback() 
-        }
-      }, timeout);
+    setInterval(() => {
+      if (mqttServerThing !== undefined) {
+        mqttServerThing.restartCallback()
+      }
+    }, timeout);
     //}
   }
 
@@ -288,7 +209,7 @@ export class MqttTestServerTricks {
       if (error) {
         console.error("have error on subscribe ", error, topic)
       } else {
-        console.log("subscribe ok ", topic, " aka ", "="+util.KnotNameHash(topic) )
+        console.log("subscribe ok ", topic, " aka ", "=" + util.KnotNameHash(topic))
       }
     });
   }
@@ -388,80 +309,112 @@ export class MqttTestServerTricks {
 
       });
       this.client.on("message", (topic: any, message: any, packet: any) => {
+
         // this is where the deliveries arrive fresh from mqtt
-        // console.log("mqtt_stuff have on message ", message.toString('utf8'))
+        //console.log("mqtt_stuff have on message ", message.toString('utf8'))
         // see notes 
         // console.log("have on  message packet ", packet)
-        // console.log("have user data ", packet.properties.userProperties)
+        //console.log("have user data ", packet.properties.userProperties)
 
-        var returnAddress = packet.properties.responseTopic// has responseTopic: and userProperties:
+        const returnAddress = packet.properties.responseTopic// has responseTopic: and userProperties:
         //console.log("have top of on message returnAddress ", returnAddress)
         //console.log("mqtt_stuff have a message: " + msgstring.substr(0, end))
         //console.log("have topic " + topic)
 
         // we need to unpack this bad boy right here
-        var gotOptions: Map<string, string> = mqtt_util.UnpackMqttOptions(packet)
-
-        var isApi = gotOptions.get("api1")
+        const gotOptions: Map<string, string> = util.UnpackMqttOptions(packet)
+        const isApi = gotOptions.get("api1")
         //console.log("found user val for api1 ", isApi) // should be a big key, or short api name
 
         if (isApi !== undefined) {
 
-          var ourParams: WaitingRequest = {
-            id: "unknown",
-            when: 0,
-            permanent: false,
-            topic: topic,
-            message: message,
-            packet: packet,
-            replydata: Buffer.from(""),
-            waitingCallbackFn: (wr: WaitingRequest, err: any) => { },
-            options: gotOptions,
-            returnAddress: packet.properties.responseTopic,
-            callerPublicKey64: "unknown"
-          }
+          // the are several possibilities now.
+          // 1) it's an api call. Normally this means we're on the server. 
+          // 2) it's a return. Normally this mean we're in the client. 
+          // Event can happen. Ping can happen. Ping's are api1 but no crypto. 
 
-          mqtt_util.HandleApi1PacketIn(this, isApi, ourParams)
+          const returnHandler = this.returnsWaitingMap.get(isApi)
+          if (returnHandler !== undefined) {
+
+            returnHandler.message = message
+            returnHandler.options = gotOptions
+            returnHandler.topic = topic
+            returnHandler.returnAddress = returnAddress
+
+            if (returnHandler.permanent) {  // an api call
+
+              api.HandleApiIncoming(this, isApi, returnHandler)
+
+            } else { // a return
+
+              this.returnsWaitingMap.delete(isApi)
+              api.HandleApiReplyArrival(this, isApi, returnHandler)
+
+            }
+
+          } else {
+            // if returnHandler is undefined then this packet is not for us.
+            // no returnHandler found
+            console.log("ERROR had api1 but unknown cmd. did you forget to 'load up the api with handlers for the various'? cmd was:", isApi)
+
+          }
+          // var ourParams: WaitingRequest = {
+          //   id: "unknown",
+          //   when: 0,
+          //   permanent: false,
+          //   topic: topic,
+          //   message: message,
+          //   packet: packet,
+          //   replydata: Buffer.from(""),
+          //   waitingCallbackFn: (wr: WaitingRequest, err: any) => { },
+          //   options: gotOptions,
+          //   returnAddress: packet.properties.responseTopic,
+          //   //callerPublicKey64: "unknown"
+          // }
+
+          // mqtt_util.HandleApi1PacketIn(this, isApi, ourParams)
 
 
         } else {
           // the proxy route - has no crypto
           // maybe
           const str = Buffer.from(message).toString('utf8')
-          if ( ! str.startsWith("GET ")) {
-             console.log("Spooky: Have unknown packet. not api1 and not GET ", topic, str)
+          if (!str.startsWith("GET ")) {
+            console.log("Spooky: Have unknown packet. not api1 and not GET ", topic, str)
           } else {
-          // the proxy route 
-          const realname = this.hashed2name.get(topic)
-          if (!realname) {
-            console.log("failed to find topic in map", topic, this.hashed2name)
-            if (topic === this.myReplyChannel) {
-              console.log("myReplyChannel has a proxy request??", topic, this.hashed2name)
+            // the proxy route 
+            const realname = this.hashed2name.get(topic)
+            if (!realname) {
+              console.log("failed to find topic in map", topic, this.hashed2name)
+              if (topic === this.myReplyChannel) {
+                console.log("myReplyChannel has a proxy request??", topic, this.hashed2name)
+              }
+              //var gotOptions: Map<string, string> = mqtt_util.UnpackMqttOptions(packet)
+              console.log("failed to find topic. Options:", gotOptions)
+
+              // TODO: this is where the billing errors come through eg  BILLING ERROR 330.38766 bytes out > 128/s
+              // FIXME: push to somewhere. It's in the client so ...  
+              console.log("failed to find topic. Message:", Buffer.from(message).toString('utf8'))
+
+              // FIXME: systemErrorReceiver( Buffer.from(message).toString('utf8') )
+
+            } else {
+              var portStr = this.topic2port.get(realname)
+              if (portStr === undefined) {
+                console.log("ERROR we really need to know a port for EVERY name ", realname, topic)
+                portStr = "9090"
+              }
+              // message is supposed to be a GET
+
+              console.log("in the proxy route now", topic)
+              // i guess. what todo with non api1 packets?
+              // fall back and handle packet as proxy request
+              var callParams = new PacketCallParams(message, topic, packet)
+              var ppi = new ProxyPortInstance(this, topic, returnAddress, portStr, callParams)
+              ppi.go()
             }
-            //var gotOptions: Map<string, string> = mqtt_util.UnpackMqttOptions(packet)
-            console.log("failed to find topic. Options:", gotOptions)
-            // TODO: this is where the billing errors come through eg  BILLING ERROR 330.38766 bytes out > 128/s
-            // FIXME: push to somewhere. It's in the client so ...  
-            console.log("failed to find topic. Message:", Buffer.from(message).toString('utf8'))
-
-            // FIXME: systemErrorReceiver( Buffer.from(message).toString('utf8') )
-
-          } else {
-            var portStr = this.topic2port.get(realname)
-            if (portStr === undefined) {
-              console.log("ERROR we really need to know a port for EVERY name ", realname, topic)
-              portStr = "9090"
-            }
-            // message is supposed to be a GET
-
-            console.log("in the proxy route now", topic)
-            // i guess. what todo with non api1 packets?
-            // fall back and handle packet as proxy request
-            var callParams = new PacketCallParams(message, topic, packet)
-            var ppi = new ProxyPortInstance(this, topic, returnAddress, portStr, callParams)
-            ppi.go()
           }
-        }}
+        }
       });
     } else {
       console.error("ERROR client was null")
@@ -532,6 +485,23 @@ function cleaner() {
 export function StartClientMqtt(aToken: string, aServer: string, successCb: (msg: string) => any) {
 
   console.log("StartClientMqtt called")
+
+  // is there a sooner place to init context? for client.
+  const anonContext: util.Context = {
+    ...util.emptyContext,
+    username: "Anonymous",
+    password: "Anonymous",
+  }
+  util.initContext(anonContext)
+  util.pushContext(anonContext)
+
+  const profileContext: util.Context = {
+    ...util.emptyContext,
+    username: util.getProfileName(),
+    password: "",
+  }
+  util.initContext(profileContext)
+  util.pushContext(profileContext)
 
   const start = () => {
     var ourConfig: config.ServerConfigList = {

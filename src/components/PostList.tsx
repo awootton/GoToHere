@@ -1,17 +1,13 @@
 
-
-
-
 import { Component, Fragment } from 'react';
 
 import * as social from '../server/SocialTypes'
 
 //import * as topcard from "./PostListTopCard"
 
-
 import * as getpostsapi from "../api1/GetPosts"
 
-//import * as api1 from "../api1/Api"
+//import * as api from "../api1/Api"
 
 import * as cards from "./CardUtil"
 import * as util from "../server/Util"

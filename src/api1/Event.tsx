@@ -5,7 +5,7 @@
 import * as util from '../server/Util';
 
 import ApiCommand from "./Api"
-import * as api1 from "./Api"
+import * as api from "./Api"
 //import * as config from "../server/Config"
 import * as broadcast from "../server/BroadcastDispatcher"
 
@@ -28,7 +28,7 @@ export type EventReceiver = (reply: EventCmd, error: any) => any
 
 export const defaultRetry = 20
 
-export function XxxIssueTheCommand(username: string, what: ApiCommand, receiver: EventReceiver) {
+export function XxdeletemexxxIssueTheCommand(username: string, what: ApiCommand, receiver: EventReceiver) {
 
     var cmd: EventCmd = {
         cmd: "Event",
@@ -41,12 +41,12 @@ export function XxxIssueTheCommand(username: string, what: ApiCommand, receiver:
 
     //const theRetries = retries || defaultRetry
 
-    var wr: api1.WaitingRequest = EventWaitingRequest
+    const wr: api.WaitingRequest = EventWaitingRequest
 
     // if we call this it sets up a wr for the receiver and there's no reply to broadcast
  //   wr.callerPublicKey: "unknown"
 
-    api1.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
+    api.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
 
         var strdata = new TextDecoder().decode(data)
         console.log("Event is  back from SendApiCommandOut with data ", strdata)
@@ -65,7 +65,7 @@ export function XxxIssueTheCommand(username: string, what: ApiCommand, receiver:
     })
 }
 
-const EventWaitingRequest: api1.WaitingRequest = {
+const EventWaitingRequest: api.WaitingRequest = {
     id: "Event",
     when: util.getMilliseconds(),
     permanent: true,
@@ -75,50 +75,28 @@ const EventWaitingRequest: api1.WaitingRequest = {
     waitingCallbackFn: handleEventApi,
     options: new Map<string, string>(),
     returnAddress: "unused now",
-    callerPublicKey64: "unknown"
+    isEvent:true
 }
 
-export function InitApiHandler(returnsWaitingMap: Map<string, api1.WaitingRequest>) {
+export function InitApiHandler(returnsWaitingMap: Map<string, api.WaitingRequest>) {
 
     EventWaitingRequest.options.set("api1", EventWaitingRequest.id)
     // returnsWaitingMap map is handling incoming packets in mqttclient 
     returnsWaitingMap.set(EventWaitingRequest.id, EventWaitingRequest)
 }
 
-function handleEventApi(wr: api1.WaitingRequest, err: any) {
+function handleEventApi(wr: api.WaitingRequest, err: any) {
 
     console.log("in the handleEventApi with ", wr.topic, wr.message.toString())
 
     var cmd: EventCmd = JSON.parse(wr.message.toString(),reviver)
 
-    //var cryptoContext = util.getMatchingContext(wr.topic)
-    // var configItem = cryptoContext.config || config.EmptyServerConfigItem
-    // var path = "data/" + "lists/events/" //configItem.directory
-
-    //var newid: social.DateNumber = util.getCurrentDateNumber()
     console.log(" on the ?? in handleEventApi with ", cmd)
 
     broadcast.DispatchAll(cmd)
 
     // do we write it to the timeline? now
     // no - the caller will do that? 
-
-    //post.id = newid
-
-    // EventFile(path, cmd.id)
-
-    // // now send reply
-    // const reply : EventReply = {
-    //     cmd : "Event",
-    //     id : cmd.id
-    // }
-    // var jsonstr = JSON.stringify(reply,replacer)
-    // // console.log("have reply Event ", jsonstr  )
-    // api1.handleSendReplyCallback(wr, Buffer.from(jsonstr), null)
-
-    // // and broadcast the change
-
-    // api1.Broadcast(cryptoContext, Buffer.from(wr.message))
 }
 
 function replacer(key: any, value: any) {

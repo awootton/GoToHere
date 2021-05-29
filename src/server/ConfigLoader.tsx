@@ -1,12 +1,27 @@
 
 import fs from 'fs'
-import * as nacl from 'tweetnacl-ts'
- 
 // crypto-js/sha256 is banned for life for not using uint8array import sha256 from 'crypto-js/sha256';
 
 import * as config from "./Config"
 import * as util from "./Util"
-//import * as c_util from "../components/CryptoUtil"
+
+function first3bytes( b: Buffer): string {
+  return b[0] + "," + b[1] + "," + b[2] 
+}
+
+function logcontext( c: util.Context ){
+
+  var sss:string = util.toBase64Url(c.ourPublicKey)
+  var bbb:Buffer = util.fromBase64Url(sss)
+  if ( Buffer.compare(bbb,c.ourPublicKey) !== 0 ){
+    console.log("oh, man, this is really bad")
+  }
+  var n = c.username + "                                                                           "
+  n = n.slice(0,30)
+  console.log("have name, pass, keys for ", c.username, 
+  first3bytes(c.ourPublicKey),util.toBase64Url(c.ourPublicKey).slice(0,4), 
+  first3bytes(c.ourSecretKey),util.toBase64Url(c.ourSecretKey).slice(0,4))
+}
 
 export function readServerConfig(specialpath?: string): config.ServerConfigList {
 
@@ -21,16 +36,17 @@ export function readServerConfig(specialpath?: string): config.ServerConfigList 
     ... util.emptyContext,
      username: "Anonymous",
      password: "Anonymous",
-     profileNameFromApp:"Anonymous",
   }
   util.initContext(anonContext)
   util.pushContext(anonContext)
+
+  logcontext(anonContext)
 
   console.log("reading config frm ", path)
 
   var bytes = fs.readFileSync(path)
 
-  var itemsList: config.ServerConfigList = JSON.parse(bytes.toString("utf8"))
+  var itemsList : config.ServerConfigList = JSON.parse(bytes.toString("utf8"))
 
   // check the token? 
 
@@ -38,13 +54,13 @@ export function readServerConfig(specialpath?: string): config.ServerConfigList 
 
   // check the private keys how? 
 
-  for (let item of itemsList.items) {
-    const userName = item.name
-    const phrase = item.passphrase
-    const keypair: nacl.BoxKeyPair = util.getBoxKeyPairFromPassphrase(userName, phrase)
-    //item.publicLey = Buffer.from(keypair.publicKey)
-    //item.privateKey = Buffer.from(keypair.secretKey)
-  };
+  // for (let item of itemsList.items) {
+  //   const userName = item.name
+  //   const phrase = item.passphrase
+  //   //const keypair: nacl.BoxKeyPair = util.getBoxKeyPairFromPassphrase(userName, phrase)
+  //   //item.publicLey = Buffer.from(keypair.publicKey)
+  //   //item.privateKey = Buffer.from(keypair.secretKey)
+  // };
 
   for (let item of itemsList.items) {
     if (!item.directory.endsWith("/")) {
@@ -60,16 +76,20 @@ export function readServerConfig(specialpath?: string): config.ServerConfigList 
       ...util.emptyContext,
       username: item.name,
       password: item.passphrase,
-      profileNameFromApp: item.name.toLowerCase(),
       tokenFromApp: itemsList.token,
-      config: item
+      //config: item
     }
     util.initContext(con)
     util.pushContext(con)
-  }
-  util.setCurrentIndex(0)  
+    logcontext(con)
+  }  
   // we probably need some maps and here would a a good place
   // TODO: add maps to lookup items
+
+  config.itemsList.token = itemsList.token
+  for (let item of itemsList.items) {
+    config.itemsList.items.push(item)
+  }
 
   return itemsList
 }

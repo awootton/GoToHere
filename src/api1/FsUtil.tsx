@@ -2,13 +2,6 @@
 import fs from 'fs'
 
 
-// import * as mqttserver from '../server/MqttClient';
-// import * as util from '../server/Util';
-// import * as social from '../server/SocialTypes';
-// import * as c_util from '../components/CryptoUtil';
-// import * as api1 from './Api';
- 
-
 type haveOneType = ( data: Buffer) => any
 
 export type fsGetContext = {

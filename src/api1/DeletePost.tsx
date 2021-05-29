@@ -5,7 +5,7 @@ import fs from 'fs'
 import * as util from '../server/Util';
 
 import ApiCommand from "./Api"
-import * as api1 from "./Api"
+import * as api from "./Api"
 import * as config from "../server/Config"
 
 //import * as cardutil from '../components/CardUtil'
@@ -57,9 +57,9 @@ export function IssueTheCommand(username: string, id: social.DateNumber, receive
 
     const theRetries = retries || defaultRetry
 
-    var wr: api1.WaitingRequest = DeletePostWaitingRequest 
+    const wr: api.WaitingRequest = DeletePostWaitingRequest 
 
-    api1.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
+    api.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
 
         var strdata = new TextDecoder().decode(data)
         //console.log("App is  back from SendApiCommandOut with data ", strdata)
@@ -81,7 +81,7 @@ export function IssueTheCommand(username: string, id: social.DateNumber, receive
     })
 }
 
-const DeletePostWaitingRequest: api1.WaitingRequest = {
+const DeletePostWaitingRequest: api.WaitingRequest = {
     id: "DeletePost",
     when: util.getMilliseconds(),
     permanent: true,
@@ -91,10 +91,10 @@ const DeletePostWaitingRequest: api1.WaitingRequest = {
     waitingCallbackFn: handleDeletePostApi,
     options: new Map<string, string>(),
     returnAddress: "unused now",
-    callerPublicKey64: "unknown+so+far"
+    //callerPublicKey64: "unknown+so+far"
 }
 
-export function InitApiHandler(returnsWaitingMap: Map<string, api1.WaitingRequest>) {
+export function InitApiHandler(returnsWaitingMap: Map<string, api.WaitingRequest>) {
 
     DeletePostWaitingRequest.options.set("api1", DeletePostWaitingRequest.id)
     // returnsWaitingMap map is handling incoming packets in mqttclient 
@@ -131,7 +131,7 @@ function deletePostFile(path: string, id: social.DateNumber) {
 
 }
 
-function handleDeletePostApi(wr: api1.WaitingRequest, err: any) {
+function handleDeletePostApi(wr: api.WaitingRequest, err: any) {
 
     console.log("in the handleDeletePostApi with ", wr.topic, wr.message.toString())
 
@@ -144,8 +144,8 @@ function handleDeletePostApi(wr: api1.WaitingRequest, err: any) {
 
     //const post = cmd.post
 
-    var cryptoContext = util.getMatchingContext(wr.topic)
-    var configItem = cryptoContext.config || config.EmptyServerConfigItem
+    var cryptoContext = util.getHashedTopic2Context(wr.topic)
+    var configItem =  config.GetName2Config(cryptoContext.username)
     var path = "data/" + configItem.directory
 
     //var newid: social.DateNumber = util.getCurrentDateNumber()
@@ -162,11 +162,11 @@ function handleDeletePostApi(wr: api1.WaitingRequest, err: any) {
     }
     var jsonstr = JSON.stringify(reply,replacer)
     // console.log("have reply DeletePost ", jsonstr  )
-    api1.handleSendReplyCallback(wr, Buffer.from(jsonstr), null)
+    api.SendApiReplyBack(wr, Buffer.from(jsonstr), null)
 
     // and broadcast the change
 
-    api1.Broadcast(cryptoContext, cmd)
+    api.Broadcast(cryptoContext, cmd)
 }
 
 function replacer(key: any, value: any) {

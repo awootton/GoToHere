@@ -17,7 +17,7 @@ import Header from './Header';
 
 //typescript-eslint/no-unused-vars
 //@typescript-eslint/no-unused-vars
-//import * as util from '../server/util';
+import * as util from '../server/Util';
 import * as tok from './TokenScreen';
 import * as app from '../App';
 
@@ -36,7 +36,7 @@ import * as app from '../App';
   // }
   return (
     <>
-      <Header title={app.getProfileName() } username = {app.getProfileName()} />
+      <Header title={util.getProfileName() } username = {util.getProfileName()} />
       <Login {...props} ></Login>
     </>
   );
@@ -64,7 +64,7 @@ const Login: FC<LoginProps> = (props: LoginProps) => {
   // }
   //console.log("found myToken ", myToken)
 
-  const profileName = app.getProfileName()
+  const profileName = util.getProfileName()
   //console.log("profile name is", profileName) eg. alice_vociferous_mcgrath
   initialState.username = profileName
 

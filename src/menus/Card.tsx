@@ -20,16 +20,29 @@ import MenuIcon from '@material-ui/icons/Menu';
 //import TextField from '@material-ui/core/TextField';
 //import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
 
-import { SimpleDialog } from '../dialogs/SimpleDialog'
+//import { SimpleDialog } from '../dialogs/SimpleDialog'
  
 import * as postedit from '../dialogs/EditPost'
 import * as postdelete from '../dialogs/DeletePost'
 import * as social from "../server/SocialTypes"
 
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+
 
 // define css-in-js
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
+
+        editdialog: {
+            flexGrow: 1,
+            margin: "2 2px",
+            padding: "20 20px",
+            width: 800,
+            height: 800,
+            minWidth: 800
+          },
+      
 
         // root: {
         // },
@@ -57,10 +70,6 @@ const useStyles = makeStyles((theme: Theme) =>
             height: "40",
             width: "32px"
         },
-
-        // scrollingEdit : {
-        //     overflow-y: scroll
-        // }
     })
 );
 
@@ -72,7 +81,8 @@ type CardMenuProps = {
 }
 export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement => {
 
-    const classes = useStyles();
+    //console.log("CardMenu post = ", props.post, props.username )
+
 
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [openEdit, setOpenEdit] = React.useState(false);
@@ -87,6 +97,10 @@ export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement 
     };
 
     const handleDialogClose = (value: any) => {
+        handleDialogClosePlain()
+    };
+
+    const handleDialogClosePlain = () => {
         setOpenEdit(false);
         setOpenDelete(false);
     };
@@ -107,9 +121,7 @@ export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement 
     };
 
 
-
-    //const selectedValue = 'dummy'
-    //const testUsernameTest = "building_bob_bottomline_boldness"
+    const classes = useStyles();
 
     return (
         <>
@@ -132,33 +144,36 @@ export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement 
 
             </Menu>
 
-            {/* // I hate to put a dialog in every post!  */}
-
-            <SimpleDialog  
+            <Dialog  
                 // style = {someAppStyles}
-               // className={classes.root}
+                className = {classes.editdialog}
                 open={openEdit}
-                fillme={postedit.FillEditPost}
-                post={props.post}
-                username={props.username}
-                cancel = {handleDialogClose}
+               //  fillme={postedit.FillEditPost
+               // cancel = {handleDialogClose}
                 
-                title={"Edit " + props.post.title}
-                onClose={handleDialogClose}
-            />
+              //  title={"Edit " + props.post.title}
 
-            <SimpleDialog  
+                onClose={handleDialogClose}
+             > 
+                <DialogTitle>{"Edit " + props.post.title}</DialogTitle>
+                <postedit.FillEditPost  post={props.post} username={props.username} cancel = {handleDialogClosePlain} /> 
+            </Dialog>
+
+            <Dialog  
                 // style = {someAppStyles}
                // className={classes.root}
                 open={openDelete}
-                fillme={postdelete.FillDeletePost}
-                post={props.post}
-                username={props.username}
-                cancel = {handleDialogClose}
+              //  fillme={postdelete.FillDeletePost}
+               
                 
-                title={"delete " + props.post.title + "?"}
+               // cancel = {handleDialogClose}
+                
+               // title={"delete " + props.post.title + "?"}
                 onClose={handleDialogClose}
-            />
+            >
+                 <DialogTitle>{"delete " + props.post.title + "?"}</DialogTitle>
+                <postdelete.FillDeletePost username={props.username}  post={props.post} cancel = {handleDialogClosePlain} /> 
+            </Dialog>
 
         </>
     )

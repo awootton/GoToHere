@@ -11,7 +11,7 @@ export function makeTopCard( username: string ) : social.Post {
         id : 0,
         title : "Waiting...",
         theText: "No posts loaded yet.",
-        likes: [],
+        likes: 0,
         retweets : [],
         comments: [] ,
         postedByName : username
@@ -24,8 +24,8 @@ export function makeEditCard(username: string) : social.Post {
     var apost : social.Post = {
         id : 0,
         title : "",
-        theText: "",//  You can edit this one and save.  You can edit this one and save.",
-        likes: [],
+        theText: "", 
+        likes: 0,
         retweets : [],
         comments: []    , 
         editable : true,
@@ -41,7 +41,7 @@ export function makeEmptyCard( username: string ) : social.Post {
         id : 0,
         title : "",
         theText: "",
-        likes: [],
+        likes: 0,
         retweets : [],
         comments: [] ,
         postedByName : username

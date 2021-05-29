@@ -1,12 +1,11 @@
 
 import fs from 'fs'
 
-import { WaitingRequest, handleSendReplyCallback } from './Api';
+import { WaitingRequest, SendApiReplyBack } from './Api';
 import * as util from '../server/Util';
 import ApiCommand from "./Api"
-import * as api1 from "./Api"
+import * as api from "./Api"
 import * as config from "../server/Config"
-
  
 export  interface GetFriendsCmd extends ApiCommand {
     
@@ -52,10 +51,9 @@ export function IssueTheCommand(username: string, count:number, offset:number, r
     
     //console.log("jsonstr of cmd ", jsonstr,)
 
-    var wr: WaitingRequest = getFriendsWaitingRequest
+    const wr: WaitingRequest = getFriendsWaitingRequest
 
-
-    api1.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
+    api.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
 
         var strdata = new TextDecoder().decode(data)
         //console.log("App is  back from GetGriends SendApiCommandOut from user ", username)
@@ -82,7 +80,7 @@ const getFriendsWaitingRequest: WaitingRequest = {
     waitingCallbackFn: handleGetFriendsApi,
     options: new Map<string, string>(),
     returnAddress: "unused now",
-    callerPublicKey64 : "unknown"
+   // callerPublicKey64 : "unknown"
 }
 
 export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
@@ -101,8 +99,8 @@ function handleGetFriendsApi(wr: WaitingRequest, err: any) {
     const count = cmd.count
     //const offset = cmd.offset
     
-    var cryptoContext = util.getMatchingContext( wr.topic )
-    var configItem = cryptoContext.config || config.EmptyServerConfigItem
+    var cryptoContext = util.getHashedTopic2Context( wr.topic ) || util.emptyContext // this smells
+    var configItem =  config.GetName2Config(cryptoContext.username)
     var path = "data/" + configItem.directory
 
     if (count !== 0) {
@@ -168,7 +166,7 @@ function handleGetFriendsApi(wr: WaitingRequest, err: any) {
             if ( expecting <= 0 ){
                 var jsonstr = JSON.stringify(reply,replacer)
                 // console.log("have reply friends ", jsonstr  )
-                handleSendReplyCallback(wr, Buffer.from(jsonstr), null)
+                SendApiReplyBack(wr, Buffer.from(jsonstr), null)
                 // and, we're done here
             }
         }

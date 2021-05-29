@@ -18,9 +18,9 @@ export type Reference = {
     alias: PersonAlias; // this is the sha256 of the topic name 
 }
 
-export type LikeReference = {
-    who: PersonAlias;
-}
+// export type LikeReference = {
+//     who: PersonAlias;
+// }
 
 export type Friend = {
     name: string // the full name aka alice_vociferous_mcgrath
@@ -29,37 +29,62 @@ export type Friend = {
 
 }
 
-export class Post {
+export type Post = {
     id: DateNumber;
     title: string;
     theText: string;
-    likes: PersonAlias[];
+    likes: number; //PersonAlias[];
     retweets: string[]; // what type ? 
     comments: Reference[];
     postedByName: string; // who sent it. including us. a username
     editable?: boolean;
     more?: any
     //replyingTo? : Reference // if this is a comment then this is the parent
-    constructor(
-        id: DateNumber,
-        title: string,
-        theText: string,
-        likes: PersonAlias[],
-        retweets: string[], // what type ? 
-        comments: Reference[],
-        postedByName: string, // who sent it. including us. a username
-        editable?: boolean,
-        more?: any
-    ) {
-        this.id = id;
-        this.title = title;
-        this.theText = theText;
-        this.likes = likes;
-        this.retweets = retweets;
-        this.comments = comments;
-        this.postedByName = postedByName;
-    }
 }
+
+export const emptyPost : Post = {
+
+    id: 0,
+    title: "",
+    theText: "",
+    likes: 0, //PersonAlias[],
+    retweets: [] , // what type ? 
+    comments: [],
+    postedByName: "", // who sent it. including us. a username
+}
+
+// why is this a class and not a type? 
+// export class Post {
+//     id: DateNumber;
+//     title: string;
+//     theText: string;
+//     likes: number; //PersonAlias[];
+//     retweets: string[]; // what type ? 
+//     comments: Reference[];
+//     postedByName: string; // who sent it. including us. a username
+//     editable?: boolean;
+//     more?: any
+//     //replyingTo? : Reference // if this is a comment then this is the parent
+//     constructor(
+//         id: DateNumber,
+//         title: string,
+//         theText: string,
+//         likes: number, // PersonAlias[],
+//         retweets: string[], // what type ? 
+//         comments: Reference[],
+//         postedByName: string, // who sent it. including us. a username
+//         editable?: boolean,
+//         more?: any
+//     ) {
+//         this.id = id;
+//         this.title = title;
+//         this.theText = theText;
+//         this.likes = 0;
+//         this.retweets = retweets;
+//         this.comments = comments;
+//         this.postedByName = postedByName;
+//     }
+// }
 
 export interface Comment extends Post {
     parents: Reference[];

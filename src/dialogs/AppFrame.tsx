@@ -2,18 +2,8 @@
 import {FC } from "react";
 
 
-
-//import { makeStyles } from '@material-ui/core/styles';
-//import { blue } from '@material-ui/core/colors';
-
-//import CSS from 'csstype';
-
-//import Typography from '@material-ui/core/Typography';
-
-//import Paper from '@material-ui/core/Paper';
-
 import * as profile from "../components/ProfileMain"
-import * as tok from '../components/TokenScreen';
+//import * as tok from '../components/TokenScreen';
 
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 
@@ -78,17 +68,17 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
     username:string
-    tokenState : tok.State //  tok.initialState,
+    // tokenState : tok.State //  tok.initialState,
     hasHeader: boolean
 }
 
-export const FillAppTest : FC<Props> = ( props : Props ) => {
+export const FillAppFrame : FC<Props> = ( props : Props ) => {
     const classes = useStyles();
     return (
         <div className = {classes.root}>
-            <profile.ProfileMain tokenState = {props.tokenState} username={props.username} hasHeader={false} ></profile.ProfileMain>
+            <profile.ProfileMain username={props.username} hasHeader={false} ></profile.ProfileMain>
         </div>
     )
 }
 
-export default FillAppTest
+export default FillAppFrame

@@ -1,216 +1,122 @@
- 
+
 // crypto-js/sha256 is banned for life import sha256 from 'crypto-js/sha256';
 // also banned import Base64 from 'crypto-js/enc-base64';
 
 import * as nacl from 'tweetnacl-ts'
-import * as crypto from 'crypto'
+//import * as crypto from 'crypto'
+// this acts differently in browser !!!!!  import { createHash } from "crypto";
 import base64url from 'base64url'
 
+import sha256 from "fast-sha256";
+
 import * as social from './SocialTypes'
-import * as config from "./Config"
-
-
-var theLastOne: social.DateNumber = 0
-export function getUniqueId() : social.DateNumber {
-
-    //const startDate = new Date()
-    //const start = startDate.getTime()
-    const s2 = new Date().getTime()
-    var nnn =  ConvertFromMsToDateNumber(s2)
-    if (nnn <= theLastOne) {
-        // this is when less than 1 ms has elapsed since the last time we were here
-        nnn = theLastOne + 1
-        // TODO: watch for roll over from 59 to 60 sec which should increment minute
-    }
-    theLastOne = nnn
-    return nnn
-}
-
-
-// the first return is the hostname from **inside** the token
-// the 2nd return is a string with an error
-export function VerifyToken(myToken :string) : [  string,string ] {
-
-    if ( myToken.length < 200 ) {
-        return ["", "token is too short to be a token"]
-    }
-
-    console.log("about to verify the token")
-
-    var pos = 0
-    var longestPos1 = 0
-    var longestPos2 = 0
-    for ( var i = 0; i < myToken.length; i ++ ){
-        const c = myToken[i]
-        if ( (c >= 'a' && c<='z') || (c >= 'A' && c<='Z') || (c >= '0' && c<='9') || c==='-'  || c==='_' || c==='.' ) {
-            var newLen = i - pos
-            if ( newLen > (longestPos2-longestPos1)){
-                longestPos1 = pos
-                longestPos2 = i
-            }
-        } else {
-            pos = i + 1
-        }
-    }
-    var justTheToken = myToken.substring(longestPos1,longestPos2+1)
-    var parts = justTheToken.split('.')
-    if ( parts.length !== 3 ){
-        return ["", "Token needs 3 periods"]
-    } 
-    var middle =  parts[1]
-    var unpacked = base64url.decode(middle)
-
-    console.log("verify the token found ", unpacked)
-
-    var obj = JSON.parse(unpacked) || {}
-    if ( obj.url !== undefined  ){
-        return [obj.url, ""]
-    } else {
-        console.log("expected  ", unpacked)
-    }
-    return ["", "expected 'url' in token "]
-}
-
-export function getBoxKeyPairFromPassphrase( username: string , phrase: string ): nacl.BoxKeyPair{
-
-    // eg. 
-    // var sha256 = new jsSHA('SHA-256', 'TEXT');
-    // sha256.update(elem.value);
-    // var hash = sha256.getHash("B64");
-    // anonymousanonymous becvomes  DehWi0kF8HS3evNlnMwjdGhyvfg-p0jRMwQUXVp-5O4
-
-    const hash = crypto.createHash('sha256');
-    hash.write(username+phrase);
-    hash.end();
-    var hashBytes = hash.digest()
-
-    const seedKeyPair3 = nacl.box_keyPair_fromSecretKey(hashBytes)
-
-    //console.log("getBoxKeyPairFromPassphrase making keypair from ", username, base64url.encode(Buffer.from(seedKeyPair3.publicKey)))
-
-    return seedKeyPair3
-}
-
- 
-export function getMilliseconds() : number {
-    return new Date().getTime()
-}
-
- 
-export function getSecondsDisplay() : string {
-    var ms =  getMilliseconds()
-    var tmp = ms
-    const millis : number = tmp % 1000
-    tmp = Math.floor(tmp / 1000)
-
-    const secs : number = tmp % 60
-    
-    return ":" + secs + "." + millis
-}
-
-
-export function getCurrentDateNumber() : number {
-    var millis = getMilliseconds()
-    return ConvertFromMsToDateNumber(millis)
-}
-
-// export function getCurrentDateString() : string {
-//     var millis = getMilliseconds()
-//     return ConvertFromMsToDateString(millis)
-// }
-
-// FIXME: atw use crypto.randomBytes(size[, callback]) and convert to b64
-export function randomString(len:number) {
-    const charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    var randomString = '';
-    for (var i = 0; i < len; i++) {
-        var randomPoz = Math.floor(Math.random() * charSet.length);
-        randomString += charSet.substring(randomPoz,randomPoz+1);
-    }
-    return randomString;
-}
+//import * as config from "./Config"
 
 export type Context = {
-    username: string  // the username and password go together
-    password: string  // 
-    // usually username and profileNameFromApp will match.
+    username: string
+    password: string  // might be "" in which case the ourSecretKey is "" and ourPublicKey must be set manually
+
+    // delete me usually username and profileNameFromApp will match.
     // sometimes from a topic when messages received
-    profileNameFromApp: string   // this is from the url, on the server it's == username 
+    //profileNameFromApp: string   // this is from the url, on the server it's == username 
 
     tokenFromApp: string
-    serverPubKeyFromApp: string
+    //   knotServerPubKeyFromApp: string
 
     initialized: boolean
 
     ourPublicKey: Buffer
     ourSecretKey: Buffer
     profileHash: string
-    serversPubKey: Buffer
+    //   knotServersPubKey: Buffer
 
-    config?: config.ServerConfigItem
+    //onfig?: config.ServerConfigItem
 }
-export const emptyContext = {
+export const emptyContext: Context = {
     username: "",
     password: "",
-    profileNameFromApp: "",
+    //profileNameFromApp: "",
     tokenFromApp: "",
-    serverPubKeyFromApp: "",
+    //knotServerPubKeyFromApp: "",
 
     initialized: false,
 
     ourPublicKey: Buffer.from(""),
     ourSecretKey: Buffer.from(""),
     profileHash: "", // starts with = and has exactly 43 following
-    serversPubKey: Buffer.from(""),// as obtained by TokenScreen using profileName, client
+   // knotServersPubKey: Buffer.from(""),// as obtained by TokenScreen using profileName, client
 }
 
 // not public
 var contexts: Context[] = []
-contexts.push(emptyContext)
-var currentIndex = 0
+ 
+// BEFORE you change this make sure that 
+// a context has been added.
+// chenge this when the user signs in.
+export var signedInAs : string = 'Anonymous'
 
-export function getCurrentContext(): Context {
-    var cx = contexts[currentIndex]
-    initContext(cx)
-    return cx
+// export function XXXgetCurrent Context(): Context {
+//     var cx = contexts[currentIndex]
+//     initContext(cx)
+//     return cx
+// }
+
+export function getSignedInContext(): Context {
+    const c = getNameToContext(signedInAs)
+    if (c) {
+        return c
+    }
+    // fuck
+    console.log("getSignedInContext fail. was hoping to avoid this.")
+    return emptyContext
 }
 
-export function getMatchingNamedContext(username: string): Context {
+export function getNameToContext(username: string): Context {
     // FIXME: use a map
-    var found = contexts[currentIndex] // a bad default 
+    var found: Context | undefined = undefined
     contexts.forEach(context => {
         initContext(context)
-        if (context.username === username) {
+        if (context.username.toLowerCase() === username.toLowerCase()) {
             found = context
         }
     });
-    return found
+    if (found){
+        return found
+    }
+    // fuck
+    console.log("getNameToContext fail. was hoping to avoid this.", username)
+    return emptyContext
 }
 
-export function getMatchingTopicContext( hashedtopic: string): Context {
+export function getMatchingHashedTopicContext(hashedtopic: string): Context {
     // FIXME: use a map
-    var found = contexts[currentIndex] // a bad default 
+    var found: Context | undefined = undefined
     contexts.forEach(context => {
         initContext(context)
         if (context.profileHash === hashedtopic) {
             found = context
         }
     });
-    return found
+    if (found){
+        return found
+    }
+    // fuck
+    console.log("getMatchingHashedTopicContext fail. was hoping to avoid this.")
+    return emptyContext
 }
 
 // used by logging
-export function getTopicName( topic: string ) : string {
-    if ( ! topic.startsWith("=")) {
+export function getTopicName(topic: string): string {
+    if (!topic.startsWith("=")) {
         return topic
     }
-    return getMatchingTopicContext(topic).username
+    return getMatchingHashedTopicContext(topic).username
 }
 
 // pubkToName is useful for logging
-export function getPubkToName( pubk: Buffer ) : string {
-     // FIXME: use a map
-    for ( var i = 0 ; i < contexts.length; i ++ ){
+export function getPubkToName(pubk: Buffer): string {
+    // FIXME: use a map
+    for (var i = 0; i < contexts.length; i++) {
         const context = contexts[i]
         initContext(context)
         //const pubk64 = toBase64Url(pubk)
@@ -223,34 +129,44 @@ export function getPubkToName( pubk: Buffer ) : string {
 }
 
 
-export function getMatchingContext(topic: string): Context {
+export function getHashedTopic2Context(hashedTopic: string): Context {
+    if (!hashedTopic.startsWith("=")) {
+        console.log("ERROR expecting HASHED topic ", hashedTopic)
+    }
     // FIXME: use a map
-    var found = contexts[currentIndex] // a bad default 
+    var found: Context | undefined = undefined 
     var wasFound = false
     contexts.forEach(context => {
         initContext(context)
-        if (context.profileHash === topic) {
+        if (context.profileHash === hashedTopic) {
             found = context
             wasFound = true
         }
     });
-    if ( ! wasFound ){
-        console.log("ERROR context not found for topic ", topic, contexts )
+    if (found){
+        return found
     }
-    return found
+    // fuck
+    console.log("getHashedTopic2Context fail. was hoping to avoid this.", hashedTopic)
+    return emptyContext
 }
 
 
-export function setCurrentIndex(i: number) {
-    currentIndex = i
-}
+// export function setCurrentIndex(i: number) {
+//     currentIndex = i
+// }
 
 export function cleanContexts() {
     contexts = []
-    currentIndex = 0
 }
 
-export function pushContext(context: Context) {
+export function pushContext( context: Context) {
+    // don't do it twice. FIXME: use map
+    for ( var c of contexts){
+        if (c.username === context.username) {
+            return
+        }
+    }
     contexts.push(context)
 }
 
@@ -258,38 +174,155 @@ export function initContext(context: Context) {
     if (context.initialized) {
         return
     }
-    const keypair: nacl.BoxKeyPair = getBoxKeyPairFromPassphrase(context.username, context.password)
-    context.ourPublicKey = Buffer.from(keypair.publicKey)
-    context.ourSecretKey = Buffer.from(keypair.secretKey)
-    context.profileHash = "=" + KnotNameHash(context.profileNameFromApp)
-    context.serversPubKey = fromBase64Url(context.serverPubKeyFromApp)
+    if (context.password.length !== 0) {
+        const keypair: nacl.BoxKeyPair = getBoxKeyPairFromPassphrase(context.username, context.password)
+        context.ourPublicKey = Buffer.from(keypair.publicKey)
+        context.ourSecretKey = Buffer.from(keypair.secretKey)
+    }
+    context.profileHash = "=" + KnotNameHash(context.username)
+    // context.knotServersPubKey = fromBase64Url(context.knotServerPubKeyFromApp)
     context.initialized = true
 }
-export function SetUsernameFromApp(str: string) {
-    contexts[currentIndex].username = str
-}
-export function SetPasswordFromApp(str: string) {
-    contexts[currentIndex].password = str
-}
-export function SetProfileNameFromApp(str: string) {
-    contexts[currentIndex].profileNameFromApp = str
-}
-export function SetTokenFromApp(str: string) {
-    contexts[currentIndex].tokenFromApp = str
+// export function SetUsernameFromApp(str: string) {
+//     contexts[currentIndex].username = str
+//     contexts[currentIndex].initialized = false
+// }
+// export function SetPasswordFromApp(str: string) {
+//     contexts[currentIndex].password = str
+//     contexts[currentIndex].initialized = false
+// }
+// export function SetProfileNameFromApp(str: string) {
+//     contexts[currentIndex].profileNameFromApp = str
+//     contexts[currentIndex].initialized = false
+// }
+// export function SetTokenFromApp(str: string) {
+//     contexts[currentIndex].tokenFromApp = str
+//     contexts[currentIndex].initialized = false
+// }
+
+// export function SetKnotServerPubKeyFromApp(str: string) {
+//     contexts[currentIndex].knotServerPubKeyFromApp = str
+//     contexts[currentIndex].initialized = false
+// }
+
+var theLastOne: social.DateNumber = 0
+export function getUniqueId(): social.DateNumber {
+    const s2 = new Date().getTime()
+    var nnn = ConvertFromMsToDateNumber(s2)
+    if (nnn <= theLastOne) {
+        // this is when less than 1 ms has elapsed since the last time we were here
+        nnn = theLastOne + 1
+        // watch for roll over from 59 to 60 sec which should increment minute, which *might* inc hour etc.
+        // to have that happen we'd have to call this 1000 times in a sec?
+        // I'm bett it doesn't happen
+        if ( nnn % 100000 === 60000 ){
+            console.log("ERROR FIXME: rollover problem")
+        }
+    }
+    theLastOne = nnn
+    return nnn
 }
 
-export function SetServerPubKeyFromApp(str: string) {
-    contexts[currentIndex].serverPubKeyFromApp = str
+// the first return is the hostname from **inside** the token
+// the 2nd return is a string with an error
+export function VerifyToken(myToken: string): [string, string] {
+
+    if (myToken.length < 200) {
+        return ["", "token is too short to be a token"]
+    }
+    console.log("about to verify the token")
+    var pos = 0
+    var longestPos1 = 0
+    var longestPos2 = 0
+    for (var i = 0; i < myToken.length; i++) {
+        const c = myToken[i]
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c === '-' || c === '_' || c === '.') {
+            var newLen = i - pos
+            if (newLen > (longestPos2 - longestPos1)) {
+                longestPos1 = pos
+                longestPos2 = i
+            }
+        } else {
+            pos = i + 1
+        }
+    }
+    var justTheToken = myToken.substring(longestPos1, longestPos2 + 1)
+    var parts = justTheToken.split('.')
+    if (parts.length !== 3) {
+        return ["", "Token needs 3 periods"]
+    }
+    var middle = parts[1]
+    var unpacked = base64url.decode(middle)
+
+    console.log("verify the token found ", unpacked)
+
+    var obj = JSON.parse(unpacked) || {}
+    if (obj.url !== undefined) {
+        return [obj.url, ""]
+    } else {
+        console.log("expected  ", unpacked)
+    }
+    return ["", "expected 'url' in token "]
 }
+
+export function Sha256Hash( str: string ): Uint8Array{
+    const data = Buffer.from(str)
+    return sha256(data)
+}
+
+export function getBoxKeyPairFromPassphrase(username: string, phrase: string): nacl.BoxKeyPair {
+    // this is how we do
+    // const hash = createHash('sha256');
+    // hash.write(username + phrase);
+    // hash.end();
+    // var hashBytes = hash.digest()
+    const hashBytes = Sha256Hash(username + phrase)
+    const seedKeyPair3 = nacl.box_keyPair_fromSecretKey(hashBytes)
+    return seedKeyPair3
+}
+
+
+export function getMilliseconds(): number {
+    return new Date().getTime()
+}
+
+export function getSecondsDisplay(): string {
+    var ms = getMilliseconds()
+    var tmp = ms
+    const millis: number = tmp % 1000
+    tmp = Math.floor(tmp / 1000)
+    const secs: number = tmp % 60
+    return ":" + secs + "." + millis
+}
+
+export function getCurrentDateNumber(): number {
+    var millis = getMilliseconds()
+    return ConvertFromMsToDateNumber(millis)
+}
+
+// FIXME: atw use crypto.randomBytes(size[, callback]) and convert to b64 ?
+export function randomString(len: number) {
+    const charSet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var randomString = '';
+    for (var i = 0; i < len; i++) {
+        var randomPoz = Math.floor(Math.random() * charSet.length);
+        randomString += charSet.substring(randomPoz, randomPoz + 1);
+    }
+    return randomString;
+}
+
+
 
 // base64 convert base64 encode base64
-export function toBase64Url(buf: Uint8Array): string {
-    const buffer = Buffer.from(buf)
-    return base64url.encode(buffer)
+export function toBase64Url(buf: Buffer): string {
+    const result: string = base64url.encode(buf)
+    // const lll = result.length 32 to 43
+    return result
 }
 
 export function fromBase64Url(str: string): Buffer {
-    var buf: Buffer = Buffer.from(base64url.decode(str))
+    const buf: Buffer = base64url.toBuffer(str)
+    //const lll = buf.length // 43 to 32
     return buf
 }
 
@@ -309,44 +342,22 @@ export function UnBoxIt(message: Buffer, nonce: Buffer, theirPublicKey: Buffer, 
     return result
 }
 
-
+// KnotNameHash must match exactly what KnotFree does to topics.
 export function KnotNameHash(name: string): string {
-    //var result: Uint8Array
-
-    //var enc = new TextEncoder();
-    //result = enc.encode(name)
-
-    //const hashDigest = sha256(name);
-   // var tmp = Base64.stringify(hashDigest);
-
-   const hash = crypto.createHash('sha256') 
-   hash.write(name) 
-   hash.end() 
-   var  hbytes = hash.digest()
-   var tmp = base64url.encode(hbytes).substring(0,32)
+    // const hash = createHash('sha256')
+    // hash.write(name)
+    // hash.end()
+    // const hbytes = hash.digest()
+    const hbuff = Buffer.from(Sha256Hash(name))
+    var tmp = toBase64Url(hbuff)
+    tmp = tmp.slice(0,32)
     return tmp
 }
 
-// deprecate me
-// export function xxxxxConvertFromMsToDateString( millis : number ) : string{
-//     const startDate = new Date(millis)
-//     var date = startDate.getDate(); //returns date (1 to 31) you can getUTCDate() for UTC date
-//     var month = startDate.getMonth() + 1 ; // returns 1 less than month count since it starts from 0
-//     var year = startDate.getFullYear(); //returns year 
-//     year = year % 100
-//     var hours = startDate.getHours();
-//     var minutes = startDate.getMinutes();
-//     var seconds = startDate.getSeconds();
-//     millis = millis % 1000
-//     var result = year + ZeroPadLeft2(month) + ZeroPadLeft2(date) + ZeroPadLeft2(hours) + ZeroPadLeft2(minutes) + ZeroPadLeft2(seconds) + millis
-
-//     return result
-//}
-
-export function ConvertFromMsToDateNumber( millis : number ) : social.DateNumber{
+export function ConvertFromMsToDateNumber(millis: number): social.DateNumber {
     const startDate = new Date(millis)
     var date = startDate.getDate(); //returns date (1 to 31) you can getUTCDate() for UTC date
-    var month = startDate.getMonth() + 1 ; // returns 1 less than month count since it starts from 0
+    var month = startDate.getMonth() + 1; // returns 1 less than month count since it starts from 0
     var year = startDate.getFullYear(); //returns year 
     year = year % 100
     var hours = startDate.getHours();
@@ -363,43 +374,40 @@ export function ConvertFromMsToDateNumber( millis : number ) : social.DateNumber
     return result
 }
 
-export function DateFromDateNumber ( dn : social.DateNumber ) : Date  {
+export function DateFromDateNumber(dn: social.DateNumber): Date {
 
     var tmp = dn
-    const millis : number = tmp % 1000
+    const millis: number = tmp % 1000
     tmp = Math.floor(tmp / 1000)
 
-    const secs : number = tmp % 100
+    const secs: number = tmp % 100
     tmp = Math.floor(tmp / 100)
 
-    const mins : number = tmp % 100
+    const mins: number = tmp % 100
     tmp = Math.floor(tmp / 100)
 
-    const hours : number = tmp % 100
+    const hours: number = tmp % 100
     tmp = Math.floor(tmp / 100)
 
-    const day : number = tmp % 100
+    const day: number = tmp % 100
     tmp = Math.floor(tmp / 100)
 
-    const month : number = tmp % 100
+    const month: number = tmp % 100
     tmp = Math.floor(tmp / 100)
 
-    const year : number = tmp % 100
-    //tmp = tmp / 100
+    const year: number = tmp % 100
 
-
-    var res : Date = new Date()
+    var res: Date = new Date()
     res.setMilliseconds(millis)
     res.setSeconds(secs)
     res.setMinutes(mins)
     res.setHours(hours)
-    res.setFullYear(2000 + year, month,day)
+    res.setFullYear(2000 + year, month, day)
     // does it know it's supposed to be in gmt ?
     return res
 }
 
-export function FormatDateNumber ( dn : social.DateNumber ) : string  { 
-    //var date: Date = DateFromDateNumber(dn)
+export function FormatDateNumber(dn: social.DateNumber): string {
 
     var tmp = dn
     //const millis : number = tmp % 1000
@@ -408,41 +416,93 @@ export function FormatDateNumber ( dn : social.DateNumber ) : string  {
     //const secs : number = tmp % 100
     tmp = Math.floor(tmp / 100)
 
-    const mins : number = tmp % 100
+    const mins: number = tmp % 100
     tmp = Math.floor(tmp / 100)
 
-    const hours : number = tmp % 100
+    const hours: number = tmp % 100
     tmp = Math.floor(tmp / 100)
 
-    const day : number = tmp % 100
+    const day: number = tmp % 100
     tmp = Math.floor(tmp / 100)
 
-    const month : number = tmp % 100
+    const month: number = tmp % 100
     tmp = Math.floor(tmp / 100)
 
-    const year : number = tmp % 100
+    const year: number = tmp % 100
     //tmp = tmp / 100
 
-    return "" + month + "/" + day + "/" + year + " " + hours + ":" + mins 
-  
-    //return "" + date
-
+    return "" + month + "/" + day + "/" + year + " " + hours + ":" + mins
 }
 
 // ZeroPadLeft2 adds '0' on the left, as needed, to make the result have 2 length === 2
-export function ZeroPadLeft2( sss : (number|string) ) : string {
-    var tmp = "00"+sss
+export function ZeroPadLeft2(sss: (number | string)): string {
+    var tmp = "00" + sss
     var x = tmp.length
-    tmp = tmp.substr(x-2,x-1)
+    tmp = tmp.substr(x - 2, x - 1)
     return tmp
 }
 
 // ZeroPadLeft3 adds '0' on the left, as needed, to make the result have 2 length === 3
-export function ZeroPadLeft3( sss : (number|string) ) : string {
-    var tmp = "000"+sss
+export function ZeroPadLeft3(sss: (number | string)): string {
+    var tmp = "000" + sss
     var x = tmp.length
-    tmp = tmp.substr(x-3,x-1)
+    tmp = tmp.substr(x - 3, x - 1)
     return tmp
 }
 
+// getProfileName comes from the client browser eg alice_vociferous_mcgrath
+export function getProfileName(): string {
+    var profileName = "unknown"
+    var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotlocal.com:3000/
+    var ind = locationhref.indexOf("//")
+    if (ind > 0) {
+        locationhref = locationhref.substring(ind + 2)
+        var parts = locationhref.split(".")
+        if (parts.length <= 0) {
+            console.log("how can we have missing parts here?")
+        }
+        profileName = parts[0]
+    }
+    return profileName
+}
 
+// eg gotohere.com
+export function getServerName(): string {
+    var serverName = "unknown"
+    var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotlocal.com:3000/
+    var ind = locationhref.indexOf("//")
+    if (ind > 0) {
+        locationhref = locationhref.substring(ind + 2)
+        var parts = locationhref.split(".")
+        if (parts.length <= 0) {
+            console.log("how can we have missing parts here?")
+        }
+        serverName = parts[1] + "." + parts[2]
+    }
+    return serverName
+}
+
+
+// UnpackMqttOptions will pull the key,value pairs from the mqtt userProperties
+// and put them into a Map of strings and not a funky js object
+// sometimes they are wrapped with [ ] and I don't know why.
+// probably the mqtt5 spec allows mutliple values which is dumb.
+export function UnpackMqttOptions( packet : any ) :Map<string, string>  {
+    var gotOptions = new Map<string, string>()
+    //console.log("unpacking packet.properties.userProperties ", Object.keys(packet.properties.userProperties))
+    Object.keys(packet.properties.userProperties).forEach((key: string) => {
+      var val = packet.properties.userProperties[key]// copy over the user stuff
+      if (val) {
+        var tmp = val.toString()
+        if (tmp[0] === '[') {
+          tmp = tmp.substr(1)
+        }
+        if (tmp[tmp.length - 1] === ']') {
+          tmp = tmp.substr(0, tmp.length - 1)
+        }
+        gotOptions.set(key, tmp)
+      }
+    });
+    //console.log(" userProperties unpacked as ",  gotOptions )
+    return gotOptions
+}

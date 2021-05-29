@@ -15,19 +15,14 @@ import Button from '@material-ui/core/Button';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 
-import {getMqttThing} from '../server/MqttClient';
-
-//import EditorFormatLineSpacing from 'material-ui/svg-icons/editor/format-line-spacing';
+import * as mqttstuff from '../server/MqttClient';
 
 import * as util from "../server/Util"
 import * as mqtt_stuff from "../server/MqttClient"
-import { getProfileName } from '../App';
-import { getServerName } from '../App';
-//import { RestoreOutlined } from '@material-ui/icons';
-// import base64url from 'base64url';
-import * as nacl from 'tweetnacl-ts'
-import classes from "*.module.css";
 
+
+import * as nacl from 'tweetnacl-ts'
+import * as pingapi from "../api1/Ping";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -155,7 +150,7 @@ export const TokenScreen: FC<Props> = (props: Props): ReactElement => {
         // can we start mqtt? 
         // the first path is for when it's already started
         // the 2nd starts it. 
-        if (getMqttThing() != undefined) {
+        if ( mqttstuff.getMqttThing() !== undefined) {
             // don't start again
             console.log("didn't restart mqtt unnecessarily")
             console.log("mqtt success in TokenScreen")
@@ -177,7 +172,7 @@ export const TokenScreen: FC<Props> = (props: Props): ReactElement => {
         } else {
             mqtt_stuff.StartClientMqtt(aToken, serverName, (errmsg: string) => {
 
-                console.log("returned from mqtt with xxx news ", errmsg)
+                console.log("returned from mqtt no news is good: ", errmsg)
                 if (errmsg.length) {
                     console.log("mqtt has err here ", errmsg)
                     // failed
@@ -189,7 +184,7 @@ export const TokenScreen: FC<Props> = (props: Props): ReactElement => {
                         serverName: serverName
                     }
                     setState(newState)
-                    const mqtt = getMqttThing()
+                    const mqtt = mqttstuff.getMqttThing()
                     if ( mqtt ){
                         mqtt.CloseTheConnect()
                     } else {
@@ -199,20 +194,60 @@ export const TokenScreen: FC<Props> = (props: Props): ReactElement => {
 
                 } else {
                     console.log("mqtt 2 success in TokenScreen 2")
-                    // success, tell ourselves
-                    const newState: State = {
-                        ...state,
-                        theToken: aToken,
-                        complaints: "",
-                        serverName: serverName,
-                        serverPublicKeyB64: serverPubKey,
-                        isVerified: true
-                    }
-                    // don't refresh self on success setState(newState)
-                    localStorage.setItem('knotfree_access_token_v1', aToken);
-                    console.log("mqtt success 2 pubkey ", newState.serverPublicKeyB64)
-                    //tell the app
-                    props.setAppHasToken(newState)
+                    
+                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 100);
+                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 200);
+                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 300);
+                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 400);
+                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 500);
+                    
+                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 2100);
+                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 2200);
+                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 2300);
+                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 2400);
+                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 2500);
+
+                    const context: util.Context = util.getNameToContext(util.getProfileName()) 
+                    console.log("TokenScreen ping will use this name", context.username)  
+                    const profileName = util.getProfileName()
+                    // send a ping to get the pubk of the profile
+                    pingapi.IssueTheCommand("Anonymous",profileName,(cmd: pingapi.PingCmd, error: any) => {
+                        if ( error ){
+                            console.log("ERROR in ping from token screen ")
+                        } else {
+                            console.log("TokenScreen Ping is back ")
+
+                            var context: util.Context = util.getNameToContext(util.getProfileName()) 
+        
+                            console.log("Have pubk from ping of " , context.username)
+                  
+                            // success, tell ourselves
+                            // is cmd.pub is in b64
+                            const pubk:Buffer = util.fromBase64Url(cmd.pub)
+
+                            // now that we have the pubk we can set up the context
+                            context.initialized = false
+                            util.initContext(context) // fix the wong hash of the name
+                            context.ourPublicKey = pubk
+                            context = util.getNameToContext(util.getProfileName()) 
+                            console.log("Have pubk from ping of " , util.toBase64Url(context.ourPublicKey) )
+
+                            const newState: State = {
+                                ...state,
+                                theToken: aToken,
+                                complaints: "",
+                                serverName: serverName,
+                                serverPublicKeyB64: serverPubKey,
+                                isVerified: true
+                            }
+                            //util.SetPserverPubKey(util.getProfileName())
+                            // don't refresh self on success setState(newState)
+                            localStorage.setItem('knotfree_access_token_v1', aToken);
+                            console.log("mqtt success 2 pubkey ", newState.serverPublicKeyB64)
+                            //tell the app
+                            props.setAppHasToken(newState)
+                        }
+                    })
                 }
             })
         }
@@ -280,11 +315,11 @@ export const TokenScreen: FC<Props> = (props: Props): ReactElement => {
     }
 
     const getFreeTokenHandler = () => {
-        var serverName = getServerName()
+        var serverName = util.getServerName()
         if (process.env.NODE_ENV === "development") {
             serverName = serverName.replace("3000", "8085")
         }
-        const hoststr = "http://" + getProfileName() + "." + serverName + "api1/getToken"
+        const hoststr = "http://" + util.getProfileName() + "." + serverName + "api1/getToken"
 
         console.log("it's ftech time again ... for a Token !!", hoststr)
         var data = getSampleKnotFreeTokenRequest()
@@ -595,7 +630,7 @@ function getSampleKnotFreeTokenRequest(): TokenRequest {
     var res: TokenRequest = {
         pkey: "fixme",        //    `json:"pkey"` // a curve25519 pub key of caller
         payload: getSampleKnotFreeTokenPayload(),
-        Comment: "For " + getProfileName()             // `json:"comment"`
+        Comment: "For " + util.getProfileName()             // `json:"comment"`
     }
     return res
 }

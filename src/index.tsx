@@ -4,6 +4,9 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// should we pushContext with profileContext() here
+
+
 ReactDOM.render(
   <React.StrictMode>
     <App />

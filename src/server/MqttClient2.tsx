@@ -1,11 +1,17 @@
 
 
-import * as api1 from '../api1/Api';
+//import { updateTypeLiteralNode } from 'typescript';
+import * as api from '../api1/Api';
 import * as mqtt_stuff from './MqttClient';
+import * as util from './Util';
 
-export function HandleApi1PacketIn( mqttThing: mqtt_stuff.MqttTestServerTricks,
+// we should move this to Api TODO: soon seee HandleApiIncoming
+// this is different on client and server.
+// Deprecated. TODO: delete me. 
+export function xxxHandleApi1PacketIn( mqttThing: mqtt_stuff.MqttTestServerTricks,
                  isApi:string,
-                 ourParams: api1.WaitingRequest ) {
+                 ourParams: api.WaitingRequest ) {
+
     var returnHandler = mqttThing.returnsWaitingMap.get(isApi)
     if (returnHandler !== undefined) {
 
@@ -15,7 +21,7 @@ export function HandleApi1PacketIn( mqttThing: mqtt_stuff.MqttTestServerTricks,
         ourParams.permanent = returnHandler.permanent
         ourParams.replydata = returnHandler.replydata
         ourParams.waitingCallbackFn = returnHandler.waitingCallbackFn // the main thing !
-        ourParams.callerPublicKey64 =  ourParams.options.get("pubk") || "unfound"
+        //ourParams.callerPublicKey64 =  ourParams.options.get("pubk") || ""
         
       // const hadReturnHandler = returnHandler
       // it's a return. Just dispatch it,
@@ -23,25 +29,40 @@ export function HandleApi1PacketIn( mqttThing: mqtt_stuff.MqttTestServerTricks,
         mqttThing.returnsWaitingMap.delete(isApi)
       }
 
+      const msg:string = Buffer.from(ourParams.message).toString('utf-8')
+      const isPingPacket = msg.startsWith('{"cmd":"ping"')
+      const weShouldSkipCrypto: boolean = ! api.BoxItUp || isPingPacket
+   
       // // FIXME needs crypto  - unbox it now
-      if ( returnHandler.skipCryptoForThisOne === true) {
+      if ( weShouldSkipCrypto) {
 
         // console.log("calling return handler callbask ping")// if call a callbask yiu turn to stone 
         ourParams.waitingCallbackFn(ourParams)
 
       } else {
 
-        // console.log("HandleApi1PacketIn Return Handler unbox usernameFromApp  ",  c_util.contexts[c_util.currentIndex].usernameFromApp )
-        // console.log("HandleApi1PacketIn Return Handler unbox passwordFromApp  ",  c_util.contexts[c_util.currentIndex].passwordFromApp )
-        // console.log("HandleApi1PacketIn Return Handler unbox profileNameFromApp  ",  c_util.contexts[c_util.currentIndex].profileNameFromApp )
-        // //console.log("HandleApi1PacketIn Return Handler unbox tokenFromApp  ",  c_util.contexts[c_util.currentIndex].tokenFromApp )
-        // console.log("HandleApi1PacketIn Return Handler unbox serverPubKeyFromApp   ",  c_util.contexts[c_util.currentIndex].serverPubKeyFromApp )
-   
-        // FIXME unbox it now. we're on the server seeing an api1 request
-        // figure out which c_util.context to use 
-        
-        //console.log("calling return handler callbask")
-        ourParams.waitingCallbackFn(ourParams)
+        const message:Buffer = Buffer.from(ourParams.message)
+      
+        const nonce: Buffer = Buffer.from(ourParams.options.get("nonc") || "")
+        if ( nonce.length === 0 ){
+          console.log("ERROR missing nonc ")
+        }
+        const theirPubk : string = ourParams.options.get("pubk") || ""
+        if ( theirPubk.length === 0 ){
+          console.log("ERROR missing pubk ")
+        }
+        const theirPublicKey:Buffer = util.fromBase64Url(theirPubk)
+        const secret: Buffer = util.getHashedTopic2Context(ourParams.topic).ourSecretKey 
+
+        const unboxed:Buffer = util.UnBoxIt(message,nonce,theirPublicKey,secret)
+        ourParams.message = unboxed
+
+        if ( unboxed.length === 0) {
+          console.log("unboxing disaster inHandleApi1PacketIn  ")
+        } else {
+          console.log("HandleApi1PacketIn calling 2 waitingCallbackFn", unboxed.toString('utf8'))
+          ourParams.waitingCallbackFn(ourParams)
+        }
       }
 
     } else {
@@ -49,28 +70,4 @@ export function HandleApi1PacketIn( mqttThing: mqtt_stuff.MqttTestServerTricks,
       console.log("ERROR had api1 but unknown cmd. did you forget to 'load up the api with handlers for the various'? cmd was:", isApi) 
 
     }
-}
-
-// UnpackMqttOptions will pull the key,value pairs from the mqtt userProperties
-// and put them into a Map of strings and not a funky js object
-// sometimes they are wrapped with [ ] and I don't know why.
-// probably the mqtt5 spec allows mutliple values which is dumb.
-export function UnpackMqttOptions( packet : any ) :Map<string, string>  {
-    var gotOptions = new Map<string, string>()
-    //console.log("unpacking packet.properties.userProperties ", Object.keys(packet.properties.userProperties))
-    Object.keys(packet.properties.userProperties).forEach((key: string) => {
-      var val = packet.properties.userProperties[key]// copy over the user stuff
-      if (val) {
-        var tmp = val.toString()
-        if (tmp[0] === '[') {
-          tmp = tmp.substr(1)
-        }
-        if (tmp[tmp.length - 1] === ']') {
-          tmp = tmp.substr(0, tmp.length - 1)
-        }
-        gotOptions.set(key, tmp)
-      }
-    });
-    //console.log(" userProperties unpacked as ",  gotOptions )
-    return gotOptions
 }

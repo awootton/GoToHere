@@ -4,9 +4,9 @@ import fs from 'fs'
 
 import * as util from '../server/Util';
 
-import * as api1 from "./Api"
+import * as api from "./Api"
 
-import ApiCommand, { WaitingRequest, handleSendReplyCallback, SendApiCommandOut} from './Api';
+import ApiCommand, { WaitingRequest, SendApiReplyBack, SendApiCommandOut} from './Api';
 
 import * as config from "../server/Config"
 
@@ -47,7 +47,7 @@ export function IssueTheCommand(username: string, post: social.Post, receiver: S
 
     const theRetries = retries || defaultRetry
 
-    var wr: WaitingRequest = SavePostWaitingRequest
+    const wr: WaitingRequest = SavePostWaitingRequest
 
     SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
 
@@ -78,7 +78,7 @@ const SavePostWaitingRequest: WaitingRequest = {
     waitingCallbackFn: handleSavePostApi,
     options: new Map<string, string>(),
     returnAddress: "unused now",
-    callerPublicKey64:  "unknown"
+    //callerPublicKey64:  "unknown"
 }
 
 export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
@@ -128,17 +128,18 @@ function handleSavePostApi(wr: WaitingRequest, err: any) {
         console.log("in the handleSavePostApi error undefined post ", util.getTopicName(wr.topic), wr.message.toString())
         return
     }
-    var newid: social.DateNumber = util.getCurrentDateNumber()
-    
-    cmd.post.id = newid
+    // if the id exists then it's an edit and not a new. 
+    if ( cmd.post.id === 0 ) {
+        var newid: social.DateNumber = util.getCurrentDateNumber()
+        cmd.post.id = newid
+    }
     const post = cmd.post
 
     console.log(" on the server in handleSavePostApi with ", post.id , post.title)
 
-    var cryptoContext = util.getMatchingContext(wr.topic)
-    var configItem = cryptoContext.config || config.EmptyServerConfigItem
+    var cryptoContext = util.getHashedTopic2Context( wr.topic ) || util.emptyContext // this smells
+    var configItem =  config.GetName2Config(cryptoContext.username)
     var path = "data/" + configItem.directory
-
 
     writePostToFile(path, post)
 
@@ -149,9 +150,14 @@ function handleSavePostApi(wr: WaitingRequest, err: any) {
     }
     var jsonstr = JSON.stringify(reply,replacer)
                 // console.log("have reply savepost ", jsonstr  )
-    handleSendReplyCallback(wr, Buffer.from(jsonstr), null)
+    SendApiReplyBack(wr, Buffer.from(jsonstr), null)
 
-    api1.Broadcast(cryptoContext, cmd)
+    const mostlyEmptyPost: social.Post = {
+        ...social.emptyPost,
+        id : cmd.post.id
+    }
+    cmd.post = mostlyEmptyPost //FIXME: use BroadcastCommand 
+    api.Broadcast(cryptoContext, cmd)
 }
 
 function replacer(key: any, value: any) {

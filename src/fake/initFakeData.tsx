@@ -21,6 +21,8 @@ import * as config from "../server/Config"
 import Rand32 from './Rand32'
 import { NamePairs } from './namePairs'
 
+import * as generalapi from "../api1/GeneralApi"
+
 
 // to run this file :
 // node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/fake/initFakeData
@@ -64,9 +66,9 @@ function getSomeFakeText(wordCount: number, which: string): string {
         fakeText = tmp
     }
 
-    fakeText.fakeText = fakeText.fakeText.replace("\n", " ")
-    fakeText.fakeText = fakeText.fakeText.replace("  ", " ")
-    fakeText.fakeText = fakeText.fakeText.replace("  ", " ")
+    fakeText.fakeText = fakeText.fakeText.replaceAll("\n", " ")
+    fakeText.fakeText = fakeText.fakeText.replaceAll("  ", " ")
+    fakeText.fakeText = fakeText.fakeText.replaceAll("  ", " ")
 
     var originalTextPos = fakeText.pos
     var someText = fakeText.fakeText
@@ -102,7 +104,7 @@ function makeFakePost( username:string, id: number, path: string, theme: string)
         id: id,
         title: aTitle.trim(),
         theText: someText.trim(), // ATW FIXME: shorter names text
-        likes: [],  // like
+        likes: 0,  // like
         retweets: [], // rt
         comments: [], // comm
         postedByName : username
@@ -131,31 +133,6 @@ function makeFakePost( username:string, id: number, path: string, theme: string)
     });
 }
 
-// this.topic2datafolder.set("alice_vociferous_mcgrath", "alice")
-// this.topic2datafolder.set("building_bob_bottomline_boldness", "bob")
-// this.topic2datafolder.set("charles_everly_erudite", "charles")
-// this.topic2datafolder.set("alan_tracey_wootton", "alan")
-// "data/lists/"+folder+"/" + theDay becomes  data/alice/lists/posts/
-// and data/alice/lists/timeline/
-
-// for (var i = 0; i < 24; i++) {
-
-//     makeFakePost(i, "data/alice/lists/posts/", "cupcake")
-//     makeFakePost(i, "data/alice/lists/timeline/", "cupcake")
-
-//     makeFakePost(i, "data/bob/lists/posts/", "hipster")
-//     makeFakePost(i, "data/bob/lists/timeline/", "hipster")
-
-//     makeFakePost(i, "data/charles/lists/posts/", "monacle")
-//     makeFakePost(i, "data/charles/lists/timeline/", "monacle")
-
-//     makeFakePost(i, "data/alan/lists/posts/", "space")
-//     makeFakePost(i, "data/alan/lists/timeline/", "space")
-
-// }
-
-// The trick: make it idempotent
-
 type FakeProfileProfile = {
     item: config.ServerConfigItem
     pubk64: string // the public key in base64url
@@ -165,6 +142,8 @@ type FakeProfileProfile = {
     followers: string [] // of pubk64
     following: string [] // of pubk64
     key : string [] // pub key followed by space then name
+
+    generalinfo: generalapi.GeneralInfo
 }
 
 // The trick: make it idempotent
@@ -196,7 +175,8 @@ function initPeople() {
                 friends:   [] ,
                 followers:   [],
                 following:   [],
-                key :   []
+                key :   [],
+                generalinfo : generalapi.GeneralInfoSample
             }
         } else {
             var theName = makeRandName(rand, 3)
@@ -205,7 +185,7 @@ function initPeople() {
                 nameReservationToken: "nonameReservationToken",
                 port: "3010",  // for forwarding http
                 directory: theName,  // where the data lives
-                passphrase: makeRandWords(rand, 4)
+                passphrase: theName //makeRandWords(rand, 4)
             }
             localConfig.items.push(item)
             pro = {
@@ -216,7 +196,8 @@ function initPeople() {
                 friends:   [] ,
                 followers:   [],
                 following:   [],
-                key :   []
+                key :   [],
+                generalinfo : generalapi.GeneralInfoSample
             }
         }
 
@@ -247,9 +228,9 @@ function initPeople() {
     }// people loop
 
     for (var pro of profileList) {
-        // init all the keys? 
+        // init all the keys?  no
         var keypair: nacl.BoxKeyPair = util.getBoxKeyPairFromPassphrase(pro.item.name, pro.item.passphrase)
-        pro.pubk64 = util.toBase64Url(keypair.publicKey)
+        pro.pubk64 = util.toBase64Url(Buffer.from(keypair.publicKey))
 
         pubkToName.set(pro.pubk64,pro.item.name)
     }// people loop
@@ -366,6 +347,30 @@ function initPeople() {
 
     }// people loop
 
+    for (var pro of profileList) {
+
+        pro.generalinfo.name = pro.item.name
+        pro.generalinfo.publickey =  "",
+        pro.generalinfo.location = "Silicon Valley USA"
+        pro.generalinfo.about = makeRandWords(rand, 12).replaceAll("_", " ")
+        pro.generalinfo.tags = "fakepeople demo random"
+    
+        pro.generalinfo.twitter = "https://twitter.com/alan_wootton" 
+        pro.generalinfo.facebook = "https://www.facebook.com/" + pro.item.name
+        pro.generalinfo.instagram = "https://www.instagram.com/" + pro.item.name + "/"
+        pro.generalinfo.youtube = "https://www.youtube.com/channel/UChjsdVeffzzTwpccEbEq1tg" ,
+        pro.generalinfo.tiktok = "are you kidding me" ,
+        pro.generalinfo.patreon = "https://www.patreon.com/gotohere",
+        pro.generalinfo.bitcoin = "35fqMZwsNokbAZsznmCvjVZLmiejAjW9EB",
+        pro.generalinfo.linkedin = "https://www.linkedin.com/in/"  + pro.item.name + "/"
+        pro.generalinfo.github = "https://github.com/" + pro.item.name
+        pro.generalinfo.more = "send bitcoin please" 
+        
+        const jsonstr = JSON.stringify(pro.generalinfo,null,2)
+        fs.writeFileSync("data/" + pro.item.directory + "/generalinfo.txt", jsonstr)
+
+
+    }// generalInfo
 
     for (var pro of profileList) {
         // make permissions 
@@ -385,6 +390,7 @@ function initPeople() {
     for (var pro of profileList) {
         pro.item.port = "3010"
     }// people loop
+
 
     // write out the new config
     

@@ -2,12 +2,12 @@
 import fs from 'fs'
 
 import * as social from '../server/SocialTypes';
-import { WaitingRequest, handleSendReplyCallback } from './Api';
+import { WaitingRequest, SendApiReplyBack } from './Api';
 import ApiCommand from "./Api"
 
 import * as fsApi from './FsUtil';
 import * as util from '../server/Util';
-import * as api1 from "./Api"
+import * as api from "./Api"
 //import * as c_util from "../components/CryptoUtil"
 import * as config from "../server/Config"
 
@@ -39,11 +39,11 @@ export function IssueTheCommand(username: string, top: string, fold: string, cou
     // topic:string , jsonstr: string, cb: ( data:Uint8Array, error: any ) => {} ) {
     //console.log("jsonstr of cmd ", jsonstr,)
 
-    var wr: WaitingRequest = getPostsWaitingRequest
+    const wr: WaitingRequest = getPostsWaitingRequest
 
     //console.log("GtePosts SendApiCommandOut calling with user", username )
 
-    api1.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
+    api.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
 
         var strdata = new TextDecoder().decode(data)
         
@@ -75,7 +75,7 @@ const getPostsWaitingRequest: WaitingRequest = {
     waitingCallbackFn: handleGetPostApi,
     options: new Map<string, string>(),
     returnAddress: "unused now",
-    callerPublicKey64 : "unknown+now" 
+    //callerPublicKey64 : "unknown+now" 
 }
 
 export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
@@ -88,7 +88,7 @@ export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
 function handleGetPostApi(wr: WaitingRequest, err: any) {
 
     //console.log("in the handleGetPostApi with ", util.getTopicName(wr.topic), wr.message.toString(), " by ",util.getPubkToName(wr.callerPublicKey))
-    console.log("in the handleGetPostApi with ", util.getTopicName(wr.topic), " key id ", wr.options.get("nonc") , util.getSecondsDisplay())
+    //console.log("in the handleGetPostApi with ", util.getTopicName(wr.topic), " key id ", wr.options.get("nonc") , util.getSecondsDisplay())
 
     var getPostCmd: GetPostsCmd = JSON.parse(wr.message.toString())
 
@@ -96,8 +96,8 @@ function handleGetPostApi(wr: WaitingRequest, err: any) {
     const count = getPostCmd.count
     const folder = getPostCmd.fold
 
-    var cryptoContext = util.getMatchingContext( wr.topic )
-    var configItem = cryptoContext.config || config.EmptyServerConfigItem
+    var cryptoContext = util.getHashedTopic2Context( wr.topic )
+    var configItem =  config.GetName2Config(cryptoContext.username)
     var path = "data/" + configItem.directory  + folder
 
     // make the directories if missing.
@@ -121,7 +121,7 @@ function handleGetPostApi(wr: WaitingRequest, err: any) {
             if (items.length >= count && done === false) {
                 var listBytes = JSON.stringify(items)
                 //console.log("GetPosts calling handleSendReplyCallback with",listBytes )
-                handleSendReplyCallback(wr, Buffer.from(listBytes), null)
+                SendApiReplyBack(wr, Buffer.from(listBytes), null)
                 // and, we're done here
                 done = true
             }

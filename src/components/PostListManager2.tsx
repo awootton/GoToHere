@@ -1,9 +1,7 @@
 
-import React, { ReactElement, FC, useEffect, useCallback } from "react";
+import React, { ReactElement, FC, useEffect,useCallback } from "react";
 import ReactList from 'react-list';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-
-//import debounce from 'debounce';
 
 import * as getpostsapi from "../api1/GetPosts"
 
@@ -13,9 +11,6 @@ import * as cards from "./CardUtil"
 import * as util from "../server/Util"
 import * as event from "../api1/Event"
 import * as broadcast from "../server/BroadcastDispatcher"
-
-//import * as deletepostapi from "../api1/DeletePost" 
-//import * as savepostapi from "../api1/SavePost" 
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -68,28 +63,6 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
 
   const [state, setState] = React.useState(emptyState)
 
-  // post.id to post map
-  // const [posts, setPosts] = React.useState(new Map<number, social.Post>());
-
-  // // sorted list of the dates/ids of the posts in posts
-  // const [dates, setDates] = React.useState(emptydates);
-
-  // const [full, setFull] = React.useState(false);
-
-  // const [needsMore, setNeedsMore] = React.useState(true);
-
-  // call load more as necessary
-  useEffect(() => {
-    //console.log("PostListManager2 will loadMore, needsMore=", needsMore)
-    if (state.needsMore) {
-      //loadMoreDebounced()
-      loadMore()
-    }
-    //setTimer()
-    // listen for events that may affect us.
-
-  }, [state.needsMore])
-
   const handleEvent = (event: event.EventCmd) => {
     //console.log("PostListManager2 have event", event, event.who, props.username,dates.length)
     if (event.what.cmd === 'DeletePost' && event.who === props.username) { //event.what.cmd
@@ -125,21 +98,35 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
       //loadMore(util.getCurrentDateNumber(),1)// FIXME: a cop out and ugly
       console.log("SavePost setState")
       setState(emptyState)
+    } else if (event.what.cmd === 'IncrementLikes' && event.who === props.username) { //event.what.cmd
+      console.log("PostListManager2 have SavePost event", event, event.who, props.username, state.dates.length)
+      setState(emptyState)
+    } else {
+      // this is not really an error. The save general info broadcasts go through here.
+      //console.log("ERROR PostListManager2 handleEvent unkn own event",event.what.cmd )
     }
   }
 
-  const subscribeEffect = () => {
+  // const subscribeEffect = () => {
+  //   //console.log("PostListManager2 subscribe folder,user,count", props.folder,props.username, dates.length)
+  //   broadcast.Subscribe(props.username, props.folder + props.username, handleEvent.bind(this))
+  //   return () => {
+  //     //console.log("PostListManager2 UNsubscribe folder,user,count", props.folder,props.username, dates.length)
+  //     broadcast.Unsubscribe(props.username, props.folder + props.username)
+  //   };
+  // }
+
+  //console.log("PostListManager2 rendering len = ", state.dates.length, util.getSecondsDisplay())
+
+  //useEffect(subscribeEffect.bind(this), [state]);
+  useEffect(() => {
     //console.log("PostListManager2 subscribe folder,user,count", props.folder,props.username, dates.length)
     broadcast.Subscribe(props.username, props.folder + props.username, handleEvent.bind(this))
     return () => {
       //console.log("PostListManager2 UNsubscribe folder,user,count", props.folder,props.username, dates.length)
       broadcast.Unsubscribe(props.username, props.folder + props.username)
     };
-  }
-
-  console.log("PostListManager2 rendering len = ", state.dates.length, util.getSecondsDisplay())
-
-  useEffect(subscribeEffect.bind(this), [state]);
+  }, [state]);
 
   // const setTimer = () => {
   //   if (timerId === undefined && ! full) {
@@ -187,9 +174,23 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
     getpostsapi.IssueTheCommand(props.username, top, fold, count, old, gotMorePosts.bind(this))
   }
 
+  const loadMoreCallback = useCallback( () => {loadMore()} , [])
+
+  // call load more as necessary
+  useEffect(() => {
+    //console.log("PostListManager2 will loadMore, needsMore=", needsMore)
+    if (state.needsMore) {
+      loadMore()
+    }
+    //setTimer()
+    // listen for events that may affect us.
+
+  }, [state.needsMore])
+
+
   const gotMorePosts = (postslist: social.Post[], countRequested: number, error: any) => {
 
-    console.log("ReactListTest just got back from issueTheCommand ")
+    // console.log("ReactListTest just got back from issueTheCommand ")
 
     var newState2: State = {
       ...state,
@@ -214,7 +215,7 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
       newState2.posts = newPosts
 
     }// else no error
-    console.log("loadMore bottom setState")
+    //console.log("loadMore bottom setState")
     setState(newState2)
   }
 
@@ -240,17 +241,17 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
 
   var localNeedsTest = false
 
-  const setNeedsMore = useCallback(() => { 
-   if (state.needsMore === false && localNeedsTest === false){
-    var newState:State = {
-      ...state,
-      needsMore :true,
-    }
-    console.log("renderItem setState")
-    localNeedsTest = true
-    setState(newState) 
-    }
-  },[])
+  // const setNeedsMore = useCallback(() => { 
+  //  if (state.needsMore === false && localNeedsTest === false){
+  //   var newState:State = {
+  //     ...state,
+  //     needsMore :true,
+  //   }
+  //   console.log("renderItem setState")
+  //   localNeedsTest = true
+  //   setState(newState) 
+  //   }
+  // },[])
 
   const setNeedsMore2 =  () => { 
     if (localNeedsTest === false ){
@@ -279,29 +280,7 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
       // need to load more
       //setTimer()
       if (!state.full && !state.needsMore) {
-
         setNeedsMore2()
-
-        //neededMore = true
-        // var newState:State = {
-        //   ...state,
-        //   needsMore :true,
-        // }
-        // console.log("renderItem setState")
-        // setState(newState)
-
-        // we need a call back here: 
-
-        // useEffect(() => {
-        //   if (state.needsMore === false) {
-        //     var newState: State = {
-        //       ...state,
-        //       needsMore: true,
-        //     }
-        //     console.log("renderItem setState")
-        //     setState(newState)
-        //   }
-        // }, []) // eval this once
       }
     }
     var evens = classes.evens
@@ -311,7 +290,6 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
       <div
         key={key}
         className={(index % 2 ? odds : evens)}
-      // style={{ lineHeight: `${getHeight(index)}px` }}
       >
         <postitem.PostItem post={post} username={props.username} ></postitem.PostItem>
       </div>
@@ -325,8 +303,6 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
 
   const classes = useStyles()
   var dom = (
-    // <div>
-
     <div className={classes.wrapper} >
       <ReactList
         itemRenderer={renderItem.bind(this)}
@@ -334,21 +310,7 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
         type='uniform'
       />
     </div>
-
-    // </div>
   );
-
-  // useEffect(() => {
-  //   if (neededMore) {
-  //     var newState: State = {
-  //       ...state,
-  //       needsMore: true,
-  //     }
-  //     console.log("renderItem setState")
-  //     setState(newState)
-  //   }
-  // }) // eval this always
-
   return dom
 
 }
