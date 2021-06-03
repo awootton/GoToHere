@@ -1,4 +1,17 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //import React, { ReactElement, FC, useState } from "react";
 import { ReactElement, FC } from "react";
 
@@ -17,9 +30,13 @@ import CardActions from '@material-ui/core/CardActions'
 import Button from '@material-ui/core/Button'
 
 import Tooltip from '@material-ui/core/Tooltip'
- 
+
 import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
 import FavoriteIcon from '@material-ui/icons/Favorite';
+
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ExpandLessIcon from '@material-ui/icons/ExpandLess';
+
 
 import * as menus_card from '../menus/Card'
 import * as util from '../server/Util'
@@ -41,11 +58,12 @@ const useStyles = makeStyles((theme: Theme) =>
         //     marginBottom: 12,
         // },
         theText: {
-            display : "flex",
+            display: "flex",
             padding: "0px 0px",
             height: 120, // 
-            
+
             overflow: 'auto',
+            flexDirection: "column"
         },
 
         nopadding: {
@@ -58,18 +76,18 @@ const useStyles = makeStyles((theme: Theme) =>
             //alignItems: 'center', // vertical
         },
 
-        centered : {
+        centered: {
             display: "flex",
-            justifyContent: "space-between" ,
+            justifyContent: "space-between",
             fontSize: 11,
-            alignItems : 'center', // centers vertical
+            alignItems: 'center', // centers vertical
         },
 
         button: {
             margin: "0px 0px",
             padding: "0px 0px",
-            height: "40",
-            width: "32px"
+            height: "24",
+            width: "24"
         },
 
         // scrollingEdit : {
@@ -82,6 +100,9 @@ const useStyles = makeStyles((theme: Theme) =>
 export interface Props {
     post: social.Post
     username: string
+    commentsOpen: boolean
+    isComment: number // the depth in the tree
+    toggleOpened: (ref: social.StringRef) => any
 }
 
 export const PostItem: FC<Props> = (props: Props): ReactElement => {
@@ -90,9 +111,37 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
 
     const classes = useStyles();
 
-    // todo: add from  {post.from}: <b>{post.title}</b>   
-    const getTitleStuff = (post: social.Post) => {
+    const isComment = props.isComment
+    const byLine = isComment ? (props.post.by + ":" + props.post.title) : props.post.title
+    const hasComments = props.post.comments.length !== 0
 
+    // width not working. How do I do it? 
+    const getOpenButton = (post: social.Post) => {
+        if (post.comments.length !== 0) {
+            return (
+                <div style={{  width:"8px", margin:"0 0",  padding: "0px 0px" } } >
+                <Tooltip title={props.commentsOpen?"Hide comments":"Show comments"}  >
+                <Button variant="contained"
+                    size="small"
+                    color="secondary"
+                    className={classes.button}
+                    style={{backgroundColor:"white", color:"black" , margin:"0 0" } }
+                    onClick={handleCommentClick} >
+                    {props.commentsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon /> }
+                </Button>
+                </Tooltip>
+                </div>
+            )
+        } else {
+            return (
+                <></>
+            )
+        }
+    }
+
+    // todo: add from  {post.from}: <b>{post.title}</b>
+    // if it's a comment and name != props.username   
+    const getTitleStuff = (post: social.Post) => {
         var dom = (
             <Box
                 display="flex"
@@ -103,84 +152,65 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
 
                 className={classes.pushedright}
             >
-
-                <b>{post.title}</b>
+                <b>{byLine}</b>
                 <span className={classes.centered} >
-                    { post.id !==0 ? util.FormatDateNumber(post.id):"" }
+                    {post.id !== 0 ? util.FormatDateNumber(post.id) : ""}
                 </span>
                 <span className={classes.pushedright} >
-                { post.id !== 0 ? (
-                    <>
-                        <Tooltip title={post.likes.toString() + " likes" }  >
-                        
-                        <Button onClick={handleClickHeart} className={classes.button} > 
-                            {post.likes === 0 ? <FavoriteBorderIcon/> : <FavoriteIcon/> }
-                        </Button>
-                 
-                        </Tooltip>
-                        <menus_card.CardMenu post={post}  username={props.username} />
-                    </>
-                 ) : (<></>)
-                }
-                </span>
+                    {post.id !== 0 ? (
+                        <>
+                            {/* {getOpenButton(post)} */}
 
+                            <Tooltip title={post.likes.toString() + " likes"}  >
+
+                                <Button onClick={handleClickHeart} className={classes.button} >
+                                    {post.likes === 0 ? <FavoriteBorderIcon /> : <FavoriteIcon />}
+                                </Button>
+
+                            </Tooltip>
+                            <menus_card.CardMenu post={post} username={props.username} />
+                        </>
+                    ) : (<></>)
+                    }
+                </span>
             </Box>
         )
-
-        // var y = (
-        //     <Box
-        //         display="flex"
-        //         flexDirection="row"
-        //         p={1}
-        //         m={1}
-        //         bgcolor="background.paper"
-
-        //         className={classes.pushedright}
-        //     >
-        //         <Box p={1} bgcolor="grey.300">
-        //             Item 1
-        //         </Box>
-        //         <Box p={1} bgcolor="grey.300">
-        //             Item 2
-        //         </Box>
-        //         <Box p={1} bgcolor="grey.300" >
-        //             Item 3
-        //         </Box>
-        //     </Box>
-        // )
-
         return dom
     }
 
     const handleClickHeart = () => {
-
         // should be alice, anon
         console.log("like pushed for ", props.username, " by ", util.getSignedInContext().username)
-        likesapi.IssueTheCommand(props.username,props.post.id, util.getSignedInContext().username, (reply: likesapi.IncrementLikesReply, error: any) => {
+        likesapi.IssueTheCommand(props.username, props.post.id, util.getSignedInContext().username, (reply: likesapi.IncrementLikesReply, error: any) => {
             console.log("nobody really give a shit about the likes return. The action is in the broadcast event")
         })
     };
 
     const handleCommentClick = () => {
+        props.toggleOpened(social.StringRefNew(props.post))
     }
 
-    const renderPlainCard = (post: social.Post) => {
+    const renderTheCard = (post: social.Post) => {
+
+        var posStyle = {
+            marginLeft: 0
+        }
+        if ( isComment > 0 ){
+            posStyle.marginLeft = 12 * isComment
+        }
+
         return (
             <>
-                <Card elevation={2} className={classes.nopadding} key={post.id} >
+                <Card elevation={2} className={classes.nopadding} key={post.id} style = {posStyle} >
 
-                    <CardContent className={classes.nopadding} >
+                    <CardContent className={classes.nopadding}  >
                         {getTitleStuff(post)}
                         <Typography variant="body2" color="textSecondary" component="div" className={classes.theText}  >
-                            <ReactMarkdown className={classes.theText} >{post.theText}</ReactMarkdown>
+                            <ReactMarkdown className={classes.theText} children={post.theText}/>
                         </Typography>
                     </CardContent>
-                    <CardActions>
-
-                        {/* <Button size="small" onClick={handleCommentClick} >Comments</Button>
-                        <Button size="small">Re-post</Button>
-                        <Button size="small">Like</Button> */}
-
+                    <CardActions style={{justifyContent:"center",  width:"8px", margin:"0 0",  padding: "0px 0px",marginLeft: 120  }}>
+                    {getOpenButton(post)}
                     </CardActions>
                 </Card>
             </>
@@ -199,7 +229,7 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
     {
         return (
             <>
-                {renderPlainCard(props.post)}
+                {renderTheCard(props.post)}
             </>
         );
     }
@@ -240,7 +270,7 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
 //             <>
 //                 <Card elevation={2} className={`background-color: gray;`} key={post.id} >
 //                     <TextField
-                        
+
 //                         fullWidth
 //                         id="titleeditor"
 //                         type="text"

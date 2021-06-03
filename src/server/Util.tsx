@@ -1,6 +1,20 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // crypto-js/sha256 is banned for life import sha256 from 'crypto-js/sha256';
-// also banned import Base64 from 'crypto-js/enc-base64';
+// also banned import Base64 from 'crypto-js/enc-base64'
 
 import * as nacl from 'tweetnacl-ts'
 //import * as crypto from 'crypto'
@@ -12,9 +26,14 @@ import sha256 from "fast-sha256";
 import * as social from './SocialTypes'
 //import * as config from "./Config"
 
+export interface LooseObject { // decend mqtt uer props from this 
+    [key: string]: any
+}
+
+
 export type Context = {
     username: string
-    password: string  // might be "" in which case the ourSecretKey is "" and ourPublicKey must be set manually
+    password: string[]  // might be "" in which case the ourSecretKey is "" and ourPublicKey must be set manually
 
     // delete me usually username and profileNameFromApp will match.
     // sometimes from a topic when messages received
@@ -25,35 +44,36 @@ export type Context = {
 
     initialized: boolean
 
-    ourPublicKey: Buffer
-    ourSecretKey: Buffer
+    ourPublicKey: Buffer[]
+    ourSecretKey: Buffer[]
     profileHash: string
     //   knotServersPubKey: Buffer
 
     //onfig?: config.ServerConfigItem
 }
+
 export const emptyContext: Context = {
     username: "",
-    password: "",
+    password: [],
     //profileNameFromApp: "",
     tokenFromApp: "",
     //knotServerPubKeyFromApp: "",
 
     initialized: false,
 
-    ourPublicKey: Buffer.from(""),
-    ourSecretKey: Buffer.from(""),
+    ourPublicKey: [],
+    ourSecretKey: [],
     profileHash: "", // starts with = and has exactly 43 following
-   // knotServersPubKey: Buffer.from(""),// as obtained by TokenScreen using profileName, client
+    // knotServersPubKey: Buffer.from(""),// as obtained by TokenScreen using profileName, client
 }
 
 // not public
 var contexts: Context[] = []
- 
+
 // BEFORE you change this make sure that 
 // a context has been added.
 // chenge this when the user signs in.
-export var signedInAs : string = 'Anonymous'
+export var signedInAs: string = 'Anonymous'
 
 // export function XXXgetCurrent Context(): Context {
 //     var cx = contexts[currentIndex]
@@ -73,16 +93,12 @@ export function getSignedInContext(): Context {
 
 export function getNameToContext(username: string): Context {
     // FIXME: use a map
-    var found: Context | undefined = undefined
-    contexts.forEach(context => {
+    for (var context of contexts) {
         initContext(context)
         if (context.username.toLowerCase() === username.toLowerCase()) {
-            found = context
+            return context
         }
-    });
-    if (found){
-        return found
-    }
+    };
     // fuck
     console.log("getNameToContext fail. was hoping to avoid this.", username)
     return emptyContext
@@ -90,16 +106,12 @@ export function getNameToContext(username: string): Context {
 
 export function getMatchingHashedTopicContext(hashedtopic: string): Context {
     // FIXME: use a map
-    var found: Context | undefined = undefined
-    contexts.forEach(context => {
+    for (var context of contexts) {
         initContext(context)
         if (context.profileHash === hashedtopic) {
-            found = context
+            return context
         }
-    });
-    if (found){
-        return found
-    }
+    };
     // fuck
     console.log("getMatchingHashedTopicContext fail. was hoping to avoid this.")
     return emptyContext
@@ -116,13 +128,12 @@ export function getTopicName(topic: string): string {
 // pubkToName is useful for logging
 export function getPubkToName(pubk: Buffer): string {
     // FIXME: use a map
-    for (var i = 0; i < contexts.length; i++) {
-        const context = contexts[i]
+    for (var context of contexts) {
         initContext(context)
-        //const pubk64 = toBase64Url(pubk)
-        //const ourPublicKey64 = toBase64Url(context.ourPublicKey)
-        if (context.ourPublicKey === pubk) {
-            return context.username
+        for (var i = 0; i < context.ourPublicKey.length; i++) {
+            if (context.ourPublicKey[i] === pubk) {
+                return context.username
+            }
         }
     }
     return toBase64Url(pubk)
@@ -134,18 +145,12 @@ export function getHashedTopic2Context(hashedTopic: string): Context {
         console.log("ERROR expecting HASHED topic ", hashedTopic)
     }
     // FIXME: use a map
-    var found: Context | undefined = undefined 
-    var wasFound = false
-    contexts.forEach(context => {
+    for (var context of contexts) {
         initContext(context)
         if (context.profileHash === hashedTopic) {
-            found = context
-            wasFound = true
+            return context
         }
-    });
-    if (found){
-        return found
-    }
+    };
     // fuck
     console.log("getHashedTopic2Context fail. was hoping to avoid this.", hashedTopic)
     return emptyContext
@@ -160,9 +165,9 @@ export function cleanContexts() {
     contexts = []
 }
 
-export function pushContext( context: Context) {
+export function pushContext(context: Context) {
     // don't do it twice. FIXME: use map
-    for ( var c of contexts){
+    for (var c of contexts) {
         if (c.username === context.username) {
             return
         }
@@ -175,9 +180,13 @@ export function initContext(context: Context) {
         return
     }
     if (context.password.length !== 0) {
-        const keypair: nacl.BoxKeyPair = getBoxKeyPairFromPassphrase(context.username, context.password)
-        context.ourPublicKey = Buffer.from(keypair.publicKey)
-        context.ourSecretKey = Buffer.from(keypair.secretKey)
+        context.ourPublicKey = []
+        context.ourSecretKey = []
+        for (var i = 0; i < context.password.length; i++) {
+            const keypair: nacl.BoxKeyPair = getBoxKeyPairFromPassphrase(context.username, context.password[i])
+            context.ourPublicKey.push(Buffer.from(keypair.publicKey))
+            context.ourSecretKey.push(Buffer.from(keypair.secretKey))
+        }
     }
     context.profileHash = "=" + KnotNameHash(context.username)
     // context.knotServersPubKey = fromBase64Url(context.knotServerPubKeyFromApp)
@@ -215,7 +224,7 @@ export function getUniqueId(): social.DateNumber {
         // watch for roll over from 59 to 60 sec which should increment minute, which *might* inc hour etc.
         // to have that happen we'd have to call this 1000 times in a sec?
         // I'm bett it doesn't happen
-        if ( nnn % 100000 === 60000 ){
+        if (nnn % 100000 === 60000) {
             console.log("ERROR FIXME: rollover problem")
         }
     }
@@ -265,7 +274,7 @@ export function VerifyToken(myToken: string): [string, string] {
     return ["", "expected 'url' in token "]
 }
 
-export function Sha256Hash( str: string ): Uint8Array{
+export function Sha256Hash(str: string): Uint8Array {
     const data = Buffer.from(str)
     return sha256(data)
 }
@@ -350,7 +359,7 @@ export function KnotNameHash(name: string): string {
     // const hbytes = hash.digest()
     const hbuff = Buffer.from(Sha256Hash(name))
     var tmp = toBase64Url(hbuff)
-    tmp = tmp.slice(0,32)
+    tmp = tmp.slice(0, 32)
     return tmp
 }
 
@@ -461,13 +470,16 @@ export function getProfileName(): string {
         if (parts.length <= 0) {
             console.log("how can we have missing parts here?")
         }
+        if ( parts.length <= 2 ){
+            return ""
+        }
         profileName = parts[0]
     }
     return profileName
 }
 
 // eg gotohere.com
-export function getServerName(): string {
+export function getServerNamepart(): string {
     var serverName = "unknown"
     var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotlocal.com:3000/
     var ind = locationhref.indexOf("//")
@@ -477,32 +489,64 @@ export function getServerName(): string {
         if (parts.length <= 0) {
             console.log("how can we have missing parts here?")
         }
+        if ( parts.length <= 2 ){
+            return locationhref
+        }
         serverName = parts[1] + "." + parts[2]
     }
     return serverName
 }
+
+export function getServerName(): string {
+   var str =  getServerNamepart() // eg gotolocal.com:3000/getFreeToken w/o the alice part
+   const ind = str.indexOf("/")
+   if ( ind >= 0 ){
+       str = str.slice(0,ind)
+   }
+   return str
+}
+// eg alice.gotolocal.com:3000/getFreeToken return the getFreeToken
+export function getServerPage(): string {
+    var str =  getServerNamepart() // eg gotolocal.com:3000/getFreeToken w/o the alice part
+    const ind = str.indexOf("/")
+    if ( ind >= 0 ){
+        str = str.slice(ind+1)
+    } else {
+        str = ""
+    }
+    return str
+ }
+ 
 
 
 // UnpackMqttOptions will pull the key,value pairs from the mqtt userProperties
 // and put them into a Map of strings and not a funky js object
 // sometimes they are wrapped with [ ] and I don't know why.
 // probably the mqtt5 spec allows mutliple values which is dumb.
-export function UnpackMqttOptions( packet : any ) :Map<string, string>  {
+export function UnpackMqttOptions(packet: any): Map<string, string> {
     var gotOptions = new Map<string, string>()
     //console.log("unpacking packet.properties.userProperties ", Object.keys(packet.properties.userProperties))
     Object.keys(packet.properties.userProperties).forEach((key: string) => {
-      var val = packet.properties.userProperties[key]// copy over the user stuff
-      if (val) {
-        var tmp = val.toString()
-        if (tmp[0] === '[') {
-          tmp = tmp.substr(1)
+        var val = packet.properties.userProperties[key]// copy over the user stuff
+        if (val) {
+            var tmp = val.toString()
+            if (tmp[0] === '[') {
+                tmp = tmp.substr(1)
+            }
+            if (tmp[tmp.length - 1] === ']') {
+                tmp = tmp.substr(0, tmp.length - 1)
+            }
+            gotOptions.set(key, tmp)
         }
-        if (tmp[tmp.length - 1] === ']') {
-          tmp = tmp.substr(0, tmp.length - 1)
-        }
-        gotOptions.set(key, tmp)
-      }
     });
     //console.log(" userProperties unpacked as ",  gotOptions )
     return gotOptions
+}
+
+export function hashCode(str: string): number {
+    var h: number = 0;
+    for (var i = 0; i < str.length; i++) {
+        h = 31 * h + str.charCodeAt(i);
+    }
+    return h & 0xFFFFFFFF
 }

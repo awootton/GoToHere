@@ -5,22 +5,25 @@ import fs from 'fs'
 import * as config from "./Config"
 import * as util from "./Util"
 
-function first3bytes( b: Buffer): string {
-  return b[0] + "," + b[1] + "," + b[2] 
+function first3bytes(b: Buffer): string {
+  return b[0] + "," + b[1] + "," + b[2]
 }
 
-function logcontext( c: util.Context ){
+function logcontext(c: util.Context) {
+  for (var i = 0; i < c.ourPublicKey.length; i++) {
 
-  var sss:string = util.toBase64Url(c.ourPublicKey)
-  var bbb:Buffer = util.fromBase64Url(sss)
-  if ( Buffer.compare(bbb,c.ourPublicKey) !== 0 ){
-    console.log("oh, man, this is really bad")
+    var sss: string = util.toBase64Url(c.ourPublicKey[i])
+    var bbb: Buffer = util.fromBase64Url(sss)
+    if (Buffer.compare(bbb, c.ourPublicKey[i]) !== 0) {
+      console.log("oh, man, this is really bad")
+    }
+    var n = c.username + "                                                                           "
+    n = n.slice(0, 30)
+    console.log("have name, pass, keys for ", c.username,
+    first3bytes(c.ourPublicKey[i]), util.toBase64Url(c.ourPublicKey[i]).slice(0, 4),
+    first3bytes(c.ourSecretKey[i]), util.toBase64Url(c.ourSecretKey[i]).slice(0, 4))
+
   }
-  var n = c.username + "                                                                           "
-  n = n.slice(0,30)
-  console.log("have name, pass, keys for ", c.username, 
-  first3bytes(c.ourPublicKey),util.toBase64Url(c.ourPublicKey).slice(0,4), 
-  first3bytes(c.ourSecretKey),util.toBase64Url(c.ourSecretKey).slice(0,4))
 }
 
 export function readServerConfig(specialpath?: string): config.ServerConfigList {
@@ -32,10 +35,10 @@ export function readServerConfig(specialpath?: string): config.ServerConfigList 
     path = specialpath
   }
 
-  const anonContext : util.Context = {
-    ... util.emptyContext,
-     username: "Anonymous",
-     password: "Anonymous",
+  const anonContext: util.Context = {
+    ...util.emptyContext,
+    username: "Anonymous",
+    password: ["Anonymous", "Anonymous2"],
   }
   util.initContext(anonContext)
   util.pushContext(anonContext)
@@ -46,7 +49,7 @@ export function readServerConfig(specialpath?: string): config.ServerConfigList 
 
   var bytes = fs.readFileSync(path)
 
-  var itemsList : config.ServerConfigList = JSON.parse(bytes.toString("utf8"))
+  var itemsList: config.ServerConfigList = JSON.parse(bytes.toString("utf8"))
 
   // check the token? 
 
@@ -82,7 +85,7 @@ export function readServerConfig(specialpath?: string): config.ServerConfigList 
     util.initContext(con)
     util.pushContext(con)
     logcontext(con)
-  }  
+  }
   // we probably need some maps and here would a a good place
   // TODO: add maps to lookup items
 
@@ -102,33 +105,33 @@ const sampleItemsList: config.ServerConfigList = {
       nameReservationToken: "fixme",
       port: "3000",
       directory: "alice",
-      passphrase: "join_red_this_string_plain_does_quart_simple_buy_line_fun_look_original_deal",
+      passphrase: ["join_red_this_string_plain_does_quart_simple_buy_line_fun_look_original_deal", "join_red_this_string_plain_does_quart_simple_buy_line_fun_look_original_deal2"],
     },
     {
       name: "building_bob_bottomline_boldness",
       nameReservationToken: "fixme",
       port: "3000",
       directory: "bob",
-      passphrase: "tail_wait_king_particular_track_third_arrive_agree_plural_charge_rise_grew_continent_fact"
+      passphrase: ["tail_wait_king_particular_track_third_arrive_agree_plural_charge_rise_grew_continent_fact", "tail_wait_king_particular_track_third_arrive_agree_plural_charge_rise_grew_continent_fact2"],
     },
     {
       name: "charles_everly_erudite",
       nameReservationToken: "fixme",
       port: "3000",
       directory: "charles",
-      passphrase: "sense_trouble_lost_final_crowd_child_fear_buy_card_apple_such_it_as_note"
+      passphrase: ["sense_trouble_lost_final_crowd_child_fear_buy_card_apple_such_it_as_note", "sense_trouble_lost_final_crowd_child_fear_buy_card_apple_such_it_as_note2"]
     },
   ]
 }
 
 
 export function saveSample() {
-  var str = JSON.stringify( sampleItemsList, null, 2) // indented json pretty
+  var str = JSON.stringify(sampleItemsList, null, 2) // indented json pretty
   console.log(str)
   fs.writeFileSync("sample_server_config.json", str)
 }
 
 //saveSample()
 
-readServerConfig()
+//readServerConfig()
 

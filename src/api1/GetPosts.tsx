@@ -1,4 +1,17 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import fs from 'fs'
 
 import * as social from '../server/SocialTypes';
@@ -11,7 +24,7 @@ import * as api from "./Api"
 //import * as c_util from "../components/CryptoUtil"
 import * as config from "../server/Config"
 
-//import { HandleApi1PacketIn } from '../server/MqttClient2';
+import * as mqttclient from "../server/MqttClient";
 
 export default interface GetPostsCmd extends ApiCommand {
     // posts are in reverse order, id's are YYMMDDHHMMSSmmm
@@ -47,17 +60,17 @@ export function IssueTheCommand(username: string, top: string, fold: string, cou
 
         var strdata = new TextDecoder().decode(data)
         
-        //console.log("GtePosts SendApiCommandOut ", error )
+        console.log("GetPostsCmd returns w err ", error)
 
         var postslist: social.Post[] = strdata.length>0 ? JSON.parse(strdata) : []
 
         if ( error !== undefined  ){
-            console.log("GtePosts SendApiCommandOut have error,user " ,error, username, util.getSecondsDisplay())
+            console.log("GetPostsCmd SendApiCommandOut have error,user " ,error, username, util.getSecondsDisplay())
             // try again, in a sec.
-            // setTimeout(()=>{
-            //     console.log("GtePosts SendApiCommandOut timer done. IssueTheCommand AGAIN. " )
-            //     IssueTheCommand(username, top, fold, count, old, receiver)
-            // },9000 )
+            setTimeout(()=>{
+                console.log("GetPostsCmd SendApiCommandOut timer done. IssueTheCommand AGAIN. " )
+                IssueTheCommand(username, top, fold, count, old, receiver)
+            },9000 )
         } else {
             //console.log("GtePosts SendApiCommandOut receiver " )
             receiver(postslist, count ,error)
@@ -76,14 +89,22 @@ const getPostsWaitingRequest: WaitingRequest = {
     options: new Map<string, string>(),
     returnAddress: "unused now",
     //callerPublicKey64 : "unknown+now" 
+    debug: true
 }
 
-export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
+//   function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
 
-    getPostsWaitingRequest.options.set("api1", getPostsWaitingRequest.id)
-     // returnsWaitingMap map is handling incoming packets in mqttclient 
-    returnsWaitingMap.set(getPostsWaitingRequest.id, getPostsWaitingRequest)
+//     getPostsWaitingRequest.options.set("api1", getPostsWaitingRequest.id)
+//      // returnsWaitingMap map is handling incoming packets in mqttclient 
+//     returnsWaitingMap.set(getPostsWaitingRequest.id, getPostsWaitingRequest)
+// }
+
+//mqttclient.returnsWaitingMapset(getPostsWaitingRequest.id, getPostsWaitingRequest)
+
+export function getWr(): WaitingRequest {
+    return getPostsWaitingRequest
 }
+
 
 function handleGetPostApi(wr: WaitingRequest, err: any) {
 

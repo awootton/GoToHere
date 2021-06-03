@@ -1,4 +1,17 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import fs from 'fs'
 
 
@@ -13,6 +26,8 @@ import * as config from "../server/Config"
 import * as cardutil from '../components/CardUtil'
 
 import * as social from '../server/SocialTypes'
+
+import * as mqttclient from "../server/MqttClient";
 
 // to run just this file :
 // node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/api1/SavePost
@@ -35,7 +50,7 @@ export type SavePostReceiver = (reply: SavePostReply, error: any) => any
 
 export const defaultRetry = 20
 
-export function IssueTheCommand(username: string, post: social.Post, receiver: SavePostReceiver, retries?: number) {
+export function IssueTheCommand(username: string, post: social.Post, receiver: SavePostReceiver) {
 
     var cmd: SavePostCmd = {
         cmd: "SavePost",
@@ -44,8 +59,6 @@ export function IssueTheCommand(username: string, post: social.Post, receiver: S
     const jsonstr = JSON.stringify(cmd, replacer)
 
     //console.log("jsonstr of cmd ", jsonstr,)
-
-    const theRetries = retries || defaultRetry
 
     const wr: WaitingRequest = SavePostWaitingRequest
 
@@ -56,11 +69,10 @@ export function IssueTheCommand(username: string, post: social.Post, receiver: S
 
         var reply: SavePostReply = strdata.length > 0 ? JSON.parse(strdata, reviver) : {}
 
-        if (error !== undefined && (theRetries > 0)) {
+        if (error !== undefined ) {
             // try again, in a sec.
             setTimeout(() => {
-                const newretries = theRetries - 1
-                IssueTheCommand(username, post, receiver, newretries)
+                IssueTheCommand(username, post, receiver)
             }, 1000)
         } else {
             receiver(reply, error)
@@ -81,12 +93,20 @@ const SavePostWaitingRequest: WaitingRequest = {
     //callerPublicKey64:  "unknown"
 }
 
-export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
+// export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
 
-    SavePostWaitingRequest.options.set("api1", SavePostWaitingRequest.id)
-    // returnsWaitingMap map is handling incoming packets in mqttclient 
-    returnsWaitingMap.set(SavePostWaitingRequest.id, SavePostWaitingRequest)
+//     SavePostWaitingRequest.options.set("api1", SavePostWaitingRequest.id)
+//     // returnsWaitingMap map is handling incoming packets in mqttclient 
+//     returnsWaitingMap.set(SavePostWaitingRequest.id, SavePostWaitingRequest)
+// }
+
+// mqttclient.returnsWaitingMapset(SavePostWaitingRequest.id, SavePostWaitingRequest)
+
+export function getWr(): api.WaitingRequest {
+    return SavePostWaitingRequest
 }
+
+
 
 // writePostToFile ripped off from initFake
 function writePostToFile(path: string, post: social.Post) {
@@ -96,7 +116,7 @@ function writePostToFile(path: string, post: social.Post) {
     const dirpath = path + "lists/posts/" + theDay + "/" // "data/lists/"+folder+"/" + theDay
     const fname = "" + post.id
     const wholepath = dirpath + fname
-    var fbody = JSON.stringify(post)
+    var fbody = JSON.stringify(post,null,2)
 
     var pathParts = dirpath.split("/")
     var tmpPath = ""

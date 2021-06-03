@@ -1,4 +1,17 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import fs from 'fs'
 
 import { WaitingRequest, SendApiReplyBack } from './Api';
@@ -6,6 +19,8 @@ import * as util from '../server/Util';
 import ApiCommand from "./Api"
 import * as api from "./Api"
 import * as config from "../server/Config"
+
+import * as mqttclient from "../server/MqttClient";
 
 export {} // i want to beeee a module
 
@@ -92,10 +107,11 @@ export function IssueTheCommand(username: string, generalInfo: GeneralInfo | und
     api.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
 
         var strdata = new TextDecoder().decode(data)
-        //console.log("App is  back from GetGriends SendApiCommandOut from user ", username)
+        console.log("App is  back from GeneralApi SendApiCommandOut from user ", username)
 
         if (error !== undefined) {
             // try again, in a sec. forever
+            console.log("GeneralApi SendApiCommandOut timed out, retrying ", username)
             setTimeout(() => {
                 IssueTheCommand(username, generalInfo, receiver)
             }, 15000)
@@ -119,12 +135,22 @@ const GeneralApiWaitingRequest: WaitingRequest = {
     //callerPublicKey64: "unknown"
 }
 
-export function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
+//   function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
 
-    GeneralApiWaitingRequest.options.set("api1", GeneralApiWaitingRequest.id)
-    // returnsWaitingMap map is handling incoming packets in mqttclient 
-    returnsWaitingMap.set(GeneralApiWaitingRequest.id, GeneralApiWaitingRequest)
+//     GeneralApiWaitingRequest.options.set("api1", GeneralApiWaitingRequest.id)
+//     // returnsWaitingMap map is handling incoming packets in mqttclient 
+//     returnsWaitingMap.set(GeneralApiWaitingRequest.id, GeneralApiWaitingRequest)
+// }
+
+
+//mqttclient.returnsWaitingMapset(GeneralApiWaitingRequest.id, GeneralApiWaitingRequest)
+
+
+export function getWr(): WaitingRequest {
+    return GeneralApiWaitingRequest
 }
+
+ 
 
 function handleGeneralApi(wr: WaitingRequest, err: any) {
 

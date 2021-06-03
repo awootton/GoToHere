@@ -1,12 +1,50 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-//import * as mqttserver from '../server/MqttClient';
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
 import { mqttServerThing } from '../server/MqttClient';
 import * as util from '../server/Util';
+
+import * as mqttclient from '../server/MqttClient';
+ 
 import * as eventapi from '../api1/Event';
+import * as deletepostapi from '../api1/DeletePost';
+import * as generalapi from '../api1/GeneralApi';
+import * as commentsapi from '../api1/GetComments';
+import * as friendsapi from '../api1/GetFriends';
+import * as getpostsapi from '../api1/GetPosts';
+import * as likesapi from '../api1/IncrementLikes';
+import * as pingapi from '../api1/Ping';
+import * as savepostapi from '../api1/SavePost';
+ 
 
-import * as mqtt_stuff from '../server/MqttClient';
+export function getAllHooks()  : WaitingRequest[] {
+    var res : WaitingRequest[] = []
 
-//import * as c_util from '../components/CryptoUtil';
+    res.push(eventapi.getWr())
+    res.push(deletepostapi.getWr())
+    res.push(generalapi.getWr())
+    res.push(commentsapi.getWr())
+    res.push(friendsapi.getWr())
+    res.push(getpostsapi.getWr())
+    res.push(pingapi.getWr())
+    res.push(savepostapi.getWr())
+    res.push(eventapi.getWr())
+    res.push(likesapi.getWr())
+    
+    return res
+}
 
 export default interface ApiCommand {
     cmd: string
@@ -32,9 +70,7 @@ export type WaitingRequest = {
     options: Map<string, string>,
     returnAddress: string,
 
-    // what is this? callerPublicKey64: string,
-
-    packet?: object, // the mqtt packet received during the reply, try to dep
+    //packet?: object, // the mqtt packet received during the reply, try to dep
     replydata: Uint8Array, // during the reply
 
     waitingCallbackFn: (req: WaitingRequest, err?: any) => void
@@ -44,6 +80,7 @@ export type WaitingRequest = {
     isEvent?: boolean
 
     context? : util.Context
+    debug?:boolean
 }
 
 // Who is this from? The util.getProfileName() ? 
@@ -90,16 +127,17 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
         context : context
     }
 
-    mqttServerThing.returnsWaitingMap.set(waitingRequest.id, waitingRequest)
+    // when the reply arrives it will have the rand24 as its api1 id and that will match with this:
+    mqttclient.returnsWaitingMapset(waitingRequest.id, waitingRequest)
 
     // now send the packet
-    const ourPubk: Buffer = util.getSignedInContext().ourPublicKey
-    const theirPubk: Buffer = util.getNameToContext(topic).ourPublicKey
+    const ourPubk: Buffer = util.getSignedInContext().ourPublicKey[0]
+    const theirPubk: Buffer = util.getNameToContext(topic).ourPublicKey[0]
 
     var message = jsonstr
     // packet.properties.userProperties
     // let utf8Encode = new TextEncoder();
-    var options = {
+    var options : util.LooseObject = {
         retain: false,
         qos: 0,
         properties: {
@@ -112,33 +150,36 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
             }
         }
     };
+    if ( commandWr.debug === true ){
+        options.properties.userProperties["debg"] = "12345678" // trace publish in knotfree
+    }
 
     const weShouldSkipCrypto: boolean = !BoxItUp || isPingPacket
     if (weShouldSkipCrypto) {
 
         if ( mqttServerThing.client === undefined) {
+            console.log("ERROR mqttServerThing.client === undefined")
             return
         }
         mqttServerThing.client.publish(topic, message, options)
         if (!isPingPacket) {
-            console.log("sent out api1 DANGER skipCryptoForThisOne  topic,id ", topic, random24, " with " + message, "pubk ", util.getPubkToName(context.ourPublicKey), util.getSecondsDisplay())
+            console.log("sent out api1 DANGER skipCryptoForThisOne  topic,id ", topic, random24, " with " + message, "pubk ", util.getPubkToName(context.ourPublicKey[0]), util.getSecondsDisplay())
         }
 
     } else { // in SendApiCommandOut
         // client: box it up
 
-        console.log("sending api1 call topic,id ", topic, random24, " with " + message, "pubk ", util.getPubkToName(context.ourPublicKey), util.getSecondsDisplay())
-        const ourSecret: Buffer = util.getSignedInContext().ourSecretKey
-        console.log("sending api1 call pubk,sec ", util.toBase64Url(ourPubk), util.toBase64Url(ourPubk))
+        console.log("sending api1 call topic,id ", topic, random24, " with " + message, "pubk ", util.getPubkToName(context.ourPublicKey[0]), util.getSecondsDisplay())
+        const ourSecret: Buffer = util.getSignedInContext().ourSecretKey[0]
 
         const boxed: Buffer = util.BoxItItUp(Buffer.from(message), Buffer.from(random24), theirPubk, ourSecret)
 
         if ( mqttServerThing.client === undefined) {
+            console.log("ERROR mqttServerThing.client === undefined")
             return
         }
         mqttServerThing.client.publish(topic, boxed, options)
 
-        console.log("sent out api1 call topic,id ", topic, random24, " with " + message, "pubk ", util.getPubkToName(context.ourPublicKey), util.getSecondsDisplay())
         // message reappears in HandleApi1PacketIn
     }
     if (!isPingPacket) { // what the actual fuck is going on here where this is needed? TODO: FIXME
@@ -147,7 +188,10 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
             clearTimeout(timeoutThing)
         }
         timeoutThing = setTimeout(() => { mqttServerThing.sendAPing() }, 100);
-        setTimeout(() => { mqttServerThing.sendAPing() }, 150);// FIXME: (atw)
+        // setTimeout(() => { mqttServerThing.sendAPing() }, 110);// FIXME: (atw)
+        // setTimeout(() => { mqttServerThing.sendAPing() }, 120);// FIXME: (atw)
+        // setTimeout(() => { mqttServerThing.sendAPing() }, 130);// FIXME: (atw)
+        // setTimeout(() => { mqttServerThing.sendAPing() }, 140);// FIXME: (atw)
     }
 }
 
@@ -166,11 +210,7 @@ export const SendApiReplyBack = (wr: WaitingRequest, replyData: Buffer, err: any
         console.log("ERROR returnId === undefined happened")
     }
 
-    interface LooseObject {
-        [key: string]: any
-    }
-
-    var options: LooseObject = {
+    var options: util.LooseObject = {
         retain: false,
         qos: 0,
         properties: {
@@ -191,7 +231,7 @@ export const SendApiReplyBack = (wr: WaitingRequest, replyData: Buffer, err: any
     // TODO: api1 and nonc are the same value. optimize.
     options.properties.userProperties["api1"] = waitingHandlerId
     options.properties.userProperties["nonc"] = waitingHandlerId
-    options.properties.userProperties["pubk"] = util.toBase64Url(context.ourPublicKey)
+    options.properties.userProperties["pubk"] = util.toBase64Url(context.ourPublicKey[0])
 
     //console.log("publish api1 reply address:", wr.returnAddress)
     var topic = wr.returnAddress
@@ -214,7 +254,7 @@ export const SendApiReplyBack = (wr: WaitingRequest, replyData: Buffer, err: any
         
         const ourSecretKey = context.ourSecretKey
 
-        const boxed = util.BoxItItUp(replyData,nonce,theirPublicKey,ourSecretKey)
+        const boxed = util.BoxItItUp(replyData,nonce,theirPublicKey,ourSecretKey[0])
 
         mqttServerThing.client.publish(topic, boxed, options)
     }
@@ -222,7 +262,7 @@ export const SendApiReplyBack = (wr: WaitingRequest, replyData: Buffer, err: any
 
 // a server thing, unless it's an Event
 // HandleApiIncoming deals with a packet which is an api request
-export function HandleApiIncoming(mqttThing: mqtt_stuff.MqttTestServerTricks,
+export function HandleApiIncoming(mqttThing: mqttclient.MqttTestServerTricks,
     isApi: string,
     permanent_handler: WaitingRequest) {
 
@@ -252,7 +292,7 @@ export function HandleApiIncoming(mqttThing: mqtt_stuff.MqttTestServerTricks,
     const weShouldSkipCrypto: boolean = !BoxItUp || isPingPacket || isEventPacket
     if (weShouldSkipCrypto) {
 
-        console.log("calling return handler callbask ping or event")// if ya call a callbask ya turn to dead 
+        //console.log("calling return handler callbask ping or event")// if ya call a callbask ya turn to dead 
         handler.waitingCallbackFn(handler)
 
     } else {
@@ -268,7 +308,7 @@ export function HandleApiIncoming(mqttThing: mqtt_stuff.MqttTestServerTricks,
             console.log("ERROR missing pubk ")
         }
         const theirPublicKey: Buffer = util.fromBase64Url(theirPubk)
-        const secret: Buffer = util.getHashedTopic2Context(handler.topic).ourSecretKey
+        const secret: Buffer = util.getHashedTopic2Context(handler.topic).ourSecretKey[0]
 
         const unboxed: Buffer = util.UnBoxIt(message, nonce, theirPublicKey, secret)
         handler.message = unboxed
@@ -285,7 +325,7 @@ export function HandleApiIncoming(mqttThing: mqtt_stuff.MqttTestServerTricks,
 // HandleApiReplyArrival deals with a packet which is a reply to a *previous* api request
 // set up by SendApiCommandOut. 
 // a client thing.
-export function HandleApiReplyArrival(mqttThing: mqtt_stuff.MqttTestServerTricks,
+export function HandleApiReplyArrival(mqttThing: mqttclient.MqttTestServerTricks,
     isApi: string,
     handler: WaitingRequest) {
 
@@ -300,7 +340,7 @@ export function HandleApiReplyArrival(mqttThing: mqtt_stuff.MqttTestServerTricks
         var weShouldSkipCrypto: boolean = !BoxItUp || isPingPacket
         if (weShouldSkipCrypto) {
     
-            console.log("calling return handler callbask")// if call a callbask yiu turn to stone 
+            //console.log("calling return handler callbask")// if call a callbask yiu turn to stone 
             handler.waitingCallbackFn(handler)
     
         } else {
@@ -321,7 +361,7 @@ export function HandleApiReplyArrival(mqttThing: mqtt_stuff.MqttTestServerTricks
             const theirPublicKey: Buffer = util.fromBase64Url(theirPubk)
             const context = handler.context || util.emptyContext// was set when we started this request
 
-            const secret: Buffer = context.ourSecretKey
+            const secret: Buffer = context.ourSecretKey[0]
     
             const unboxed: Buffer = util.UnBoxIt(message, nonce, theirPublicKey, secret)
             handler.message = unboxed
@@ -358,7 +398,7 @@ export function Broadcast(context: util.Context, something: BroadcastCommand) {
             userProperties: {
                 "api1": "Event",
                 "nonc": util.randomString(24),
-                "pubk": util.toBase64Url(context.ourPublicKey) // pubk of sender
+                "pubk": util.toBase64Url(context.ourPublicKey[0]) // pubk of sender
             }
         }
     };

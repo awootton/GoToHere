@@ -9,7 +9,6 @@ It's completely distributed and there is no central authority. There's nobody to
 The code here can also be used to serve ANY webpage from your device (ie. laptop) with a url like: your-page-name.gotohere.com See http://alice_vociferous_mcgrath.gotohere.com/ for an example.
 
 
-
 ## Installation
 
 Install nodejs. For me it's:
@@ -28,7 +27,6 @@ In the project directory, you can run:
 This will start both the server and the react dev server.
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
 
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 

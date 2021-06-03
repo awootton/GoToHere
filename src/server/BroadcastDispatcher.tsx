@@ -1,5 +1,19 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-import { getMqttThing } from "./MqttClient"
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import * as mqttclient from "./MqttClient"
 
 import * as event from "../api1/Event"
 import * as util from "./Util"
@@ -23,9 +37,9 @@ var globalMap: Map<string, BroadcastItem> = new Map()
 
 export function SubscribeAll() {
     globalMap.forEach((value: BroadcastItem, key: string, map: Map<string, BroadcastItem>) => {
-        var mqtt = getMqttThing()
-        if (mqtt !== undefined) {
-            mqtt.subscribeFunc(value.name)
+       
+        if (mqttclient.mqttServerThing !== undefined) {
+            mqttclient.mqttServerThing.subscribeFunc(value.name)
         } else {
             console.log("ERROR SubscribeAll no mqtt")
         }
@@ -84,9 +98,8 @@ export function Subscribe(sitename: string, rname: string, receiver: ReceiverFun
     found.receivers.push(newReceiverStruct)
 
     if (found.receivers.length === 1 && index < 0) {
-        var mqtt = getMqttThing()
-        if (mqtt !== undefined) {
-            mqtt.subscribeFunc(sitename)
+        if (mqttclient.mqttServerThing !== undefined) {
+            mqttclient.mqttServerThing.subscribeFunc(sitename)
         } else {
             console.log("ERROR Subscribe no mqtt")
         }
@@ -130,8 +143,7 @@ export function Unsubscribe(sitename: string, rname: string) {
 
 export function CleanOldItems() {
 
-    var mqtt = getMqttThing()
-    if (mqtt === undefined) {
+    if (mqttclient.mqttServerThing === undefined) {
         // later
         console.log("ERROR CleanOldItems no mqtt")
         return
@@ -146,7 +158,7 @@ export function CleanOldItems() {
     })
     for (var i = 0; i < deadItems.length; i++) {
         var key = deadItems[i]
-        mqtt.unsubscribeFunc(key)
+        mqttclient.mqttServerThing.unsubscribeFunc(key)
         globalMap.delete(key)
     }
 }

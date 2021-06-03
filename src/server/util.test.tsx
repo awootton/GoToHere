@@ -1,3 +1,18 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 //import React from 'react';
 //import { render, screen } from '@testing-library/react';
 //import App from './App';
@@ -5,7 +20,7 @@
 import { ZeroPadLeft2 } from './Util'
 import * as social from './SocialTypes'
 
-import { ZeroPadLeft3, ConvertFromMsToDateString } from './Util'
+import { ZeroPadLeft3, ConvertFromMsToDateNumber } from './Util'
 
 import * as util from "./Util"
 
@@ -33,7 +48,7 @@ test('check out some utilities', () => {
   console.log(" day month year ", ZeroPadLeft2(date), ZeroPadLeft2(month), year) // the day of month
   console.log(" hours minutes seconds ms ", ZeroPadLeft2(hours), ZeroPadLeft2(minutes), ZeroPadLeft2(seconds), ZeroPadLeft3(millis)) // the day of month
 
-  var got = ConvertFromMsToDateString(start)
+  var got = "" + ConvertFromMsToDateNumber(start)
   console.log(" ConvertFromMsToDateNums makes ", got)
 
   var gotn = util.ConvertFromMsToDateNumber(start)

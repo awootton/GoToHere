@@ -1,4 +1,17 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import { FC, useState, useEffect } from "react";
 
@@ -9,24 +22,30 @@ import TextField from '@material-ui/core/TextField';
 import CardActions from '@material-ui/core/CardActions'
 import Button from '@material-ui/core/Button'
 import Grid from '@material-ui/core/Grid'
+import Box from '@material-ui/core/Box'
 
 import * as generalapi from '../api1/GeneralApi'
 import * as broadcast from "../server/BroadcastDispatcher"
 import * as event from "../api1/Event"
 import * as util from "../server/Util"
-
+ 
 // This is both a component and the body of an 'edit' dialog. 
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         thebox: {
-            fontSize: 12,
+            fontSize: 13,
         },
         thecard: {
             display: "flex",
             padding: "8px 8px",
+            margin: "8px 8px",
             //    height: 200, // done 'manually' below
-            overflow: 'auto',
+            //    width: 200, // done 'manually' below
+            // overflow: 'auto',
+            // overflowX: 'auto',
+            // overflowY: 'auto',
+            flexDirection : "column"
         }
     })
 );
@@ -63,11 +82,13 @@ export const GeneralInfoLayout: FC<Props> = (props: Props) => {
 
     const classes = useStyles();
 
-    const theCardStyle = {
-        height: "800px"
+    var theCardStyle = {
+        height: "800px",
+        width:  "800px"
     };
     if (props.editing == false) {
         theCardStyle.height = "200px"
+        theCardStyle.width = "200px"
     }
 
     useEffect(() => {
@@ -92,7 +113,7 @@ export const GeneralInfoLayout: FC<Props> = (props: Props) => {
     const handleEvent = (event: event.EventCmd) => {
         //console.log("PostListManager2 have event", event, event.who, props.username,dates.length)
         if (event.what.cmd === 'GeneralApi' && event.who === props.username) { //event.what.cmd
-          console.log("GeneralApi have GeneralApi event", event, event.who, props.username)
+          //console.log("GeneralApi have GeneralApi event", event, event.who, props.username)
           const cmd : generalapi.GeneralApiCmd = event.what as generalapi.GeneralApiCmd
           if ( cmd.generalInfo != undefined ) {
             const newState: State = {
@@ -139,9 +160,13 @@ export const GeneralInfoLayout: FC<Props> = (props: Props) => {
     const addSomeButtonsIfEditing = () => {
         if (props.editing) {
             return (
-                <CardActions>
-                    <Button variant="contained" onClick={() => { props.cancel("") }} >Cancel</Button>
-                    <Button variant="contained" onClick={onSaveButton} >Save</Button>
+                <CardActions style={{flexDirection:"row" }}>
+                    <Box flexGrow={1}  >
+                        <Button  variant="contained" onClick={() => { props.cancel("") } } >Cancel</Button>
+                    </Box>
+                    <Box flexGrow={1}  > 
+                        <Button variant="contained" onClick={onSaveButton} >Save</Button>
+                    </Box>
                 </CardActions>
             )
         } else {
@@ -158,6 +183,9 @@ export const GeneralInfoLayout: FC<Props> = (props: Props) => {
 
     return (
         <Grid className={classes.thecard} container direction="row" component="div" style={theCardStyle}  >
+            <div style={{ width: '100%', overflowY:"auto" }}>
+
+            {addSomeButtonsIfEditing()}
 
             {/* <GeneralItem editing={props.editing}
                 itemname="Name"
@@ -221,7 +249,7 @@ export const GeneralInfoLayout: FC<Props> = (props: Props) => {
                 value={state.generalInfo.more} />
 
             {addSomeButtonsIfEditing()}
-
+            </div>
         </Grid>
     )
 }
@@ -275,7 +303,7 @@ export const GeneralItem: FC<ItemProps> = (props: ItemProps) => {
         } else {
             return (
                 <div className={classes.thebox}  >
-                    <b><span>{capitalize(props.itemname) + ": "}</span></b>
+                    <b><span>{capitalize(props.itemname) + ":"}</span></b>
                     <span>{getValue()}</span>
                 </div>
             )

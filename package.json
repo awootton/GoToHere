@@ -52,6 +52,8 @@
         "rc": "export HOST=charles_everly_erudite.knotlocal.com && react-scripts start",
         "re": "export HOST=edward_larry_zachary.knotlocal.com && react-scripts start",
         "rw": "export HOST=alan_tracey_wootton.knotlocal.com && react-scripts start",
+        "rg": "export HOST=gotolocal.com && react-scripts start",
+        "rk": "export HOST=knotlocal.com && react-scripts start",
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject"

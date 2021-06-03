@@ -1,4 +1,17 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import React, { ReactElement, FC } from "react";
 
@@ -15,10 +28,10 @@ import Button from '@material-ui/core/Button';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 
-import * as mqttstuff from '../server/MqttClient';
+//import * as mqttclient from '../server/MqttClient';
 
 import * as util from "../server/Util"
-import * as mqtt_stuff from "../server/MqttClient"
+import * as mqttclient from "../server/MqttClient"
 
 
 import * as nacl from 'tweetnacl-ts'
@@ -59,7 +72,7 @@ export type State = {
     theToken: string
     serverPublicKeyB64: string
     counter: number
-    isMore: boolean
+    isMore: boolean // expand the bottom
     isVerified: boolean
 }
 
@@ -150,7 +163,7 @@ export const TokenScreen: FC<Props> = (props: Props): ReactElement => {
         // can we start mqtt? 
         // the first path is for when it's already started
         // the 2nd starts it. 
-        if ( mqttstuff.getMqttThing() !== undefined) {
+        if ( mqttclient.mqttServerThing !== undefined) {
             // don't start again
             console.log("didn't restart mqtt unnecessarily")
             console.log("mqtt success in TokenScreen")
@@ -170,7 +183,7 @@ export const TokenScreen: FC<Props> = (props: Props): ReactElement => {
             props.setAppHasToken(newState)
 
         } else {
-            mqtt_stuff.StartClientMqtt(aToken, serverName, (errmsg: string) => {
+            mqttclient.StartClientMqtt(aToken, serverName, (errmsg: string) => {
 
                 console.log("returned from mqtt no news is good: ", errmsg)
                 if (errmsg.length) {
@@ -184,7 +197,7 @@ export const TokenScreen: FC<Props> = (props: Props): ReactElement => {
                         serverName: serverName
                     }
                     setState(newState)
-                    const mqtt = mqttstuff.getMqttThing()
+                    const mqtt = mqttclient.mqttServerThing
                     if ( mqtt ){
                         mqtt.CloseTheConnect()
                     } else {
@@ -228,9 +241,9 @@ export const TokenScreen: FC<Props> = (props: Props): ReactElement => {
                             // now that we have the pubk we can set up the context
                             context.initialized = false
                             util.initContext(context) // fix the wong hash of the name
-                            context.ourPublicKey = pubk
+                            context.ourPublicKey = [pubk]
                             context = util.getNameToContext(util.getProfileName()) 
-                            console.log("Have pubk from ping of " , util.toBase64Url(context.ourPublicKey) )
+                            console.log("Have pubk from ping of " , util.toBase64Url(context.ourPublicKey[0]) )
 
                             const newState: State = {
                                 ...state,
@@ -248,6 +261,11 @@ export const TokenScreen: FC<Props> = (props: Props): ReactElement => {
                             props.setAppHasToken(newState)
                         }
                     })
+
+
+
+
+                    
                 }
             })
         }

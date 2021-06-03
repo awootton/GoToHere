@@ -1,4 +1,17 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import fs from 'fs'
 
 //import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
@@ -8,9 +21,8 @@ import ApiCommand from "./Api"
 import * as api from "./Api"
 import * as config from "../server/Config"
 
-//import * as cardutil from '../components/CardUtil'
-
 import * as social from '../server/SocialTypes'
+ 
 
 // to run just this file :
 // node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/api1/DeletePost
@@ -94,12 +106,19 @@ const DeletePostWaitingRequest: api.WaitingRequest = {
     //callerPublicKey64: "unknown+so+far"
 }
 
-export function InitApiHandler(returnsWaitingMap: Map<string, api.WaitingRequest>) {
+//   function InitApiHandler(returnsWaitingMap: Map<string, api.WaitingRequest>) {
 
-    DeletePostWaitingRequest.options.set("api1", DeletePostWaitingRequest.id)
-    // returnsWaitingMap map is handling incoming packets in mqttclient 
-    returnsWaitingMap.set(DeletePostWaitingRequest.id, DeletePostWaitingRequest)
+//     DeletePostWaitingRequest.options.set("api1", DeletePostWaitingRequest.id)
+//     // returnsWaitingMap map is handling incoming packets in mqttclient 
+//     returnsWaitingMap.set(DeletePostWaitingRequest.id, DeletePostWaitingRequest)
+// }
+
+//mqttclient.returnsWaitingMapset(DeletePostWaitingRequest.id, DeletePostWaitingRequest)
+
+export function getWr(): api.WaitingRequest {
+    return DeletePostWaitingRequest
 }
+
 
 // writePostToFile ripped off from initFake
 function deletePostFile(path: string, id: social.DateNumber) {

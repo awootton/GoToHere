@@ -1,4 +1,17 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import fs from 'fs'
 
 //import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
@@ -10,6 +23,7 @@ import * as config from "../server/Config"
 
 import * as social from '../server/SocialTypes'
 
+import * as mqttclient from "../server/MqttClient";
 
 export interface IncrementLikesCmd extends ApiCommand {
     id: social.DateNumber
@@ -31,7 +45,7 @@ export type IncrementLikesReceiver = (reply: IncrementLikesReply, error: any) =>
 
 export const defaultRetry = 20
 
-export function IssueTheCommand(username: string, id: social.DateNumber, who: string, receiver: IncrementLikesReceiver, retries?: number) {
+export function IssueTheCommand(username: string, id: social.DateNumber, who: string, receiver: IncrementLikesReceiver) {
 
     var cmd: IncrementLikesCmd = {
         cmd: "IncrementLikes",
@@ -52,14 +66,11 @@ export function IssueTheCommand(username: string, id: social.DateNumber, who: st
         var reply: IncrementLikesReply = strdata.length > 0 ? JSON.parse(strdata, reviver) : {}
 
         if (error !== undefined) {
-
-            receiver(reply, error)
-
+            console.log("IncrementLikesCmd error ", error)
             // try again, in a sec.
-            // setTimeout(() => {
-            //     const newretries = theRetries - 1
-            //     IssueTheCommand(username, id, receiver, newretries)
-            // }, 1000)
+            setTimeout(() => {
+                IssueTheCommand(username, id, who, receiver)
+            }, 1000)
         } else {
             receiver(reply, error)
         }
@@ -79,12 +90,19 @@ const IncrementLikesWaitingRequest: api.WaitingRequest = {
     //callerPublicKey64: "unknown+so+far"
 }
 
-export function InitApiHandler(returnsWaitingMap: Map<string, api.WaitingRequest>) {
+//   function InitApiHandler(returnsWaitingMap: Map<string, api.WaitingRequest>) {
 
-    IncrementLikesWaitingRequest.options.set("api1", IncrementLikesWaitingRequest.id)
-    // returnsWaitingMap map is handling incoming packets in mqttclient 
-    returnsWaitingMap.set(IncrementLikesWaitingRequest.id, IncrementLikesWaitingRequest)
+//     IncrementLikesWaitingRequest.options.set("api1", IncrementLikesWaitingRequest.id)
+//     // returnsWaitingMap map is handling incoming packets in mqttclient 
+//     returnsWaitingMap.set(IncrementLikesWaitingRequest.id, IncrementLikesWaitingRequest)
+// }
+
+//mqttclient.returnsWaitingMapset(IncrementLikesWaitingRequest.id, IncrementLikesWaitingRequest)
+
+export function getWr(): api.WaitingRequest {
+    return IncrementLikesWaitingRequest
 }
+
 
 // writePostToFile ripped off from initFake
 function IncrementLikesFile(path: string,

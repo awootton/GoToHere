@@ -1,3 +1,17 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //import * as util from "./util"
 //import * as social from "./social_types"
@@ -9,24 +23,21 @@ export type DateNumber = number;
 // same but a string
 export type DateString = string;
 
-// This is the standard alias of another social account. 
-// it is the first 16 bytes of a sha256 of the name, in url encoded base 64
-export type PersonAlias = string;
+export type Person = string;
 
 export type Reference = {
     id: DateNumber; // this is actually a timestamp. a 
-    alias: PersonAlias; // this is the sha256 of the topic name 
+    by: Person; // this is the topic name 
 }
 
-// export type LikeReference = {
-//     who: PersonAlias;
-// }
+export type StringRef = string // like a Reference but put in a string as "id by"
 
+
+// Friend is for a friends list. The publicKey is for verification of identity.
 export type Friend = {
     name: string // the full name aka alice_vociferous_mcgrath
-    nameHash: string // in sha256 of the name
+    //nameHash: string // in sha256 of the name
     publicKey: Buffer // ready to go
-
 }
 
 export type Post = {
@@ -35,22 +46,62 @@ export type Post = {
     theText: string;
     likes: number; //PersonAlias[];
     retweets: string[]; // what type ? 
-    comments: Reference[];
-    postedByName: string; // who sent it. including us. a username
+    comments: StringRef[];
+    by: string; // who sent it. including us. a username
     editable?: boolean;
-    more?: any
-    //replyingTo? : Reference // if this is a comment then this is the parent
+    //more?: any
 }
 
-export const emptyPost : Post = {
+// We'll just use the one direct parent for now.
+// if the parents.length = 1 doesn't mean there are no grandparents. We just didn't look yet
+export interface Comment extends Post {
+    parent: StringRef;
+}
+
+
+export function StringRefNew(ref: Reference | Post | Comment): StringRef {
+    return ref.id + " " + ref.by
+}
+
+export function StringRefToRef(str: StringRef): Reference {
+    const parts = str.split(" ")
+    const ref: Reference = {
+        id: +parts[0],
+        by: parts[1]
+    }
+    return ref
+}
+
+
+// export class StringRef {
+//     str: string;
+//     constructor(str: string) {
+//         this.str = str;
+//     }
+//     static from(ref: Reference | Post | Comment) {
+//         return new StringRef(ref.id + " " + ref.by)
+//     }
+//     getReference(): Reference {
+//         const parts = this.str.split(" ")
+//         const ref: Reference = {
+//             id: +parts[0],
+//             by: parts[1]
+//         }
+//         return ref
+//     }
+// }
+
+
+
+export const emptyPost: Post = {
 
     id: 0,
     title: "",
     theText: "",
     likes: 0, //PersonAlias[],
-    retweets: [] , // what type ? 
+    retweets: [], // what type ? 
     comments: [],
-    postedByName: "", // who sent it. including us. a username
+    by: "", // who sent it. including us. a username
 }
 
 // why is this a class and not a type? 
@@ -86,6 +137,3 @@ export const emptyPost : Post = {
 //     }
 // }
 
-export interface Comment extends Post {
-    parents: Reference[];
-}

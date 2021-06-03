@@ -1,4 +1,17 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import React, { FC, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 // import AppBar from '@material-ui/core/AppBar';
@@ -21,8 +34,9 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 
 import * as dialogs_apptest from '../dialogs/AppFrame'
 
-import * as api from '../api1/GetFriends'
+import * as friendsapi from '../api1/GetFriends'
 import * as util from "../server/Util"
+import { MqttClient } from 'mqtt';
 
 const useStyles = makeStyles((theme) => ({
 
@@ -83,6 +97,7 @@ export interface FriendTabsProps {
 type NameProps = {
     index: number,
     name: string
+    pubkeys: string[] 
 }
 export const LinkedName: FC<NameProps> = (props: NameProps) => {
 
@@ -126,12 +141,10 @@ export const LinkedName: FC<NameProps> = (props: NameProps) => {
                 onClose={handleDialogClose}
                 >
                 <DialogTitle>{getTitle()}</DialogTitle>
-                <dialogs_apptest.FillAppFrame username={props.name} hasHeader = {false}  />
+                <dialogs_apptest.FillAppFrame username={props.name} pubkeys={props.pubkeys} hasHeader = {false}  />
             </Dialog>
 
         </div>
-
-
     )
     return item
 }
@@ -142,21 +155,25 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
 
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [showing, setShowing] = React.useState("friends");
+    const [sequence, setSequence] = React.useState(0);
 
-    const [friendsData, setFriendsData] = React.useState(api.GetFriendsReplyEmpty);
+    const [friendsData, setFriendsData] = React.useState(friendsapi.GetFriendsReplyEmpty);
 
     const loadTheData = () => {
         console.log("in useEffect of FriendTabs")
         // call the api for our friends! 
-        api.IssueTheCommand(props.username, 9999, 0, gotFriendsReceiver, 3)
+        friendsapi.IssueTheCommand(props.username, 9999, 0, gotFriendsReceiver)
+        setTimeout(()=>{
+            setSequence(sequence+1)
+        },10)
     }
 
     useEffect( () => { loadTheData() }, [] )// once
 
-    const gotFriendsReceiver = (reply: api.GetFriendsReply, error: any) => {
+    const gotFriendsReceiver = (reply: friendsapi.GetFriendsReply, error: any) => {
         //console.log("have friends data", reply)
         if (reply.friends === undefined || error) {
-            reply = api.GetFriendsReplyEmpty
+            reply = friendsapi.GetFriendsReplyEmpty
         }
         setFriendsData(reply)
     }
@@ -205,12 +222,12 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
         }
         var index = 0
         //console.log("FriendTabs getPanel ", friendsData)
-        for (const pubk of theList) {
-            const name = friendsData.key2name.get(pubk) || "noname"
+        for (const name of theList) {
+            const keys: string[]  = friendsData.name2keys.get(name) || []
             //util.SetName2Pubk(name, util.fromBase64Url(pubk))
             const item = (
                 <div key={index}>
-                    <LinkedName index={index} name={name} ></LinkedName>
+                    <LinkedName index={index} name={name} pubkeys={keys} ></LinkedName>
                 </div>
             )
             items.push(item)

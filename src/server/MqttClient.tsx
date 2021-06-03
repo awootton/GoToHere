@@ -1,30 +1,45 @@
+// Copyright 2021 Alan Tracey Wootton
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+// TODO: use knotfree api directly and dump mqtt.
 
 import mqtt from 'mqtt';
 
 import { ProxyPortInstance, PacketCallParams } from "./Proxy"
 
-
 import * as util from './Util';
 import * as config from './Config';
 
-
-import * as get_posts from '../api1/GetPosts';
+import * as broadcast from '../server/BroadcastDispatcher'
 
 import { WaitingRequest } from '../api1/Api';
 import * as api from '../api1/Api';
+import * as eventapi from '../api1/Event';
 
-//import * as mqtt_util from "./MqttClient2"
+//import * as mqttclient from "./MqttClient2"
 
 //import * as c_util from "../components/CryptoUtil"
 import * as pingapi from '../api1/Ping'
-import * as friendsapi from '../api1/GetFriends'
-import * as savepostapi from '../api1/SavePost'
-import * as deletepostapi from '../api1/DeletePost'
-import * as broadcast from '../server/BroadcastDispatcher'
-import * as eventapi from '../api1/Event'
-import * as likesapi from '../api1/IncrementLikes'
-import * as generalapi from '../api1/GeneralApi'
+// import * as friendsapi from '../api1/GetFriends'
+// import * as savepostapi from '../api1/SavePost'
+// import * as deletepostapi from '../api1/DeletePost'
+// //import * as broadcast from '../server/BroadcastDispatcher'
+// import * as eventapi from '../api1/Event'
+// import * as likesapi from '../api1/IncrementLikes'
+// import * as generalapi from '../api1/GeneralApi'
+// import * as commentsapi from '../api1/GetComments'
 
 type MqttServerPropsType = {
 
@@ -85,6 +100,31 @@ const SomeMqttOptions: MqttOptionsType = {
 
 var haveWeEverInitialisedThatPingTimer: boolean = false;
 
+  // map from an api hash val to the handler
+  // there's really just one of these. 
+  // returnsWaitingMap is really more of an Api1 thing because it's the
+  // dispatcher for api1. It's here because of how close to mqtt onMessage it is. 
+var  returnsWaitingMap = new Map<string, WaitingRequest>()
+
+export function returnsWaitingMapset( a:string, w:WaitingRequest){
+  //console.log("setting returnsWaitingMapset  ",a)
+  returnsWaitingMap.set(a,w)
+}
+
+var topic2port = new Map<string, string>()
+var topic2datafolder = new Map<string, string>()
+
+export function topic2portset( a:string, b:string){
+  //console.log("setting topic2portset ",a,b)
+  topic2port.set(a,b)
+}
+
+export function topic2datafolderset( a:string, b:string){
+  //console.log("setting topic2datafolderset ",a,b)
+  topic2datafolder.set(a,b)
+}
+
+
 export class MqttTestServerTricks {
 
   client: any // mqtt client
@@ -94,12 +134,9 @@ export class MqttTestServerTricks {
   connectStatus: string
 
   server_config: config.ServerConfigList
-  topic2port = new Map<string, string>()
-  topic2datafolder = new Map<string, string>()
+  // topic2port = new Map<string, string>()
+  // topic2datafolder = new Map<string, string>()
   hashed2name = new Map<string, string>()// lookup the hash of a topic/name and get the name.
-
-  // map from an api hash val to the handler
-  returnsWaitingMap = new Map<string, WaitingRequest>()
 
   myReplyChannel: string
 
@@ -112,19 +149,19 @@ export class MqttTestServerTricks {
     this.restartCallback = restartCallback
 
     this.server_config = props.config
-    this.cleanerIntervalID = setInterval(cleaner, 1000 * 100); // FIXME cleaner is off 
+    this.cleanerIntervalID = setInterval(cleaner, 1000 * 1); //  
 
     this.myReplyChannel = "=" + util.randomString(32)
-    this.topic2port = new Map<string, string>()
+    //this.topic2port = new Map<string, string>()
     if (props.isClient === false) {
 
       // fixme with config
       for (let item of props.config.items) {
-        this.topic2port.set(item.name, item.port)
-        this.topic2datafolder.set(item.name, item.directory)
+        topic2portset(item.name, item.port)
+        topic2datafolderset(item.name, item.directory)
       }
 
-      this.topic2port.forEach((value: string, key: string) => {
+      topic2port.forEach((value: string, key: string) => {
         var k2 = util.KnotNameHash(key)
         k2 = "=" + k2
         //console.log(" new k,v ", k2, value)
@@ -132,21 +169,28 @@ export class MqttTestServerTricks {
       })
 
       // load up the api with handlers for the various api's
-      get_posts.InitApiHandler(this.returnsWaitingMap)
-      pingapi.InitApiHandler(this.returnsWaitingMap)
-      friendsapi.InitApiHandler(this.returnsWaitingMap)
-      friendsapi.InitApiHandler(this.returnsWaitingMap)
-      savepostapi.InitApiHandler(this.returnsWaitingMap)
-      deletepostapi.InitApiHandler(this.returnsWaitingMap)
-      eventapi.InitApiHandler(this.returnsWaitingMap)
-      likesapi.InitApiHandler(this.returnsWaitingMap)
-      generalapi.InitApiHandler(this.returnsWaitingMap)
+      for ( var wr of   api.getAllHooks() ){
+        returnsWaitingMap.set(wr.id,wr)
+      }
+      // get_posts.InitApiHandler(this.returnsWaitingMap)
+      // pingapi.InitApiHandler(this.returnsWaitingMap)
+      // friendsapi.InitApiHandler(this.returnsWaitingMap)
+      // friendsapi.InitApiHandler(this.returnsWaitingMap)
+      // savepostapi.InitApiHandler(this.returnsWaitingMap)
+      // deletepostapi.InitApiHandler(this.returnsWaitingMap)
+      // eventapi.InitApiHandler(this.returnsWaitingMap)
+      // likesapi.InitApiHandler(this.returnsWaitingMap)
+      // generalapi.InitApiHandler(this.returnsWaitingMap)
 
       //console.log(" returnsWaitingMap initialised to ", this.returnsWaitingMap)
 
     } else {
       // we're in the client in chrome 
-      eventapi.InitApiHandler(this.returnsWaitingMap)
+      // eventapi.InitApiHandler(this.returnsWaitingMap)
+      var wr = eventapi.getWr()
+      returnsWaitingMap.set(wr.id,wr)
+      wr = pingapi.getWr()
+      returnsWaitingMap.set(wr.id,wr)
     }
 
     this.connectStatus = "closed"
@@ -173,10 +217,10 @@ export class MqttTestServerTricks {
 
     console.log("mqtt ping")
 
-    const receiver: pingapi.PingReceiver = (cmd: pingapi.PingCmd, error: any) => {
-      //console.log("mqtt client ping receiver")//: pingapi.PingReceiver ", cmd, error)
-    }
-    pingapi.IssueTheCommand("Anonymous", "Anonymous", receiver) // todo: intercept in knotfree, reserve name Anonymous forever.
+    // const receiver: pingapi.PingReceiver = (cmd: pingapi.PingCmd, error: any) => {
+    //   //console.log("mqtt client ping receiver")//: pingapi.PingReceiver ", cmd, error)
+    // }
+    // pingapi.IssueTheCommand("Anonymous", "Anonymous", receiver) // todo: intercept in knotfree, reserve name Anonymous forever.
   }
 
   CloseTheConnect() {
@@ -265,12 +309,13 @@ export class MqttTestServerTricks {
           return;
         }
         if (this.client) {
-          this.topic2port.forEach((value: string, key: string) => {
+          topic2port.forEach((value: string, key: string) => {
             //console.log("will now be subscribing to ", key, value);
           });
 
           this.subscribeFunc(this.myReplyChannel)
-          this.topic2port.forEach((value: string, key: string) => { this.subscribeFunc(key) })
+          topic2port.forEach((value: string, key: string) => { this.subscribeFunc(key) })
+          
           broadcast.SubscribeAll()
 
           successCallback("") // no complaints
@@ -304,7 +349,7 @@ export class MqttTestServerTricks {
         console.log(" Reconnecting " + new Date())
         // repeat the subscriptions
         this.subscribeFunc(this.myReplyChannel)
-        this.topic2port.forEach((value: string, key: string) => { this.subscribeFunc(key) })
+        topic2port.forEach((value: string, key: string) => { this.subscribeFunc(key) })
         broadcast.SubscribeAll()
 
       });
@@ -333,7 +378,7 @@ export class MqttTestServerTricks {
           // 2) it's a return. Normally this mean we're in the client. 
           // Event can happen. Ping can happen. Ping's are api1 but no crypto. 
 
-          const returnHandler = this.returnsWaitingMap.get(isApi)
+          const returnHandler = returnsWaitingMap.get(isApi)
           if (returnHandler !== undefined) {
 
             returnHandler.message = message
@@ -347,7 +392,7 @@ export class MqttTestServerTricks {
 
             } else { // a return
 
-              this.returnsWaitingMap.delete(isApi)
+              returnsWaitingMap.delete(isApi)
               api.HandleApiReplyArrival(this, isApi, returnHandler)
 
             }
@@ -399,7 +444,7 @@ export class MqttTestServerTricks {
               // FIXME: systemErrorReceiver( Buffer.from(message).toString('utf8') )
 
             } else {
-              var portStr = this.topic2port.get(realname)
+              var portStr = topic2port.get(realname)
               if (portStr === undefined) {
                 console.log("ERROR we really need to know a port for EVERY name ", realname, topic)
                 portStr = "9090"
@@ -436,7 +481,7 @@ export var mqttServerThing: MqttTestServerTricks;
 export var isClient: boolean;
 
 // im not sure if this works correctly
-export function getMqttThing(): MqttTestServerTricks | undefined {
+export function xxxxgetMqttThing(): MqttTestServerTricks | undefined {
   if (mqttServerThing !== undefined) {
     if (mqttServerThing.client !== undefined) {
       return mqttServerThing
@@ -459,7 +504,7 @@ function cleaner() {
     // timeout the returnsWaitingMap
     var deletelist: string[] = []
 
-    mqtt.returnsWaitingMap.forEach((value: WaitingRequest, key: string) => {
+    returnsWaitingMap.forEach((value: WaitingRequest, key: string) => {
       //console.log(" mqtt.returnsWaitingMap key ", key, value)
       const nowms = util.getMilliseconds()
       if (!value.permanent) {
@@ -471,11 +516,14 @@ function cleaner() {
     deletelist.forEach((key: string) => {
       var mqtt = mqttServerThing
       if (mqtt !== undefined) {
-        const val = mqtt.returnsWaitingMap.get(key)
+        const val = returnsWaitingMap.get(key)
         if (val !== undefined) {
+
+          console.log("cleaning ", key, val)
+
           var err = "ERROR ERROR timeout error " + key
           val.waitingCallbackFn(val, err)
-          mqtt.returnsWaitingMap.delete(key)
+          returnsWaitingMap.delete(key)
         }
       }
     })
@@ -490,7 +538,7 @@ export function StartClientMqtt(aToken: string, aServer: string, successCb: (msg
   const anonContext: util.Context = {
     ...util.emptyContext,
     username: "Anonymous",
-    password: "Anonymous",
+    password: ["Anonymous","Anonymous"]
   }
   util.initContext(anonContext)
   util.pushContext(anonContext)
@@ -498,7 +546,7 @@ export function StartClientMqtt(aToken: string, aServer: string, successCb: (msg
   const profileContext: util.Context = {
     ...util.emptyContext,
     username: util.getProfileName(),
-    password: "",
+    password: [],
   }
   util.initContext(profileContext)
   util.pushContext(profileContext)
