@@ -13,12 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import fetch from 'cross-fetch';
+
 import * as nacl from 'tweetnacl-ts'
 
-import * as util from "./server/Util"
-import * as mqttclient from "./server/MqttClient"
-import * as pingapi from "./api1/Ping"
-import * as friendsapi from './api1/GetFriends'
+import * as util from "./gotohere/mqtt/Util"
+import * as mqttclient from "./gotohere/mqtt/MqttClient"
+import * as pingapi from "./gotohere/api1/Ping"
+import * as friendsapi from './gotohere/api1/GetFriends'
 
 // do we really need this? 
 export var theKnotPubk = ""
@@ -31,9 +33,14 @@ export function setToken(s: string) {
 
 var bootPhase = 0
 
+export var isTestingNotClient : boolean = false
+export function setisTestingNotClient() {
+  isTestingNotClient = true
+}
+
 var timerId: NodeJS.Timeout | undefined = undefined
 
-var delay = 100
+var delay = 1000
 var showDialogs = false // to see it in the ui
 
 var pending = false
@@ -41,36 +48,31 @@ var pending = false
 var reschedules = 0
 var pingsDone = 0
 
-function reschedule(increment: (finished: boolean) => any) {
-  reschedules += 1
-  if (reschedules > 20) { // kinda arbitrary
-    console.log("too many retries. Now we're going slow bootPhase=", bootPhase)
-    delay = 5000
-    showDialogs = true
-  }
-  if (showDialogs) {
-    delay = 10000
-    increment(false)
-    reschedules += 1
-  }
-  if (delay === 0) {
-    bootSequence(increment)
-  } else {
-    if (timerId === undefined) {
-      timerId = setTimeout(() => {
-        if (showDialogs) {
-          increment(false)// redraws the app
-        }
-        timerId = undefined
-        reschedules += 1
-        bootSequence(increment)
-      }, delay)
-    }
-  }
-}
+// function reschedule() {
+//   reschedules += 1
+//   if (reschedules > 20) { // kinda arbitrary
+//     console.log("too many retries. Now we're going slow bootPhase=", bootPhase)
+//     delay = 5000
+//     showDialogs = true
+//   }
+//   if (showDialogs) {
+//     LatestCallbackPointer(false)
+//   }
+//   if (delay === 0) {
+//     //bootSequence(increment)
+//   } else {
+//     if (timerId === undefined) {
+//       timerId = setTimeout(() => {
+//         timerId = undefined
+//         reschedules += 1
+//         bootSequence()
+//       }, delay)
+//     }
+//   }
+// }
 
 // only call increment at the end
-export function bootSequence(increment: (finished: boolean) => any) {
+export function bootSequence( callback: (done:boolean) => any ) {
 
   console.log("in bootSequence with ", bootPhase)
   if (pending) {
@@ -82,7 +84,7 @@ export function bootSequence(increment: (finished: boolean) => any) {
 
     //  localStorage.setItem('knotfree_access_token_v1', aToken);
     // the first thing to do is try to get a token.
-    let savedToken = localStorage.getItem('knotfree_access_token_v2');
+    let savedToken = localStorage_getItem('knotfree_access_token_v2');
     if (savedToken && savedToken.length > 0) {
       var sname: string
       var complaints: string
@@ -92,11 +94,11 @@ export function bootSequence(increment: (finished: boolean) => any) {
         // let's use the servername from the window serverName = sname
         setToken(savedToken)
         bootPhase = 1  // progress
-        reschedule(increment) // back to top
+        callback(false)//reschedule() // back to top
       } else {
         // bad token
-        localStorage.setItem('knotfree_access_token_v2', "");
-        reschedule(increment) // back to top
+        localStorage_setItem('knotfree_access_token_v2', "");
+        callback(false)//reschedule() // back to top
       }
     } else {
       // no saved token
@@ -116,15 +118,15 @@ export function bootSequence(increment: (finished: boolean) => any) {
             if (ok) {
               console.log("have token , ", theToken)
               bootPhase = 1
-              reschedule(increment)
+              callback(false)//reschedule()
             } else {
-              reschedule(increment) // try again later. state remains the same
+              callback(false)//reschedule() // try again later. state remains the same
             }
           })
         } else {
           // fail. crap. 
           console.log("apputil.pingServer fail with knotfree.net ")
-          reschedule(increment) // try again later. state remains the same
+          callback(false)//reschedule() // try again later. state remains the same
         }
       })
     }
@@ -138,9 +140,9 @@ export function bootSequence(increment: (finished: boolean) => any) {
       pending = false
       if (ok) {
         bootPhase = 2 // progress
-        reschedule(increment)
+        callback(false)//reschedule()
       } else {
-        reschedule(increment)
+        callback(false)//reschedule()
       }
     })
   } else if (bootPhase === 2) {
@@ -154,31 +156,34 @@ export function bootSequence(increment: (finished: boolean) => any) {
         if (pingsDone > 4) {
           //increment(true)// we're done
           bootPhase = 3
-          reschedule(increment)
+          callback(false)//reschedule()
         } else {
-          reschedule(increment)// try again
+          callback(false)//reschedule()// try again
         }
       } else {
-        reschedule(increment)// try again
+        callback(false)//reschedule()// try again
       }
     })
   } else if (bootPhase === 3) {
     // get friends
     pending = true
-    getFriends((ok: boolean) => {
+    getFriends((ok: boolean, friends: friendsapi.GetFriendsReply ) => {
       pending = false
       if (ok) {
-        console.log("we friends  ", util.getSecondsDisplay())
+        console.log("we have friends !!  ", util.getSecondsDisplay())
+        friendsapi.GlobalFriendsMap.set(util.getProfileName().toLowerCase(),friends)
         bootPhase = 4
-        increment(true)// we're done
+        console.log("increment(true) // we're done ")
+        //LatestCallbackPointer(true)// we're done
+        callback(true)
       } else {
-        reschedule(increment)// try again
+        callback(false)//reschedule()// try again
       }
     })
   }
 }
 
-function getFriends(done: (ok: boolean) => any) {
+function getFriends(done: (ok: boolean, friends: friendsapi.GetFriendsReply) => any) {
 
   const context: util.Context = util.getNameToContext(util.getProfileName())
   console.log("AppUtil getFriends will use this name", context.username, util.getSecondsDisplay())
@@ -188,10 +193,10 @@ function getFriends(done: (ok: boolean) => any) {
   friendsapi.IssueTheCommand(profileName, 1, 0, (reply: friendsapi.GetFriendsReply, error: any) => {
     if (error) {
       console.log("ERROR in getFriends from apiUtil ")
-      done(false)
+      done(false, reply)
     } else {
       console.log("AppUtil getFriends is back ", util.getSecondsDisplay())
-      done(true)
+      done(true, reply)
     }
   })
 }
@@ -226,7 +231,7 @@ export function pingForPubk(done: (ok: boolean) => any) {
 
       //util.SetPserverPubKey(util.getProfileName())
       // don't refresh self on success setState(newState)
-      localStorage.setItem('knotfree_access_token_v2', theToken);
+      localStorage_setItem('knotfree_access_token_v2', theToken);
       console.log("mqtt success 2 pubkey setting localStorage.setItem knotfree_access_token_v2")
       done(true)
     }
@@ -273,12 +278,13 @@ export function getFreeToken(serverName: string, done: (ok: boolean) => any) {
   }
   const hoststr = "http://" + util.getProfileName() + "." + serverName + "api1/getToken"
 
-  console.log("it's ftech time again ... for a Token !!", hoststr)
+  //console.log("it's ftech time again ... for a Token !!", hoststr)
   var data = getSampleKnotFreeTokenRequest()
   const myKeyPair: nacl.BoxKeyPair = nacl.box_keyPair()
   // arg!! wants hex ! data.pkey =  base64url.encode(Buffer.from(keyPair.publicKey))
   data.pkey = (Buffer.from(myKeyPair.publicKey)).toString('hex')
   // FIXME: use fetchWithTimeout with longer timeout 
+  console.log("AppUtil getFreeToken ", hoststr, JSON.stringify(data))
   //const response = fetchWithTimeout(hoststr, { method: 'POST', body: JSON.stringify(data)}); // , { mode: "no-cors" });
   const response = fetch(hoststr, { method: 'POST', body: JSON.stringify(data) }); // , { mode: "no-cors" });
   response.then((resp: Response) => {
@@ -313,7 +319,7 @@ export function getFreeToken(serverName: string, done: (ok: boolean) => any) {
     else {
       // resp not OK 
       console.log("have get free token fetch problem ", resp)
-      done(false)
+      setTimeout( () => { done(false) },2000)
     }
   }
   )
@@ -332,14 +338,14 @@ export function pingServer(serverName: string, done: (ok: boolean) => any) {
     console.log("pingServer have response ", resp, "from server", hoststr)
     if (resp.ok) {
       resp.text().then((thedata: string) => {
-        console.log("pingServer have fetch result ", thedata)
+        console.log("pingServer have api1/getPublicKey result ", thedata)
         theKnotPubk = thedata
         done(true)
       })
     }
     else {
       // resp not OK 
-      console.log("pingServer have fetch problem ", resp)
+      console.log("pingServer have api1/getPublicKey ERROR ", resp)
       done(false)
     }
   })
@@ -415,3 +421,24 @@ function getSampleKnotFreeTokenPayload(): KnotFreeTokenPayload {
   }
   return res
 }
+
+
+export function localStorage_getItem(key: string): string | null {
+  if ( isTestingNotClient ){
+    return null
+  }
+    if ( undefined === localStorage) {
+        return null
+    }
+    return localStorage.getItem(key)
+}
+export function localStorage_setItem(key: string, val: string) {
+  if ( isTestingNotClient ){
+    return 
+  }
+   if ( undefined === localStorage) {
+        return
+    }
+    return localStorage.setItem(key, val)
+}
+

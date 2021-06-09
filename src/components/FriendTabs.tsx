@@ -34,8 +34,8 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 
 import * as dialogs_apptest from '../dialogs/AppFrame'
 
-import * as friendsapi from '../api1/GetFriends'
-import * as util from "../server/Util"
+import * as friendsapi from '../gotohere/api1/GetFriends'
+import * as util from "../gotohere/mqtt/Util"
 import { MqttClient } from 'mqtt';
 
 const useStyles = makeStyles((theme) => ({

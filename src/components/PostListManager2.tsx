@@ -17,15 +17,15 @@ import React, { ReactElement, FC, useEffect, useCallback } from "react";
 import ReactList from 'react-list';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 
-import * as getpostsapi from "../api1/GetPosts"
+import * as getpostsapi from "../gotohere/api1/GetPosts"
 
-import * as social from "../server/SocialTypes"
+import * as s from "../gotohere/mqtt/SocialTypes"
 import * as postitem from "./PostItem"
 import * as cards from "./CardUtil"
-import * as util from "../server/Util"
-import * as event from "../api1/Event"
-import * as broadcast from "../server/BroadcastDispatcher"
-import * as getcommentsapi from "../api1/GetComments"
+import * as util from "../gotohere/mqtt/Util"
+import * as event from "../gotohere/api1/Event"
+import * as broadcast from "../gotohere/mqtt/BroadcastDispatcher"
+import * as getcommentsapi from "../gotohere/api1/GetComments"
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -50,43 +50,48 @@ const useStyles = makeStyles((theme: Theme) =>
 
 type Props = {
   message: string;
-  folder: string;
+  //folder: string;
   username: string
 }
 
 type State = {
-  posts: Map<number, social.Post>
-  comments: Map<social.StringRef, social.Comment>
-  references: social.StringRef[] // sorted newest on top
-  opened: Map<social.StringRef, boolean>,
+  posts: Map<number, s.Post>
+  comments: Map<s.StringRef, s.Comment>
+  references: s.StringRef[] // sorted newest on top
+  opened: Map<s.StringRef, boolean>,
+
   needsMore: boolean
-  needsMoreComments:boolean
+  //needsMoreComments:boolean
   full: boolean
-  pending: boolean
-  lastDate: social.DateNumber
+ // pending: boolean
+  // lastDate: social.DateNumber
   random: string
+  sequence: number
 }
 
 const emptyState: State = {
-  posts: new Map<number, social.Post>(),
+
+  posts: new Map(),
   comments: new Map(),
   opened: new Map(),
   references: [],
+
   needsMore: true,
-  needsMoreComments: true,
+ // needsMoreComments: true,
   full: false,
-  pending: false,
-  lastDate: 0,
-  random: util.randomString(16)
+ // pending: false,
+ // lastDate: 0,
+  random: util.randomString(16),
+  sequence: 0
 }
 
 type AuxState = {
-  //changed: boolean
+  
   postspending:boolean
   commentspending:boolean
 
   postsNeeded: boolean //social.DateNumber[]
-  commentsNeeded: Set<social.StringRef>
+  commentsNeeded: Set<s.StringRef>
 
   when: number // in milliseconds so we can clean them up later
   timerId: NodeJS.Timeout | undefined
@@ -180,10 +185,10 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
 
   useEffect(() => {
     //console.log("PostListManager2 subscribe folder,user,count", props.folder,props.username, dates.length)
-    broadcast.Subscribe(props.username, props.folder + props.username + state.random, handleEvent.bind(this))
+    broadcast.Subscribe(props.username, props.username + state.random, handleEvent.bind(this))
     return () => {
       //console.log("PostListManager2 UNsubscribe folder,user,count", props.folder,props.username, dates.length)
-      broadcast.Unsubscribe(props.username, props.folder + props.username + state.random)
+      broadcast.Unsubscribe(props.username, props.username + state.random)
     };
   }, [state]);
 
@@ -198,78 +203,93 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
   // }
 
   // we would like to only call this once and never until after it's done.
-  const loadMore = (aStart?: social.DateNumber, howMany?: number) => {
+  const loadMore = (aStart?: s.DateNumber, howMany?: number) => {
 
-    if (state.needsMore === false || state.pending === true) { // this is shit. TODO: sort it out.
+    if (state.needsMore === false || auxState.postspending) { // this is shit. TODO: sort it out.
       return
     }
+    auxState.postspending = true
     var startDate = util.getCurrentDateNumber()
     if (state.references.length !== 0) {
-      const r = social.StringRefToRef(state.references[state.references.length - 1])
+      const r = s.ReferenceFromStr(state.references[state.references.length - 1])
       startDate = r.id
     }
     startDate = aStart || startDate
 
-    if (startDate === state.lastDate) {
-      return
-    }
-    var newState: State = {
-      ...state,
-      pending: true,
-      lastDate: startDate
-    }
+    // if (startDate === state.lastDate) {
+    //   return
+    // }
+    // var newState: State = {
+    //   ...state,
+    //   pending: true,
+    //   lastDate: startDate
+    // }
+    //console.log("loadMore top setState")
+    //setState(newState)
 
-    console.log("loadMore top setState")
-    setState(newState)
+    auxState.postspending = true
 
     const top = "" + startDate
-    const fold = props.folder // eg. "lists/posts/"
+   // const fold = props.folder // eg. "lists/posts/"
     const count = howMany || 6
     const old = ""
 
     console.log("calling loadMore in PostListManager2 dates,startdate ", state.references.length, startDate, util.getSecondsDisplay())
 
-    getpostsapi.IssueTheCommand(props.username, top, fold, count, old, gotMorePosts.bind(this))
+    getpostsapi.IssueTheCommand(props.username, top, count, gotMorePosts.bind(this))
   }
 
+  const gotMoreComments = ( comments: s.Comment[], error: any) => {
 
-  const gotMoreComments = ( comments: social.Comment[], error: any) => {
+    console.log("gotMoreComments top setState", comments, "error=",error)
 
-    console.log("gotMoreComments top setState", comments)
+    // put them in the state
+    for ( const com of comments){
+      state.comments.set(s.StringRefNew(com),com)
+    }
 
+    if ( ! error ) { // fixme. this races and this is not the way to fix it.
+      auxState.commentspending = false
+    }
+    
     const newState : State = {
       ...state,
-      needsMoreComments : false
+      sequence : state.sequence + 1
     }
-    setState(newState)
+    setState(newState) // refresh
   }
 
 
   const loadMoreComments = () => {
 
-    if ( auxState.commentsNeeded.size === 0 || state.needsMoreComments == false){
+    if ( auxState.commentsNeeded.size === 0 ){
       return 
     }
     if (auxState.commentspending) {
       return 
     }
-
+    auxState.commentspending = true
     console.log("loadMoreComments top setState")
 
-    var needList : social.Reference[] = []
-    for ( var ref in  auxState.commentsNeeded.values ){
-      needList.push(social.StringRefToRef(ref))
+    var needList : s.Reference[] = []
+
+    auxState.commentsNeeded.forEach( strref => {
+      needList.push(s.ReferenceFromStr(strref))
+    });
+    for ( const ref of needList){
+      auxState.commentsNeeded.delete( s.StringRefNew(ref))
     }
     console.log("loading comments !!!  ",needList)
     if ( needList.length > 0 ) {
       getcommentsapi.IssueTheCommand( needList , gotMoreComments.bind(this))
     } else {
-      auxState.commentspending = false
-      const newState : State = {
-        ...state,
-        needsMoreComments : false
-      }
-      setState(newState)
+      // unreachable
+      // auxState.commentspending = false
+      // const newState : State = {
+      //   ...state,
+      //   needsMoreComments : false
+      // }
+      // setState(newState)
     }
   }
 
@@ -278,30 +298,30 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
   useEffect(() => {
 
   if (  auxState.postspending===false && auxState.postsNeeded && !state.full){
-    auxState.postspending = true
     console.log("PostListManager2 aux loadmore ")
     loadMore()
   }
 
   if ( auxState.commentsNeeded.size > 0 && auxState.commentspending === false){
+    console.log("PostListManager2 aux loadMoreComments ")
     loadMoreComments()
   }
 
 } ) // always
 
   // call load more as necessary
-  useEffect(() => {
-    //console.log("PostListManager2 will loadMore, needsMore=", needsMore)
-    if (state.needsMore) {
-      loadMore()
-    }
-    //setTimer()
-    // listen for events that may affect us.
+  // useEffect(() => {
+  //   //console.log("PostListManager2 will loadMore, needsMore=", needsMore)
+  //   if (state.needsMore) {
+  //     loadMore()
+  //   }
+  //   //setTimer()
+  //   // listen for events that may affect us.
 
-  }, [state.needsMore])
+  // }, [state.needsMore])
 
 
-  const gotMorePosts = (postslist: social.Post[], countRequested: number, error: any) => {
+  const gotMorePosts = (postslist: s.Post[], countRequested: number, error: any) => {
 
     console.log("ReactListTest gotMorePosts just got back from issueTheCommand ")
     auxState.postsNeeded = false
@@ -309,7 +329,6 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
 
     var newState2: State = {
       ...state,
-      pending: false,
       needsMore: false
     }
     if (error) {
@@ -328,19 +347,19 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
       }
 
       // let's calculate references now.
-      var refs: social.StringRef[] = []
+      var refs: s.StringRef[] = []
       for (var id of postids) {
-        const reference: social.Reference = {
+        const reference: s.Reference = {
           id: id,
           by: props.username
         }
-        const ref = social.StringRefNew(reference)
+        const ref = s.StringRefNew(reference)
         refs.push(ref)
         const isOpened = state.opened.get(ref) || false
         if (isOpened) {
           // push refs for the comments, FIXME: recurse. keep track of level.
           // do we have the post? 
-          const post: social.Post = newPosts.get(id) || social.emptyPost
+          const post: s.Post = newPosts.get(id) || s.emptyPost
           for (var commentRef of post.comments) {
             refs.push(commentRef)
             // check for if they are loaded and clicked open
@@ -352,7 +371,24 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
 
     }// else no error
     //console.log("loadMore bottom setState")
+    auxState.postspending = false
     setState(newState2)
+  }
+
+  const pushCommentRefs = ( cref: s.StringRef , refs: s.StringRef[], 
+                           newOpenMap: Map<string, boolean>,
+                           newPosts: Map<number, s.Post>) => {
+
+    const isOpened = newOpenMap.get(cref) || false
+      if (isOpened) {
+        // push refs for the comments, FIXME: recurse. keep track of level.
+        // do we have the post? 
+        const comm: s.Comment = state.comments.get(cref) || s.emptyComment
+        for (var commentRef of comm.comments) {
+          refs.push(commentRef)
+          pushCommentRefs (commentRef, refs, newOpenMap , newPosts ) // recurse
+        }
+      }
   }
 
   const recalculate = (newOpenMap: Map<string, boolean>) => {
@@ -361,7 +397,7 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
 
     var newState2: State = {
       ...state,
-      pending: false,
+     // pending: false,
       needsMore: false,
       opened: newOpenMap
     }
@@ -370,24 +406,26 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
     var postids = getSortedIdsFromPosts(newPosts)
 
     // let's calculate references now.
-    var refs: social.StringRef[] = []
+    var refs: s.StringRef[] = []
     for (var id of postids) {
-      const reference: social.Reference = {
+      const reference: s.Reference = {
         id: id,
         by: props.username
       }
-      const ref = social.StringRefNew(reference)
+      const ref = s.StringRefNew(reference)
       refs.push(ref)
+
       const isOpened = newOpenMap.get(ref) || false
       if (isOpened) {
         // push refs for the comments, FIXME: recurse. keep track of level.
         // do we have the post? 
-        const post: social.Post = newPosts.get(id) || social.emptyPost
+        const post: s.Post = newPosts.get(id) || s.emptyPost
         for (var commentRef of post.comments) {
           refs.push(commentRef)
-          // check for if they are loaded and clicked open
+          pushCommentRefs (commentRef, refs, newOpenMap , newPosts ) 
         }
       }
+
     }
     newState2.references = refs
     newState2.posts = newPosts
@@ -450,29 +488,26 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
         ...state,
         needsMore: true,
       }
-      console.log("renderItem 2 setNeedsMore2 setState")
+      console.log("renderItem 3 setNeedsMore2 setState")
       setState(newState)
       //   },100)
     }
   }
 
   const setNeedsMoreComments = () => {
-    {
+    if (auxState.commentspending === false) {
       // setInterval( () => {
       var newState: State = {
         ...state,
         needsMore: true,
       }
-      console.log("renderItem 2 setNeedsMore2 setState")
+      console.log("renderItem setNeedsMoreComments setState")
       setState(newState)
       //   },100)
     }
   }
 
-
-
-
-  const toggleOpened = (ref: social.StringRef) => {
+  const toggleOpened = (ref: s.StringRef) => {
     console.log("renderItem 2 toggleOpened")
     const open: boolean = state.opened.get(ref) || false
     var newMap = cloneOpenedMap(state.opened)
@@ -487,7 +522,7 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
     var isOpen = false
     if (index < state.references.length) {
       const ref = state.references[index]
-      const reference = social.StringRefToRef(ref)
+      const reference = s.ReferenceFromStr(ref)
       if (reference.by === props.username) {
         post = state.posts.get(reference.id) || post
       } else {
@@ -500,7 +535,9 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
         }
       }
       const got = state.opened.get(ref)
-      isOpen = got || isOpen
+      if ( got !== undefined){
+        isOpen = got
+      }
     } else {
       // off the end
       post.theText = ""  //  "index # " + index + " key " + key
@@ -524,7 +561,16 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
         key={key}
         className={(index % 2 ? odds : evens)}
       >
-        <postitem.PostItem post={post} username={props.username} commentsOpen={isOpen} toggleOpened={toggleOpened} isComment={isComment} ></postitem.PostItem>
+        <postitem.PostItem 
+            post={post} 
+            username={props.username} 
+            commentsOpen={isOpen} 
+            parentOpen={false} 
+            toggleOpened={toggleOpened} 
+            toggleParent={()=>{}} 
+            depth = {0}
+            why = {""}
+             ></postitem.PostItem>
       </div>
     )
   }
@@ -548,24 +594,24 @@ export const PostListManager2: FC<Props> = (props: Props): ReactElement => {
 
 }
 
-const getSortedIdsFromPosts = (somePosts: Map<number, social.Post>): social.DateNumber[] => {
+const getSortedIdsFromPosts = (somePosts: Map<number, s.Post>): s.DateNumber[] => {
   var theDates = somePosts.keys()
   var datesArray = Array.from(theDates)
   var sortedArray: number[] = datesArray.sort((n1, n2) => n2 - n1);
   return sortedArray
 }
 
-const clonePosts = (somePosts: Map<number, social.Post>): Map<number, social.Post> => {
-  let newPosts: Map<number, social.Post> = new Map()// shit don work: Array.from(posts.entries())  );
-  somePosts.forEach((value: social.Post, key: number) => {
+const clonePosts = (somePosts: Map<number, s.Post>): Map<number, s.Post> => {
+  let newPosts: Map<number, s.Post> = new Map()// shit don work: Array.from(posts.entries())  );
+  somePosts.forEach((value: s.Post, key: number) => {
     newPosts.set(key, value)
   });
   return newPosts
 }
 
-const cloneOpenedMap = (oldmap: Map<social.StringRef, boolean>): Map<social.StringRef, boolean> => {
-  let newmap: Map<social.StringRef, boolean> = new Map()// shit don work: Array.from(posts.entries())  );
-  oldmap.forEach((value: boolean, key: social.StringRef) => {
+const cloneOpenedMap = (oldmap: Map<s.StringRef, boolean>): Map<s.StringRef, boolean> => {
+  let newmap: Map<s.StringRef, boolean> = new Map()// shit don work: Array.from(posts.entries())  );
+  oldmap.forEach((value: boolean, key: s.StringRef) => {
     newmap.set(key, value)
   });
   return newmap

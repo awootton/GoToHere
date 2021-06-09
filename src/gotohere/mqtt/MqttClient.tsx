@@ -22,30 +22,18 @@ import { ProxyPortInstance, PacketCallParams } from "./Proxy"
 import * as util from './Util';
 import * as config from './Config';
 
-import * as broadcast from '../server/BroadcastDispatcher'
+import * as broadcast from './BroadcastDispatcher'
 
-import { WaitingRequest } from '../api1/Api';
-import * as api from '../api1/Api';
-import * as eventapi from '../api1/Event';
-
-//import * as mqttclient from "./MqttClient2"
-
-//import * as c_util from "../components/CryptoUtil"
-import * as pingapi from '../api1/Ping'
-// import * as friendsapi from '../api1/GetFriends'
-// import * as savepostapi from '../api1/SavePost'
-// import * as deletepostapi from '../api1/DeletePost'
-// //import * as broadcast from '../server/BroadcastDispatcher'
-// import * as eventapi from '../api1/Event'
-// import * as likesapi from '../api1/IncrementLikes'
-// import * as generalapi from '../api1/GeneralApi'
-// import * as commentsapi from '../api1/GetComments'
+import { WaitingRequest } from '../api1/Api';  
+import * as api from '../api1/Api';  
+import * as eventapi from '../api1/Event';  
+ 
+import * as pingapi from '../api1/Ping'  
 
 type MqttServerPropsType = {
 
   config: config.ServerConfigList,
   isClient: boolean,
-
 }
 
 export type MqttOptionsType = {
@@ -115,7 +103,7 @@ var topic2port = new Map<string, string>()
 var topic2datafolder = new Map<string, string>()
 
 export function topic2portset( a:string, b:string){
-  //console.log("setting topic2portset ",a,b)
+  console.log("setting topic2portset ",a,b)
   topic2port.set(a,b)
 }
 
@@ -172,18 +160,6 @@ export class MqttTestServerTricks {
       for ( var wr of   api.getAllHooks() ){
         returnsWaitingMap.set(wr.id,wr)
       }
-      // get_posts.InitApiHandler(this.returnsWaitingMap)
-      // pingapi.InitApiHandler(this.returnsWaitingMap)
-      // friendsapi.InitApiHandler(this.returnsWaitingMap)
-      // friendsapi.InitApiHandler(this.returnsWaitingMap)
-      // savepostapi.InitApiHandler(this.returnsWaitingMap)
-      // deletepostapi.InitApiHandler(this.returnsWaitingMap)
-      // eventapi.InitApiHandler(this.returnsWaitingMap)
-      // likesapi.InitApiHandler(this.returnsWaitingMap)
-      // generalapi.InitApiHandler(this.returnsWaitingMap)
-
-      //console.log(" returnsWaitingMap initialised to ", this.returnsWaitingMap)
-
     } else {
       // we're in the client in chrome 
       // eventapi.InitApiHandler(this.returnsWaitingMap)
@@ -196,49 +172,50 @@ export class MqttTestServerTricks {
     this.connectStatus = "closed"
 
     var timeout = 240 * 1000 //4*60*1000
-    if (haveWeEverInitialisedThatPingTimer) {
-      timeout = 30 * 1000 * 999999
-      console.log("WARNING don't init ping timer twice")
-    }
     console.log("initializing ping setInterval")
-    haveWeEverInitialisedThatPingTimer = true
+    
     //this.timerID = 
     //var ourPubKey64: string = util.toBase64Url(util.getCurr entContext().ourPublicKey)
-    setInterval(() => { this.sendAPing() }, timeout);
+    if ( haveWeEverInitialisedThatPingTimer === false) {
+      setInterval(() => { this.sendAPing() }, timeout);
+    }
+    haveWeEverInitialisedThatPingTimer = true
 
     this.client = null
   }
 
-  // gotAPong( wr: WaitingRequest , err:any ) {
-  //   console.log("mqtt pong " , Buffer.from(wr.replydata).toString("utf8") , err)
-  // }  
-
   sendAPing() {
 
     console.log("mqtt ping")
-
-    // const receiver: pingapi.PingReceiver = (cmd: pingapi.PingCmd, error: any) => {
-    //   //console.log("mqtt client ping receiver")//: pingapi.PingReceiver ", cmd, error)
-    // }
-    // pingapi.IssueTheCommand("Anonymous", "Anonymous", receiver) // todo: intercept in knotfree, reserve name Anonymous forever.
+ 
+    const receiver: pingapi.PingReceiver = (cmd: pingapi.PingCmd, error: any) => {
+      console.log("mqtt client ping receiver",error)//: pingapi.PingReceiver ", cmd, error)
+    }
+    pingapi.IssueTheCommand("Anonymous", "Anonymous", receiver) // todo: intercept in knotfree, reserve name Anonymous forever.
   }
 
   CloseTheConnect() {
-    console.log("mqtt CloseTheConnect")
-    if (this.client) {
-      this.client.end();
-    }
-    this.client = undefined
-    clearInterval(this.cleanerIntervalID)
-    // and restart:: 
-    const timeout = 5000
-    //if (mqttServerThing !== undefined) {
-    setInterval(() => {
-      if (mqttServerThing !== undefined) {
-        mqttServerThing.restartCallback()
-      }
-    }, timeout);
-    //}
+
+    // don't do anything. The client will reconnect.
+
+    // console.log("mqtt CloseTheConnect is a messy mess ")
+    // if (this.client) {
+    //   this.client.end();
+    // }
+    // //this.client = undefined
+    // //clearInterval(this.cleanerIntervalID)
+    // // and restart:: 
+    // const timeout = 5000
+    // //if (mqttServerThing !== undefined) {
+    // setInterval(() => {
+    //   if (this.client ) {
+    //     mqttServerThing.restartCallback()
+    //   }
+    // }, timeout);
+    // //}
+
+
+
   }
 
   subscribeFunc = (key: string) => {
@@ -481,15 +458,15 @@ export var mqttServerThing: MqttTestServerTricks;
 export var isClient: boolean;
 
 // im not sure if this works correctly
-export function xxxxgetMqttThing(): MqttTestServerTricks | undefined {
-  if (mqttServerThing !== undefined) {
-    if (mqttServerThing.client !== undefined) {
-      return mqttServerThing
-    }
-  }
-  console.log("WARNING why is mqtt undefined?")
-  return undefined
-}
+// export function xxxxgetMqttThing(): MqttTestServerTricks | undefined {
+//   if (mqttServerThing !== undefined) {
+//     if (mqttServerThing.client !== undefined) {
+//       return mqttServerThing
+//     }
+//   }
+//   console.log("WARNING why is mqtt undefined?")
+//   return undefined
+// }
 
 // This creates timeouts for waiting commands. 
 function cleaner() {
@@ -519,7 +496,7 @@ function cleaner() {
         const val = returnsWaitingMap.get(key)
         if (val !== undefined) {
 
-          console.log("cleaning ", key, val)
+          console.log("cleaning ", key )//, val)
 
           var err = "ERROR ERROR timeout error " + key
           val.waitingCallbackFn(val, err)
@@ -595,6 +572,14 @@ export function StartServerMqtt(ourConfig: config.ServerConfigList) {
   console.log("StartServerMqtt in run_forever")// with ", ourConfig)
 
   isClient = isClient_
+      // we'll have to glom the servername from the token
+      var server: string
+      var complaint: string
+      [server, complaint] = util.VerifyToken(ourConfig.token)
+      if (complaint.length !== 0) {
+        console.log("ERROR tartServerMqtt util.VerifyToken has complaint ", complaint)
+      }
+  
 
   const start = () => {
     const props: MqttServerPropsType = {
@@ -602,19 +587,17 @@ export function StartServerMqtt(ourConfig: config.ServerConfigList) {
       isClient: isClient_
     }
     mqttServerThing = new MqttTestServerTricks(props, () => {
+      
       console.log("RE-StartServerMqtt called")
-      start()
+
+      //start()
+      mqttServerThing.handleMqttConnect( server, options, (msg: string) => {
+        console.log("RE- handleMqttConnect complete with:", msg)
+      })
+
     })
 
     const options = SomeMqttOptions
-
-    // we'll have to glom the servername from the token
-    var server: string
-    var complaint: string
-    [server, complaint] = util.VerifyToken(ourConfig.token)
-    if (complaint.length !== 0) {
-      console.log("ERROR tartServerMqtt util.VerifyToken has complaint ", complaint)
-    }
 
     mqttServerThing.handleMqttConnect(server, options, (msg: string) => {
       console.log(" handleMqttConnect complete with:", msg)

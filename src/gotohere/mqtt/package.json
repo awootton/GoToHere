@@ -1,0 +1,7 @@
+{
+    "name": "mqtt",
+    "version": "0.0.1",
+    "description": "gotohere-mqtt is an mqtt bridge to the knotfree net",
+    "main": "index.js",
+    "dependencies": {}
+}

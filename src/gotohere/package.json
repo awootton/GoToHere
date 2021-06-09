@@ -1,0 +1,12 @@
+{
+    "name": "gotohere",
+    "version": "0.0.1",
+    "description": "libraries for gotohere social commands (posts, etc) over the knotfree net",
+    "main": "index.js",
+    "dependencies": {},
+    "license": "MIT",
+    "directories": {
+        "mqtt": "mqtt",
+        "api1": "api1"
+    }
+}

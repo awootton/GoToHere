@@ -16,12 +16,12 @@
 
 
 import './App.css';
-import { ReactElement, FC, useState } from "react";
+import { ReactElement, FC, useState, useEffect } from "react";
 //import Dialog from '@material-ui/core/Dialog';
 import { unstable_createMuiStrictModeTheme } from '@material-ui/core/styles'; // makeStyles,
 
-import * as util from "./server/Util"
- 
+import * as util from "./gotohere/mqtt/Util"
+
 import * as apputil from "./AppUtil"
 
 import * as profile from "./components/ProfileMain"
@@ -38,29 +38,47 @@ export const theme = unstable_createMuiStrictModeTheme({
     },
   },
 })
-// or these?
-// xs: 0,
-// sm: 600,
-// md: 960,
-// lg: 1280,
-// xl: 1920,
-
 
 interface Props {
 }
 
+// type okCallback = ( ok: boolean)=> any
+// export var LatestCallbackPointer : okCallback |  undefined = undefined
+
 export const App: FC<Props> = (props: Props): ReactElement => {
 
   const [initialized, setInitialized] = useState(false);
-  const [sequence, SetSequence] = useState(0);
+  const [sequence, setSequence] = useState(0);
 
-  apputil.bootSequence( ( finished: boolean ) => {
-     if ( finished ){
-       setInitialized(true)
-     } else {
-      SetSequence(sequence+1)
-     }
-  })
+  useEffect( () => {
+    if ( ! initialized ){
+      apputil.bootSequence(( done: boolean) => {
+        if ( done ){
+          setInitialized(true)
+        } else {
+          setSequence(sequence+1)
+        }
+      })
+    }
+   
+  } , [sequence])
+
+  console.log("top of APP sequence=",sequence)
+
+    // apputil.bootSequence((finished: boolean) => {
+    //   if (finished) {
+    //     console.log("App is initialized")
+    //     setTimeout( () => {
+    //       console.log("App Incrementing finally")
+    //       SetSequence(sequence + 1)
+    //       SetInitialized(true)
+    //     }, 10)
+    //   } else {
+    //     console.log("Incrementing APP sequence=",sequence)
+    //     SetSequence(sequence + 1)
+    //   }
+    // })
+ 
 
   function makeApp() {
 
@@ -78,8 +96,8 @@ export const App: FC<Props> = (props: Props): ReactElement => {
     } else {
       // todo: add log of boot sequence.
       return (
-        <div style={{ display: 'flex', textAlign: 'center', alignItems: "center", justifyContent: "center"}}> 
-        <div>{sequence}</div>
+        <div style={{ display: 'flex', textAlign: 'center', alignItems: "center", justifyContent: "center" }}>
+          <div>Waiting for server to respond: {sequence} {initialized} </div>
         </div>
       );
     }

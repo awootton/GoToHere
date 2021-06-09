@@ -14,38 +14,75 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import fs from 'fs'
 
-import * as social from '../server/SocialTypes';
+import * as s from '../mqtt/SocialTypes';
 import { WaitingRequest, SendApiReplyBack } from './Api';
 import ApiCommand from "./Api"
 
 import * as fsApi from './FsUtil';
-import * as util from '../server/Util';
+import * as util from '../mqtt/Util';
 import * as api from "./Api"
 //import * as c_util from "../components/CryptoUtil"
-import * as config from "../server/Config"
+import * as config from "../mqtt/Config"
+import * as   getter from './Getter';
 
-import * as mqttclient from "../server/MqttClient";
+
+export type PostNeed = {
+    username: string
+    when: s.DateNumber
+    amt: number
+}
+ 
+export class PostGetterClass extends getter.Getter<PostNeed, s.Post> {
+
+    keyofN(t: PostNeed): string {
+        return  "" + t.when + " " + t.username
+    }
+
+    // override me
+    keyofG(t: s.Post): string {
+        return s.StringRefNew(t)
+    }
+
+    // don't forget to delete the pending
+    useTheApi( ref: string , needing: PostNeed[], cb: (gots: s.Post[]) => any) {
+
+        const postsListReceiver = (postslist: s.Post[], countRequested:number, error: any) => {
+            if (error) {
+                console.log("ERROR useTheApi commentsReceiver has error",error)
+            } else {
+                var client = this.getClient(ref)
+                client.pending.clear()
+                cb(postslist)
+            }
+        }
+        for ( var need of needing) {
+            IssueTheCommand(need.username, ""+need.when, need.amt, postsListReceiver)
+        }
+    }
+}
+
+export var PostGetter: PostGetterClass = new PostGetterClass()
 
 export default interface GetPostsCmd extends ApiCommand {
     // posts are in reverse order, id's are YYMMDDHHMMSSmmm
 
     top: string // a newer data, typically now()
-    fold: string // folder to use eg. data/alice/posts
+    //fold: string // folder to use eg. data/alice/posts
 
     count: number // get this many
-    old: string // or, if no count, collect posts back to this time
+  //  old: string // or, if no count, collect posts back to this time
 }
 
-export type PostsListReceiver = (postslist: social.Post[], countRequested:number, error: any) => any
+export type PostsListReceiver = (postslist: s.Post[], countRequested:number, error: any) => any
 
-export function IssueTheCommand(username: string, top: string, fold: string, count: number, old: string, receiver: PostsListReceiver) {
+export function IssueTheCommand(username: string, top: string, count: number, receiver: PostsListReceiver) {
 
     var cmd: GetPostsCmd = {
         cmd: "getPosts",
         top: top,
-        fold: fold,
+      //  fold: fold,
         count: count,
-        old: old
+     //   old: old
     }
  
     const jsonstr = JSON.stringify(cmd)
@@ -62,14 +99,14 @@ export function IssueTheCommand(username: string, top: string, fold: string, cou
         
         console.log("GetPostsCmd returns w err ", error)
 
-        var postslist: social.Post[] = strdata.length>0 ? JSON.parse(strdata) : []
+        var postslist: s.Post[] = strdata.length>0 ? JSON.parse(strdata) : []
 
         if ( error !== undefined  ){
             console.log("GetPostsCmd SendApiCommandOut have error,user " ,error, username, util.getSecondsDisplay())
             // try again, in a sec.
             setTimeout(()=>{
                 console.log("GetPostsCmd SendApiCommandOut timer done. IssueTheCommand AGAIN. " )
-                IssueTheCommand(username, top, fold, count, old, receiver)
+                IssueTheCommand(username, top, count, receiver)
             },9000 )
         } else {
             //console.log("GtePosts SendApiCommandOut receiver " )
@@ -89,7 +126,7 @@ const getPostsWaitingRequest: WaitingRequest = {
     options: new Map<string, string>(),
     returnAddress: "unused now",
     //callerPublicKey64 : "unknown+now" 
-    debug: true
+    //debug: true
 }
 
 //   function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
@@ -109,17 +146,18 @@ export function getWr(): WaitingRequest {
 function handleGetPostApi(wr: WaitingRequest, err: any) {
 
     //console.log("in the handleGetPostApi with ", util.getTopicName(wr.topic), wr.message.toString(), " by ",util.getPubkToName(wr.callerPublicKey))
-    //console.log("in the handleGetPostApi with ", util.getTopicName(wr.topic), " key id ", wr.options.get("nonc") , util.getSecondsDisplay())
+    //
+    console.log("in the handleGetPostApi with ", util.getTopicName(wr.topic), " key id ", wr.options.get("nonc") , util.getSecondsDisplay())
 
     var getPostCmd: GetPostsCmd = JSON.parse(wr.message.toString())
 
     const top = getPostCmd.top // the newest date inclusive
     const count = getPostCmd.count
-    const folder = getPostCmd.fold
+    //const folder = "lists/posts/"//getPostCmd.fold
 
     var cryptoContext = util.getHashedTopic2Context( wr.topic )
     var configItem =  config.GetName2Config(cryptoContext.username)
-    var path = "data/" + configItem.directory  + folder
+    var path = "data/" + configItem.directory + "lists/posts/" 
 
     // make the directories if missing.
     if (!fs.existsSync(path)){
@@ -128,7 +166,7 @@ function handleGetPostApi(wr: WaitingRequest, err: any) {
 
     if (count !== 0) {
         // add end date ? 
-        var items: social.Post[] = []
+        var items: s.Post[] = []
         var done = false
 
         var haveOne = (data: Buffer): number => {
@@ -136,7 +174,7 @@ function handleGetPostApi(wr: WaitingRequest, err: any) {
                 return items.length
             }
 
-            var apost: social.Post = JSON.parse(data.toString("utf8"))
+            var apost: s.Post = JSON.parse(data.toString("utf8"))
             items.push(apost)
 
             if (items.length >= count && done === false) {

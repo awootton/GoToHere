@@ -15,24 +15,24 @@
 import fs from 'fs'
 
 //import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
-import * as util from '../server/Util';
+import * as util from '../mqtt/Util';
 
 import ApiCommand from "./Api"
 import * as api from "./Api"
-import * as config from "../server/Config"
+import * as config from "../mqtt/Config"
 
-import * as social from '../server/SocialTypes'
+import * as s from '../mqtt/SocialTypes'
 
-import * as mqttclient from "../server/MqttClient";
+import * as mqttclient from "../mqtt/MqttClient";
 
 export interface IncrementLikesCmd extends ApiCommand {
-    id: social.DateNumber
+    id: s.DateNumber
     who: string
 }
 
 export interface IncrementLikesReply extends ApiCommand {
 
-    id: social.DateNumber
+    id: s.DateNumber
 
 }
 
@@ -45,7 +45,7 @@ export type IncrementLikesReceiver = (reply: IncrementLikesReply, error: any) =>
 
 export const defaultRetry = 20
 
-export function IssueTheCommand(username: string, id: social.DateNumber, who: string, receiver: IncrementLikesReceiver) {
+export function IssueTheCommand(username: string, id: s.DateNumber, who: string, receiver: IncrementLikesReceiver) {
 
     var cmd: IncrementLikesCmd = {
         cmd: "IncrementLikes",
@@ -106,7 +106,7 @@ export function getWr(): api.WaitingRequest {
 
 // writePostToFile ripped off from initFake
 function IncrementLikesFile(path: string,
-                            id: social.DateNumber,
+                            id: s.DateNumber,
                             wr: api.WaitingRequest,
                             cryptoContext: util.Context,
                             cmd: IncrementLikesCmd) {
@@ -123,7 +123,7 @@ function IncrementLikesFile(path: string,
         if (err) {
             console.log(" read post in likes error " + path, err)
         } else {
-            const post: social.Post = JSON.parse(data.toString("utf8"), reviver)
+            const post: s.Post = JSON.parse(data.toString("utf8"), reviver)
             post.likes += 1
             var jsonstr = JSON.stringify(post, replacer)
             fs.writeFile(wholepath, jsonstr, function (err) {

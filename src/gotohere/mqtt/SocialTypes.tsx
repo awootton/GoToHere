@@ -13,10 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//import * as util from "./util"
-//import * as social from "./social_types"
-
-
 // this is a date in this format: 210413141933845 (it starts with the year, month, etc)
 // these are sortable but can't do arighmetic
 export type DateNumber = number;
@@ -28,10 +24,10 @@ export type Person = string;
 export type Reference = {
     id: DateNumber; // this is actually a timestamp. a 
     by: Person; // this is the topic name 
+    value? : Post | Comment | TimelineItem 
 }
 
 export type StringRef = string // like a Reference but put in a string as "id by"
-
 
 // Friend is for a friends list. The publicKey is for verification of identity.
 export type Friend = {
@@ -50,20 +46,24 @@ export type Post = {
     by: string; // who sent it. including us. a username
     editable?: boolean;
     //more?: any
+    parent?: StringRef;
 }
 
 // We'll just use the one direct parent for now.
-// if the parents.length = 1 doesn't mean there are no grandparents. We just didn't look yet
 export interface Comment extends Post {
-    parent: StringRef;
+   // I moved the parent to Post. any post can be a comment. The diff is that comments have a parent.
+   // the GetComments api will also get posts. 
 }
 
+export interface TimelineItem extends Reference {
+    why: string
+}
 
 export function StringRefNew(ref: Reference | Post | Comment): StringRef {
     return ref.id + " " + ref.by
 }
 
-export function StringRefToRef(str: StringRef): Reference {
+export function ReferenceFromStr(str: StringRef): Reference {
     const parts = str.split(" ")
     const ref: Reference = {
         id: +parts[0],
@@ -71,27 +71,6 @@ export function StringRefToRef(str: StringRef): Reference {
     }
     return ref
 }
-
-
-// export class StringRef {
-//     str: string;
-//     constructor(str: string) {
-//         this.str = str;
-//     }
-//     static from(ref: Reference | Post | Comment) {
-//         return new StringRef(ref.id + " " + ref.by)
-//     }
-//     getReference(): Reference {
-//         const parts = this.str.split(" ")
-//         const ref: Reference = {
-//             id: +parts[0],
-//             by: parts[1]
-//         }
-//         return ref
-//     }
-// }
-
-
 
 export const emptyPost: Post = {
 
@@ -104,36 +83,16 @@ export const emptyPost: Post = {
     by: "", // who sent it. including us. a username
 }
 
-// why is this a class and not a type? 
-// export class Post {
-//     id: DateNumber;
-//     title: string;
-//     theText: string;
-//     likes: number; //PersonAlias[];
-//     retweets: string[]; // what type ? 
-//     comments: Reference[];
-//     postedByName: string; // who sent it. including us. a username
-//     editable?: boolean;
-//     more?: any
-//     //replyingTo? : Reference // if this is a comment then this is the parent
-//     constructor(
-//         id: DateNumber,
-//         title: string,
-//         theText: string,
-//         likes: number, // PersonAlias[],
-//         retweets: string[], // what type ? 
-//         comments: Reference[],
-//         postedByName: string, // who sent it. including us. a username
-//         editable?: boolean,
-//         more?: any
-//     ) {
-//         this.id = id;
-//         this.title = title;
-//         this.theText = theText;
-//         this.likes = 0;
-//         this.retweets = retweets;
-//         this.comments = comments;
-//         this.postedByName = postedByName;
-//     }
-// }
+export const emptyComment: Comment = {
 
+    id: 0,
+    title: "",
+    theText: "",
+    likes: 0, //PersonAlias[],
+    retweets: [], // what type ? 
+    comments: [],
+    by: "", // who sent it. including us. a username
+    parent: ""
+}
+
+export const InTenYears: DateNumber = 310607124441000

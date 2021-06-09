@@ -38,7 +38,9 @@ import MenuIcon from '@material-ui/icons/Menu';
  
 import * as postedit from '../dialogs/EditPost'
 import * as postdelete from '../dialogs/DeletePost'
-import * as social from "../server/SocialTypes"
+import * as s from "../gotohere/mqtt/SocialTypes"
+import * as util from "../gotohere/mqtt/Util"
+import * as cardutil from "../components/CardUtil"
 
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
@@ -56,28 +58,6 @@ const useStyles = makeStyles((theme: Theme) =>
             height: 800,
             minWidth: 800
           },
-      
-
-        // root: {
-        // },
-
-        // title: {
-        //     fontSize: 14,
-        //     padding: "4px 4px",
-        // },
-        // // pos: {
-        // //     marginBottom: 12,
-        // // },
-        // nopadding: {
-        //     padding: "0px 0px",
-        // },
-
-        // pushedright: {
-        //     display: "flex",
-        //     justifyContent: "space-between" //justifyContent: "flex-end",
-        //     //alignItems: 'center', // vertical
-        // },
-
         button: {
             margin: "0px 0px",
             padding: "0px 0px",
@@ -90,17 +70,17 @@ const useStyles = makeStyles((theme: Theme) =>
 
 type CardMenuProps = {
     //id: string
-    post: social.Post
+    post: s.Post | s.Comment
     username: string
 }
 export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement => {
 
     //console.log("CardMenu post = ", props.post, props.username )
 
-
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [openEdit, setOpenEdit] = React.useState(false);
     const [openDelete, setOpenDelete] = React.useState(false);
+    const [openComment, setOpenComment] = React.useState(false);
 
     const handleClick = (event: any) => {
         setAnchorEl(event.currentTarget);
@@ -119,12 +99,17 @@ export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement 
         setOpenDelete(false);
     };
 
-    const handleClickDoSomething = () => {
-        handleClose()
-    };
+    // const handleClickDoSomething = () => {
+    //     handleClose()
+    // };
 
     const handleClickEdit = () => {
         setOpenEdit(true);
+        handleClose()
+    };
+
+    const handleClickComment = () => {
+        setOpenComment(true);
         handleClose()
     };
 
@@ -155,39 +140,41 @@ export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement 
                 <MenuItem onClick={handleClickDoSomething}>New Comment</MenuItem> */}
                 <MenuItem onClick={handleClickEdit}>Edit</MenuItem>
                 <MenuItem onClick={handleClickDelete}>Delete</MenuItem>
+                <MenuItem onClick={handleClickComment}>Comment</MenuItem>
 
             </Menu>
 
             <Dialog  
-                // style = {someAppStyles}
                 className = {classes.editdialog}
                 open={openEdit}
-               //  fillme={postedit.FillEditPost
-               // cancel = {handleDialogClose}
-                
-              //  title={"Edit " + props.post.title}
-
                 onClose={handleDialogClose}
              > 
                 <DialogTitle>{"Edit " + props.post.title}</DialogTitle>
-                <postedit.FillEditPost  post={props.post} username={props.username} cancel = {handleDialogClosePlain} /> 
+                <postedit.FillEditPost  post={props.post} 
+                                       // parent ={props.post.parent}
+                                        username={props.username} 
+                                        cancel = {handleDialogClosePlain} /> 
             </Dialog>
 
             <Dialog  
-                // style = {someAppStyles}
-               // className={classes.root}
                 open={openDelete}
-              //  fillme={postdelete.FillDeletePost}
-               
-                
-               // cancel = {handleDialogClose}
-                
-               // title={"delete " + props.post.title + "?"}
                 onClose={handleDialogClose}
             >
-                 <DialogTitle>{"delete " + props.post.title + "?"}</DialogTitle>
+                <DialogTitle>{"Delete " + props.post.title + " by " + props.post.by + " on " + util.FormatDateNumber(props.post.id) }</DialogTitle>
                 <postdelete.FillDeletePost username={props.username}  post={props.post} cancel = {handleDialogClosePlain} /> 
             </Dialog>
+
+            <Dialog
+                className = {classes.editdialog}
+                open={openComment}
+                onClose={handleDialogClose}
+            >
+                <DialogTitle>New Comment</DialogTitle>
+                <postedit.FillEditPost username={props.username} 
+                                        post={cardutil.makeEditComment(props.username,props.post)} 
+                                        cancel={handleDialogClose}/>
+            </Dialog>
+
 
         </>
     )

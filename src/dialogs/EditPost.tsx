@@ -13,11 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import React, {FC, useState } from "react";
+import React, { FC, useState } from "react";
 
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 
-import * as social from "../server/SocialTypes"
+import * as s from "../gotohere/mqtt/SocialTypes"
 
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
@@ -33,7 +33,7 @@ import TextField from '@material-ui/core/TextField';
 //import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
 
-import * as savepostapi from '../api1/SavePost'
+import * as savepostapi from '../gotohere/api1/SavePost'
 import * as cardutil from '../components/CardUtil'
 
 
@@ -45,37 +45,37 @@ const useStyles = makeStyles((theme: Theme) =>
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin : "20 20px",
-            padding : "20 20px",
-     
+            margin: "20 20px",
+            padding: "20 20px",
+
             width: theme.spacing(50),
             height: theme.spacing(50),
-    
-            minWidth : theme.spacing(50),
-           
-     
-        //    justifyContent: 'center',
-         //   alignItems: 'center', // centers vertically? 
-    
+
+            minWidth: theme.spacing(50),
+
+
+            //    justifyContent: 'center',
+            //   alignItems: 'center', // centers vertically? 
+
             textAlign: 'center',
 
-      //     flexGrow: 1,
+            //     flexGrow: 1,
             //height: 12,
-          //  backgroundColor: theme.palette.background.paper,
+            //  backgroundColor: theme.palette.background.paper,
 
             // padding: "0px 0px",
             // justifyContent: 'center',
             // alignItems: 'center',
 
-     //       height:  800, // this also sets the size
+            //       height:  800, // this also sets the size
 
-           //minWidth: theme.spacing(85),
+            //minWidth: theme.spacing(85),
 
-        //   minWidth: theme.spacing(150),
+            //   minWidth: theme.spacing(150),
 
-           //width: 800,
-          // height: 400,
-          //bgcolor: 'blue',
+            //width: 800,
+            // height: 400,
+            //bgcolor: 'blue',
 
 
         },
@@ -85,73 +85,102 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 type Props = {
-    post: social.Post
+    post: s.Post | s.Comment
+  //  parent: social.Post | social.Comment
     username: string
     cancel: (value: any) => any
+}
+
+function isComment(pet: s.Post | s.Comment): boolean {
+    return pet.parent !== undefined
 }
 
 export const FillEditPost: FC<Props> = (props: Props) => {
 
     //console.log("FillEditPost post ", props.post )
 
-    const [state,setState] = useState(props.post)
+    const [state, setState] = useState(props.post)
 
     const handleTitleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
         const str: string = event.target.value
-       
+
         //console.log("title is now ", str)
-        const newState : social.Post = {
-             ...state,
-             title: str
-         }
-         setState(newState)
+        if (!isComment(state)) {
+            const newState: s.Post = {
+                ...state,
+                title: str
+            }
+            setState(newState)
+        } else {
+            const newState: s.Comment = {
+                ...state,
+                title: str,
+                parent: (state as s.Comment).parent
+            }
+            setState(newState)
+        }
     }
     const handleBodyChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
         const str: string = event.target.value
-      
         //console.log("body is now ", str)
-        const newState : social.Post = {
-            ...state,
-            theText: str
+        if (!isComment(state)) {
+            const newState: s.Post = {
+                ...state,
+                theText: str
+            }
+            setState(newState)
+        } else {
+            const newState: s.Comment = {
+                ...state,
+                theText: str,
+                parent: (state as s.Comment).parent
+            }
+            setState(newState)
         }
-        setState(newState)
     }
 
     const classes = useStyles();
 
     const onSaveButton = () => {
 
-        const savePostReceiver = ( reply: savepostapi.SavePostReply, error: any) => {
-                console.log(" back from saving with err ", error, " and ", reply )
-                if ( error !== undefined ) {
+        // it's different if it's a comment
+        if (isComment(state)) {
+            // have tp save the comment and we also have to save the modified version of it's 
+            // parent
+
+        } else {
+            const savePostReceiver = (reply: savepostapi.SavePostReply, error: any) => {
+                console.log(" back from saving with err ", error, " and ", reply)
+                if (error !== undefined) {
                     //add error to invisible note
-                    console.log("ERROR SavePost ", error, " and ", reply )
+                    console.log("ERROR SavePost ", error, " and ", reply)
                 } else {
                     props.cancel("") // close the dialog
                 }
+            }
+            const newPost = state
+            savepostapi.IssueTheCommand(props.username, newPost, savePostReceiver)
         }
-        const newPost = state
-        savepostapi.IssueTheCommand(props.username, newPost, savePostReceiver)
     }
 
     // sx={{ p: 2, border: '1px dashed grey' }}  borderRadius={64}
 
-    const renderEditCard = (post: social.Post) => {
+    const renderEditCard = (post: s.Post) => {
         return (
-            <Box  className={classes.root}   borderColor="secondary.main"  >
-                <Card elevation={2} key={post.id} > 
+            <Box className={classes.root} borderColor="secondary.main"  >
+                <Card elevation={2} key={post.id} >
                     <CardContent>
-                    <TextField
-                        fullWidth
-                        id="titleeditor"
-                        type="text"
-                        label="Edit the title (if any):"
-                        placeholder={post.title}
-                        margin="normal"
-                        onChange={handleTitleChange}
-                        defaultValue={post.title}
-                        multiline={true}
-                    />
+                        <TextField
+                            fullWidth
+                            id="titleeditor"
+                            type="text"
+                            label="Edit the title (if any):"
+                            placeholder={post.title}
+                            margin="normal"
+                            onChange={handleTitleChange}
+                            defaultValue={post.title}
+                            multiline={true}
+                        />
                         <TextField
                             //style={{maxHeight: 200, overflow: 'auto'}}
                             fullWidth
@@ -169,8 +198,8 @@ export const FillEditPost: FC<Props> = (props: Props) => {
                         </Typography> */}
                     </CardContent>
                     <CardActions>
-                        <Button variant="contained" onClick={() => { props.cancel("")}} >Cancel</Button>
-                       <Button variant="contained" onClick={onSaveButton} >Save</Button>
+                        <Button variant="contained" onClick={() => { props.cancel("") }} >Cancel</Button>
+                        <Button variant="contained" onClick={onSaveButton} >Save</Button>
                     </CardActions>
                 </Card>
             </Box>

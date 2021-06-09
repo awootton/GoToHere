@@ -23,13 +23,22 @@ import base64url from 'base64url'
 
 import sha256 from "fast-sha256";
 
-import * as social from './SocialTypes'
-//import * as config from "./Config"
+import * as s from './SocialTypes'
+
+// BEFORE you change this make sure that 
+// a context has been added.
+// chenge this when the user signs in.
+export var signedInAs: string = 'Anonymous'
+
 
 export interface LooseObject { // decend mqtt uer props from this 
     [key: string]: any
 }
 
+export var isTestingNotClient: boolean = false
+export function setisTestingNotClient() {
+    isTestingNotClient = true
+}
 
 export type Context = {
     username: string
@@ -43,6 +52,7 @@ export type Context = {
     //   knotServerPubKeyFromApp: string
 
     initialized: boolean
+    unfamiliar: boolean // as in: a friend or follower or something and not just someone 
 
     ourPublicKey: Buffer[]
     ourSecretKey: Buffer[]
@@ -60,6 +70,7 @@ export const emptyContext: Context = {
     //knotServerPubKeyFromApp: "",
 
     initialized: false,
+    unfamiliar: false,
 
     ourPublicKey: [],
     ourSecretKey: [],
@@ -69,11 +80,6 @@ export const emptyContext: Context = {
 
 // not public
 var contexts: Context[] = []
-
-// BEFORE you change this make sure that 
-// a context has been added.
-// chenge this when the user signs in.
-export var signedInAs: string = 'Anonymous'
 
 // export function XXXgetCurrent Context(): Context {
 //     var cx = contexts[currentIndex]
@@ -91,7 +97,7 @@ export function getSignedInContext(): Context {
     return emptyContext
 }
 
-export function getNameToContext(username: string): Context {
+export function getNameToContext(username: string, ignoreWarning?: boolean): Context {
     // FIXME: use a map
     for (var context of contexts) {
         initContext(context)
@@ -100,7 +106,9 @@ export function getNameToContext(username: string): Context {
         }
     };
     // fuck
-    console.log("getNameToContext fail. was hoping to avoid this.", username)
+    if (ignoreWarning !== true) {
+        console.log("getNameToContext fail. was hoping to avoid this.", username)
+    }
     return emptyContext
 }
 
@@ -188,7 +196,7 @@ export function initContext(context: Context) {
             context.ourSecretKey.push(Buffer.from(keypair.secretKey))
         }
     }
-    context.profileHash = "=" + KnotNameHash(context.username)
+    context.profileHash = "=" + KnotNameHash(context.username.toLowerCase())
     // context.knotServersPubKey = fromBase64Url(context.knotServerPubKeyFromApp)
     context.initialized = true
 }
@@ -214,8 +222,8 @@ export function initContext(context: Context) {
 //     contexts[currentIndex].initialized = false
 // }
 
-var theLastOne: social.DateNumber = 0
-export function getUniqueId(): social.DateNumber {
+var theLastOne: s.DateNumber = 0
+export function getUniqueId(): s.DateNumber {
     const s2 = new Date().getTime()
     var nnn = ConvertFromMsToDateNumber(s2)
     if (nnn <= theLastOne) {
@@ -363,7 +371,7 @@ export function KnotNameHash(name: string): string {
     return tmp
 }
 
-export function ConvertFromMsToDateNumber(millis: number): social.DateNumber {
+export function ConvertFromMsToDateNumber(millis: number): s.DateNumber {
     const startDate = new Date(millis)
     var date = startDate.getDate(); //returns date (1 to 31) you can getUTCDate() for UTC date
     var month = startDate.getMonth() + 1; // returns 1 less than month count since it starts from 0
@@ -383,7 +391,7 @@ export function ConvertFromMsToDateNumber(millis: number): social.DateNumber {
     return result
 }
 
-export function DateFromDateNumber(dn: social.DateNumber): Date {
+export function DateFromDateNumber(dn: s.DateNumber): Date {
 
     var tmp = dn
     const millis: number = tmp % 1000
@@ -411,12 +419,12 @@ export function DateFromDateNumber(dn: social.DateNumber): Date {
     res.setSeconds(secs)
     res.setMinutes(mins)
     res.setHours(hours)
-    res.setFullYear(2000 + year, month, day)
+    res.setFullYear(2000 + year, month - 1, day)
     // does it know it's supposed to be in gmt ?
     return res
 }
 
-export function FormatDateNumber(dn: social.DateNumber): string {
+export function FormatDateNumber(dn: s.DateNumber): string {
 
     var tmp = dn
     //const millis : number = tmp % 1000
@@ -458,11 +466,16 @@ export function ZeroPadLeft3(sss: (number | string)): string {
     tmp = tmp.substr(x - 3, x - 1)
     return tmp
 }
+if (isTestingNotClient) {
 
+}
 // getProfileName comes from the client browser eg alice_vociferous_mcgrath
 export function getProfileName(): string {
+
     var profileName = "unknown"
-    var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotlocal.com:3000/
+    var locationhref = isTestingNotClient ? "http://dummy.knotlocal.com:8085/" : window.location.href 
+    // eg http://alice_vociferous_mcgrath.knotlocal.com:3000/
+
     var ind = locationhref.indexOf("//")
     if (ind > 0) {
         locationhref = locationhref.substring(ind + 2)
@@ -470,7 +483,7 @@ export function getProfileName(): string {
         if (parts.length <= 0) {
             console.log("how can we have missing parts here?")
         }
-        if ( parts.length <= 2 ){
+        if (parts.length <= 2) {
             return ""
         }
         profileName = parts[0]
@@ -481,7 +494,8 @@ export function getProfileName(): string {
 // eg gotohere.com
 export function getServerNamepart(): string {
     var serverName = "unknown"
-    var locationhref = window.location.href // eg http://alice_vociferous_mcgrath.knotlocal.com:3000/
+    var locationhref = isTestingNotClient ? "http://dummy.knotlocal.com:8085/" : window.location.href
+
     var ind = locationhref.indexOf("//")
     if (ind > 0) {
         locationhref = locationhref.substring(ind + 2)
@@ -489,7 +503,7 @@ export function getServerNamepart(): string {
         if (parts.length <= 0) {
             console.log("how can we have missing parts here?")
         }
-        if ( parts.length <= 2 ){
+        if (parts.length <= 2) {
             return locationhref
         }
         serverName = parts[1] + "." + parts[2]
@@ -498,25 +512,25 @@ export function getServerNamepart(): string {
 }
 
 export function getServerName(): string {
-   var str =  getServerNamepart() // eg gotolocal.com:3000/getFreeToken w/o the alice part
-   const ind = str.indexOf("/")
-   if ( ind >= 0 ){
-       str = str.slice(0,ind)
-   }
-   return str
+    var str = getServerNamepart() // eg gotolocal.com:3000/getFreeToken w/o the alice part
+    const ind = str.indexOf("/")
+    if (ind >= 0) {
+        str = str.slice(0, ind)
+    }
+    return str
 }
 // eg alice.gotolocal.com:3000/getFreeToken return the getFreeToken
 export function getServerPage(): string {
-    var str =  getServerNamepart() // eg gotolocal.com:3000/getFreeToken w/o the alice part
+    var str = getServerNamepart() // eg gotolocal.com:3000/getFreeToken w/o the alice part
     const ind = str.indexOf("/")
-    if ( ind >= 0 ){
-        str = str.slice(ind+1)
+    if (ind >= 0) {
+        str = str.slice(ind + 1)
     } else {
         str = ""
     }
     return str
- }
- 
+}
+
 
 
 // UnpackMqttOptions will pull the key,value pairs from the mqtt userProperties

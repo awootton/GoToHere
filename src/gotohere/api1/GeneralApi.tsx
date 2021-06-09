@@ -15,12 +15,12 @@
 import fs from 'fs'
 
 import { WaitingRequest, SendApiReplyBack } from './Api';
-import * as util from '../server/Util';
+import * as util from '../mqtt/Util';
 import ApiCommand from "./Api"
 import * as api from "./Api"
-import * as config from "../server/Config"
+import * as config from "../mqtt/Config"
 
-import * as mqttclient from "../server/MqttClient";
+import * as mqttclient from "../mqtt/MqttClient";
 
 export {} // i want to beeee a module
 

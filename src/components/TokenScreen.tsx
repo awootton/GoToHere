@@ -30,12 +30,12 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 
 //import * as mqttclient from '../server/MqttClient';
 
-import * as util from "../server/Util"
-import * as mqttclient from "../server/MqttClient"
+import * as util from "../gotohere/mqtt/Util"
+import * as mqttclient from "../gotohere/mqtt/MqttClient"
 
 
 import * as nacl from 'tweetnacl-ts'
-import * as pingapi from "../api1/Ping";
+import * as pingapi from "../gotohere/api1/Ping";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({

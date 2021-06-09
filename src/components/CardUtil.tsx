@@ -14,13 +14,13 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import * as social from '../server/SocialTypes'
+import * as s from '../gotohere/mqtt/SocialTypes'
 
 export {}
 
-export function makeTopCard( username: string ) : social.Post {
+export function makeTopCard( username: string ) : s.Post {
 
-    var apost : social.Post = {
+    var apost : s.Post = {
         id : 0,
         title : "Waiting...",
         theText: "No posts loaded yet.",
@@ -32,9 +32,9 @@ export function makeTopCard( username: string ) : social.Post {
     return apost
 }
 
-export function makeEditCard(username: string) : social.Post {
+export function makeEditCard(username: string) : s.Post {
 
-    var apost : social.Post = {
+    var apost : s.Post = {
         id : 0,
         title : "",
         theText: "", 
@@ -43,14 +43,30 @@ export function makeEditCard(username: string) : social.Post {
         comments: []    , 
         editable : true,
         by : username
-
     }
     return apost
 }
 
-export function makeEmptyCard( username: string ) : social.Post {
+export function makeEditComment(username: string, parent : s.Reference) : s.Comment {
 
-    var apost : social.Post = {
+    var apost : s.Comment = {
+        id : 0,
+        title : "",
+        theText: "", 
+        likes: 0,
+        retweets : [],
+        comments: []    , 
+        editable : true,
+        by : username,
+        parent: s.StringRefNew(parent)
+    }
+    return apost
+}
+
+
+export function makeEmptyCard( username: string ) : s.Post {
+
+    var apost : s.Post = {
         id : 0,
         title : "",
         theText: "",
@@ -58,6 +74,21 @@ export function makeEmptyCard( username: string ) : social.Post {
         retweets : [],
         comments: [] ,
         by : username
+    }
+    return apost
+}
+
+export function makeEmptyComment( username: string ) : s.Comment {
+
+    var apost : s.Comment = {
+        id : 0,
+        title : "",
+        theText: "",
+        likes: 0,
+        retweets : [],
+        comments: [] ,
+        by : username,
+        parent: ""
     }
     return apost
 }

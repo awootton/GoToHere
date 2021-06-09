@@ -28,18 +28,18 @@ import * as  fakeTextMonacle from './fakeTextMonacle'
 import * as  fakeTextSpace from './fakeTextSpace'
 import * as  words from './wordlist'
 
-import * as  util from '../server/Util'
-import * as  social from '../server/SocialTypes'
-import * as config from "../server/Config"
+import * as  util from '../gotohere/mqtt/Util'
+import * as  s from '../gotohere/mqtt/SocialTypes'
+import * as config from "../gotohere/mqtt/Config"
 
 import Rand32 from './Rand32'
 import { NamePairs } from './namePairs'
 
-import * as generalapi from "../api1/GeneralApi"
+import * as generalapi from "../gotohere/api1/GeneralApi"
 
 
 // to run this file :
-// node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/fake/initFakeData
+// node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/fake/runMakeFake20
 
 export { }
 
@@ -53,9 +53,11 @@ type FakeProfileProfile = {
     following: string[] // of pubk64
     key: string[] // pub key followed by space then name
 
-    posts: social.Post[]
+    posts: s.Post[]
 
-    comments: social.Comment[]
+    comments: s.Comment[]
+
+    timeline: s.TimelineItem[]
 
     generalinfo: generalapi.GeneralInfo
 }
@@ -78,19 +80,19 @@ function initfakes() {
     name2Fake.set("space", { pos: 0, fakeText: fakeTextSpace.fakeText })
 }
 initfakes()
-var themeKeys: string[] = []
+export var themeKeys: string[] = []
 var arr = Array.from(name2Fake.keys())
 for (let key of arr) {
     themeKeys.push(key)
 }
 
 console.log("in init fake data")
-initPeople() // the entry point here <<===--- 
+// initPeople() // the entry point here <<===--- 
 
 // The trick: make it idempotent
 // for that to work the nowMillis can't change every milli
 
-function initPeople() {
+export function initPeople(item?: config.ServerConfigItem) {
 
     var localConfig: config.ServerConfigList = readServerConfig("sample_server_config.json")
 
@@ -102,69 +104,118 @@ function initPeople() {
 
     var nameToPubkeys: Map<string, string[]> = new Map()
 
-    // 20 people.
-    for (var personIndex = 0; personIndex < 20; personIndex++) {
-        var item: config.ServerConfigItem
-        var pro: FakeProfileProfile
-        if (personIndex < localConfig.items.length) {
-            item = localConfig.items[personIndex]
-            pro = {
-                item: item,
-                pubk64: [],
-                theme: "fixme",
-                blocks: [],
-                friends: [],
-                followers: [],
-                following: [],
-                key: [],
-                posts: [],
-                comments: [],
-                generalinfo: generalapi.GeneralInfoSample
-            }
-        } else {
-            var theName = makeRandName(rand, 3)
-            item = {
-                name: theName,
-                nameReservationToken: "nonameReservationToken",
-                port: "3010",  // for forwarding http
-                directory: theName,  // where the data lives
-                passphrase: [] //makeRandWords(rand, 4)
-            }
-            item.passphrase.push(theName)
-            item.passphrase.push(theName + "2")
-            localConfig.items.push(item)
-            pro = {
-                item: item,
-                pubk64: [],
-                theme: "fixme",
-                blocks: [],
-                friends: [],
-                followers: [],
-                following: [],
-                key: [],
-                posts: [],
-                comments : [],
-                generalinfo: generalapi.GeneralInfoSample
-            }
-        }
+    // testing cann call this to init one aka the dummy 
+    if (item !== undefined) {
 
-        var theme = ""
-        if (item.name === "alice_vociferous_mcgrath") {
-            theme = "cupcake"
+        pro = {
+            item: item,
+            pubk64: [],
+            theme: "fixme",
+            blocks: [],
+            friends: [],
+            followers: [],
+            following: [],
+            key: [],
+            posts: [],
+            comments: [],
+            timeline: [],
+            generalinfo: generalapi.GeneralInfoSample
         }
-        if (item.name === "building_bob_bottomline_boldness") {
-            theme = "hipster"
-        }
-        if (item.name === "charles_everly_erudite") {
-            theme = "monacle"
-        }
-        if (theme.length == 0) {
-            theme = themeKeys[Math.floor(rand.next() * themeKeys.length)]
-        }
-        pro.theme = theme
+        pro.theme = themeKeys[3]
         profileList.push(pro)
-    }// people loop
-    //console.log(localConfig)
+
+    } else {
+
+        // 20 people.
+        for (var personIndex = 0; personIndex < 20; personIndex++) {
+            // var item: config.ServerConfigItem
+            var pro: FakeProfileProfile
+            if (personIndex < localConfig.items.length) {
+                item = localConfig.items[personIndex]
+                pro = {
+                    item: item,
+                    pubk64: [],
+                    theme: "fixme",
+                    blocks: [],
+                    friends: [],
+                    followers: [],
+                    following: [],
+                    key: [],
+                    posts: [],
+                    comments: [],
+                    timeline: [],
+                    generalinfo: generalapi.GeneralInfoSample
+                }
+            } else {
+                var theName = makeRandName(rand, 3)
+                item = {
+                    name: theName,
+                    nameReservationToken: "nonameReservationToken",
+                    port: "3010",  // for forwarding http
+                    directory: theName,  // where the data lives
+                    passphrase: [] //makeRandWords(rand, 4)
+                }
+                item.passphrase.push(theName)
+                item.passphrase.push(theName + "2")
+                localConfig.items.push(item)
+                pro = {
+                    item: item,
+                    pubk64: [],
+                    theme: "fixme",
+                    blocks: [],
+                    friends: [],
+                    followers: [],
+                    following: [],
+                    key: [],
+                    posts: [],
+                    comments: [],
+                    timeline: [],
+                    generalinfo: generalapi.GeneralInfoSample
+                }
+            }
+
+            var theme = ""
+            if (item.name === "alice_vociferous_mcgrath") {
+                theme = "cupcake"
+            }
+            if (item.name === "building_bob_bottomline_boldness") {
+                theme = "hipster"
+            }
+            if (item.name === "charles_everly_erudite") {
+                theme = "monacle"
+            }
+            if (theme.length == 0) {
+                theme = themeKeys[Math.floor(rand.next() * themeKeys.length)]
+            }
+            pro.theme = theme
+            profileList.push(pro)
+        }// people loop
+    }
+
+    const getName2Profile = (name: string): FakeProfileProfile => {
+        for (var pro of profileList) {
+            if (pro.item.name == name) {
+                return pro
+            }
+        }
+        console.log("this should be infallible really")
+        return profileList[0]
+    }
+
+    const getThoseWhoSeeMyPosts = (me: FakeProfileProfile): FakeProfileProfile[] => {
+        var res: FakeProfileProfile[] = []
+        for (var pro of profileList) {
+            // am I on their following list? 
+            for (var f of pro.following) {
+                if (f === me.item.name) {
+                    res.push(pro)
+                    break
+                }
+            }
+        }
+        return res
+    }
+
     for (var pro of profileList) {
         // check for the directory
         var dirName = "data/" + pro.item.directory
@@ -187,35 +238,17 @@ function initPeople() {
     }// people loop
 
     for (var pro of profileList) {
-        // init the posts 
-        // check the first one
-
-        var id = util.ConvertFromMsToDateNumber(nowMillis)
-        var path = "data/" + pro.item.directory + "/lists/posts/"
-        var fname = "" + id
-        fname = fname.substr(0, 6)
-        fname = path + fname
-        if ( true || !fs.existsSync(fname)) {
-            for (var i = 0; i < 24; i++) {
-                var ms = nowMillis - 1000 * 60 * 60 * 6 * i // 6 hours in ms
-                var id = util.ConvertFromMsToDateNumber(ms)
-                const post = makeFakePost(pro.item.name, id, pro.theme)
-                pro.posts.push(post)
-            }
-        }
-
-    }// people loop
-
-    for (var pro of profileList) {
         // block 3 people
         for (let i = 0; i < 3; i++) {
-            while (true) {
+            var tries = 0
+            while (tries < 10) {
                 var other = profileList[Math.floor(rand.next() * profileList.length)]
                 // if it's not me and it's not on the blocks list
                 if (other.item.name != pro.item.name && pro.blocks.find(x => x === other.item.name) == undefined) {
                     pro.blocks.push(other.item.name)
                     break
                 }
+                tries += 1
             }
         }
         // write it 
@@ -226,12 +259,14 @@ function initPeople() {
     for (var pro of profileList) {
         // make friends 
         for (let i = 0; i < 5; i++) {
-            while (true) {
+            var tries = 0
+            while (tries < 10) {
                 var other = profileList[Math.floor(rand.next() * profileList.length)]
                 if (other.item.name != pro.item.name && pro.friends.find(x => x === other.item.name) == undefined) {
                     pro.friends.push(other.item.name)
                     break
                 }
+                tries += 1
             }
         }
         // write it 
@@ -243,12 +278,14 @@ function initPeople() {
     for (var pro of profileList) {
         // make followers 
         for (let i = 0; i < 5; i++) {
-            while (true) {
+            var tries = 0
+            while (tries < 10) {
                 var other = profileList[Math.floor(rand.next() * profileList.length)]
                 if (other.item.name != pro.item.name && pro.followers.find(x => x === other.item.name) == undefined) {
                     pro.followers.push(other.item.name)
                     break
                 }
+                tries += 1
             }
         }
         // write it 
@@ -260,12 +297,14 @@ function initPeople() {
     for (var pro of profileList) {
         // make following 
         for (let i = 0; i < 5; i++) {
-            while (true) {
+            var tries = 0
+            while (tries < 10) {
                 var other = profileList[Math.floor(rand.next() * profileList.length)]
                 if (other.item.name != pro.item.name && pro.following.find(x => x === other.item.name) == undefined) {
                     pro.following.push(other.item.name)
                     break
                 }
+                tries += 1
             }
         }
         // write it 
@@ -274,7 +313,7 @@ function initPeople() {
 
     }// people loop
 
-    for (var pro of profileList) {
+    for (var pro of profileList) { // for, the all friends map 
         // form the 'key' which is a map from name to pub keys
         var mySet: Set<String> = new Set()
 
@@ -298,7 +337,7 @@ function initPeople() {
 
     }// people loop
 
-    for (var pro of profileList) {
+    for (var pro of profileList) { //  init the general info
 
         pro.generalinfo.name = pro.item.name
         pro.generalinfo.publickey = "",
@@ -320,7 +359,6 @@ function initPeople() {
         const jsonstr = JSON.stringify(pro.generalinfo, null, 2)
         fs.writeFileSync("data/" + pro.item.directory + "/generalinfo.txt", jsonstr)
 
-
     }// generalInfo
 
     for (var pro of profileList) {
@@ -328,68 +366,172 @@ function initPeople() {
 
     }// people loop
 
-    const getName2Profile = ( name: string ) :FakeProfileProfile => {
-        for (var pro of profileList) {
-             if ( pro.item.name == name){
-                 return pro
-             }
+
+    for (var pro of profileList) { // make posts 
+        // init the posts 
+        // check the first one
+
+        var id = util.ConvertFromMsToDateNumber(nowMillis)
+        var path = "data/" + pro.item.directory + "/lists/posts/"
+        var fname = "" + id
+        fname = fname.substr(0, 6)
+        fname = path + fname
+        if (true || !fs.existsSync(fname)) {
+            for (var i = 0; i < 24; i++) {
+                var ms = nowMillis - 1000 * 60 * 60 * 6 * i // 6 hours in ms
+                var id = util.ConvertFromMsToDateNumber(ms)
+                const post = makeFakePost(pro.item.name, id, pro.theme)
+                pro.posts.push(post)
+                var tli: s.TimelineItem = {
+                    id : post.id,
+                    by : post.by,
+                    why: "You made a post."
+                }
+                pro.timeline.push(tli)
+                var followers: FakeProfileProfile[] = getThoseWhoSeeMyPosts(pro)
+                for (var fr of followers) {
+                    var tli: s.TimelineItem = {
+                        id : post.id,
+                        by : post.by,
+                        why: pro.item.name + " made a post."
+                    }
+                    fr.timeline.push(tli)
+                }
+            }
         }
-        console.log("this should be infallible really")
-        return profileList[0]
-    }
+    }// people loop
 
     for (var pro of profileList) { // make comments 
-        var friendsSet : Set<string> = new Set()
-        for ( var f of pro.following){
+        var friendsSet: Set<string> = new Set()
+        for (var f of pro.following) {
             friendsSet.add(f)
         }
-        for ( var f of pro.friends){
+        for (var f of pro.friends) {
             friendsSet.add(f)
         }
         const friendsArray: string[] = []
         friendsSet.forEach(f => {
             friendsArray.push(f)
         });
+        // now we have a list of friends
 
         // so, like 10? 20?
         const howMany = 20
         for (var i = 0; i < howMany; i++) {
             // find a friend
-            var index = Math.floor( rand.next() * friendsArray.length)
+            var index = Math.floor(rand.next() * friendsArray.length)
             const friend = friendsArray[index]
             const friendPro = getName2Profile(friend)
             // find a post by the friend.
-            index = Math.floor( rand.next() * friendPro.posts.length )
-            var friendsPost: social.Post =  friendPro.posts[index]
-            var whenId = friendsPost.id 
-            if ( friendsPost.comments.length > 0 ) {// if there are already comments
-                for ( var comment of friendsPost.comments){
-                    const ref = social.StringRefToRef(comment)
-                    if ( ref.id > whenId ){
+            index = Math.floor(rand.next() * friendPro.posts.length)
+            var friendsPost: s.Post = friendPro.posts[index]
+            var whenId = friendsPost.id
+            if (friendsPost.comments.length > 0) {// if there are already comments
+                for (var comment of friendsPost.comments) {
+                    const ref = s.ReferenceFromStr(comment)
+                    if (ref.id > whenId) {
                         whenId = ref.id
                     }
                 }
             }
-            const when: Date =  util.DateFromDateNumber(whenId) 
+            // we have a post, friendsPost, and we have a time
+            const when: Date = util.DateFromDateNumber(whenId)
             const millis = when.getTime()
             const theCommenTime = util.ConvertFromMsToDateNumber(millis + 1000 * 60 * 5) // 5 minutes later
-            const parent: social.Reference = {
+            const parent: s.Reference = {
                 id: friendsPost.id,
-                by: pro.item.name
+                by: friendsPost.by
             }
-            var newComment : social.Comment = makeComment(pro.item.name,theCommenTime,pro.theme,parent)
+            var newComment: s.Comment = makeComment(pro.item.name, theCommenTime, pro.theme, parent)
             // add it to my list
             pro.comments.push(newComment)
             // add it to the comments of their post (friendsPost)
-            const reference: social.Reference = {
-                id : newComment.id,
+            const reference: s.Reference = {
+                id: newComment.id,
                 by: pro.item.name
             }
-            friendsPost.comments.push(social.StringRefNew(reference))
+            friendsPost.comments.push(s.StringRefNew(reference))
+            var tli: s.TimelineItem = {
+                id : newComment.id,
+                by : newComment.by,
+                why: "You made a comment."
+            }
+            pro.timeline.push(tli)
+            var followers: FakeProfileProfile[] = getThoseWhoSeeMyPosts(pro)
+            for (var fr of followers) {
+                var tli: s.TimelineItem = {
+                    id : newComment.id,
+                    by : newComment.by,
+                    why: pro.item.name + " made a comment."
+                }
+                fr.timeline.push(tli)
+            }
         }
     }// people loop
 
-    // should we do comments on the comments now?
+    for (var pro of profileList) { // make comments on comments
+        var friendsSet: Set<string> = new Set()
+        for (var f of pro.following) {
+            friendsSet.add(f)
+        }
+        for (var f of pro.friends) {
+            friendsSet.add(f)
+        }
+        const friendsArray: string[] = []
+        friendsSet.forEach(f => {
+            friendsArray.push(f)
+        });
+        // now we have a list of friends
+
+        // so, like 10? 20?
+        const howMany = 20
+        for (var i = 0; i < howMany; i++) {
+            // find a friend
+            var index = Math.floor(rand.next() * friendsArray.length)
+            const friend = friendsArray[index]
+            const friendPro = getName2Profile(friend)
+            // find a comment by the friend.
+            index = Math.floor(rand.next() * friendPro.comments.length)
+            var friendsComment: s.Comment = friendPro.comments[index]
+            var whenId = friendsComment.id
+            if (friendsComment.comments.length > 0) {// if there are already comments
+                // find the latest one and set whenId
+                for (var comment of friendsComment.comments) {
+                    const ref = s.ReferenceFromStr(comment)
+                    if (ref.id > whenId) {
+                        whenId = ref.id
+                    }
+                }
+            }
+            const when: Date = util.DateFromDateNumber(whenId)
+            const millis = when.getTime()
+            const theCommenTime = util.ConvertFromMsToDateNumber(millis + 1000 * 60 * 5) // 5 minutes later
+            const parent: s.Reference = {
+                id: friendsComment.id,
+                by: friendsComment.by
+            }
+            var newComment: s.Comment = makeComment(pro.item.name, theCommenTime, pro.theme, parent)
+            // add it to my list
+            pro.comments.push(newComment)
+
+            // add it to the comments of their post (friendsPost)
+            const reference: s.Reference = {
+                id: newComment.id,
+                by: pro.item.name
+            }
+            friendsComment.comments.push(s.StringRefNew(reference))
+            var followers: FakeProfileProfile[] = getThoseWhoSeeMyPosts(pro)
+            for (var fr of followers) {
+                var tli: s.TimelineItem = {
+                    id : newComment.id,
+                by : newComment.by,
+                    why: pro.item.name + " made a comment."
+                }
+                fr.timeline.push(tli)
+            }
+        }
+    }// people loop
+
 
     for (var pro of profileList) {
         // make events 
@@ -398,53 +540,96 @@ function initPeople() {
 
     for (var pro of profileList) { // write the posts! 
         for (const post of pro.posts) {
-            writeFakePost(pro, post)
+            writeFakePost(pro.item.directory, post)
         }
     }
 
-    for (var pro of profileList) { // write the posts! 
+    for (var pro of profileList) { // write the comments! 
         for (const comment of pro.comments) {
-            writeComment(pro, comment)
+            writeComment(pro.item.directory, comment)
         }
     }
 
-    // write out the new config
-
-    var previousConfig = readServerConfig("data/server_config.json")
-    var newList: config.ServerConfigList = {
-        token: "",
-        items: []
+    for (var pro of profileList) { // write the timeline! 
+        var sorted = pro.timeline.sort((a: s.TimelineItem, b: s.TimelineItem): number => {
+            if ( a.id === b.id) {
+                return 0
+            }
+            if ( a.id > b.id) {
+                return -1
+            }
+            return 1
+        })
+        writeTimeline(pro, sorted)
     }
-    for (var pro of profileList) {
-        const anItem: config.ServerConfigItem = {
-            ...pro.item,
-            port: "3020"
+
+
+    if (profileList.length >= 20) {
+        // write out the new config
+
+        var dconfig : config.ServerConfigItem = {
+            "name": "dummy",
+            "nameReservationToken": "fixme",
+            "port": "3010",
+            "directory": "dummy",
+            "passphrase": [
+              "dummy",
+              "dummy2"
+            ]
+          }
+          var dpro  : FakeProfileProfile = {
+            item: dconfig,
+            pubk64: [],
+            theme: "fixme",
+            blocks: [],
+            friends: [],
+            followers: [],
+            following: [],
+            key: [],
+            posts: [],
+            comments: [],
+            timeline: [],
+            generalinfo: generalapi.GeneralInfoSample
         }
-        newList.items.push(anItem)
-    }
-    newList.token = previousConfig.token
-    writeServerConfig("data/server_config.json", newList)
+        dpro.theme = themeKeys[3]
+        profileList.push(dpro)
 
-    var previousLoaclConfig = readServerConfig("data/server_config_local.json")
-    newList = {
-        token: "",
-        items: []
-    }
-    for (var pro of profileList) {
-        const localItem: config.ServerConfigItem = {
-            ...pro.item,
-            port: "3010"
+        var previousConfig = readServerConfig("data/server_config.json")
+        var newList: config.ServerConfigList = {
+            token: "",
+            items: []
         }
-        newList.items.push(localItem)
+        for (var pro of profileList) {
+            const anItem: config.ServerConfigItem = {
+                ...pro.item,
+                port: "3020"
+            }
+            newList.items.push(anItem)
+        }
+        newList.token = previousConfig.token
+        writeServerConfig("data/server_config.json", newList)
+
+        var previousLoaclConfig = readServerConfig("data/server_config_local.json")
+        newList = {
+            token: "",
+            items: []
+        }
+        for (var pro of profileList) {
+            const localItem: config.ServerConfigItem = {
+                ...pro.item,
+                port: "3010"
+            }
+            newList.items.push(localItem)
+        }
+        newList.token = previousLoaclConfig.token
+        writeServerConfig("data/server_config_local.json", newList)
     }
-    newList.token = previousLoaclConfig.token
-    writeServerConfig("data/server_config_local.json", newList)
 
+    console.log("finished !!!! ")
 
-}
+}// make the people
 
 var namesList: string[] | undefined
-
 
 function makeRandName(rand: Rand32, size: number): string {
 
@@ -588,16 +773,16 @@ function getSomeFakeText(wordCount: number, which: string): string {
     return gotSome
 }
 
-function makeComment(username: string, id: number, theme: string, parent: social.Reference  ): social.Comment {  // eg timeline.posts, or photos
+export function makeComment(username: string, id: number, theme: string, parent: s.Reference): s.Comment {  // eg timeline.posts, or photos
 
-    console.log("making fake comment ", id, theme)
+    //console.log("making fake comment ", id, theme)
 
     var aTitle = getSomeFakeText(3, theme)
 
     var wordCount = Math.floor(15 + Math.random() * 40)
     var someText = getSomeFakeText(wordCount, theme)
 
-    var comment: social.Comment = {
+    var comment: s.Comment = {
         id: id,
         title: aTitle.trim(),
         theText: someText.trim(), // ATW FIXME: shorter names text
@@ -605,15 +790,15 @@ function makeComment(username: string, id: number, theme: string, parent: social
         retweets: [], // rt
         comments: [], // comm
         by: username,
-        parent : social.StringRefNew(parent)
+        parent: s.StringRefNew(parent)
     }
 
     return comment
 }
 
-function makeFakePost(username: string, id: number, theme: string): social.Post {  // eg timeline.posts, or photos
+export function makeFakePost(username: string, id: number, theme: string): s.Post {  // eg timeline.posts, or photos
 
-    console.log("making fake post ", id, theme)
+    // console.log("making fake post ", id, theme)
 
     // 4 per day so every 6 hours
 
@@ -622,7 +807,7 @@ function makeFakePost(username: string, id: number, theme: string): social.Post 
     var wordCount = Math.floor(15 + Math.random() * 40)
     var someText = getSomeFakeText(wordCount, theme)
 
-    var post: social.Post = {
+    var post: s.Post = {
         id: id,
         title: aTitle.trim(),
         theText: someText.trim(), // ATW FIXME: shorter names text
@@ -657,12 +842,12 @@ function makeFakePost(username: string, id: number, theme: string): social.Post 
     // });
 }
 
-function writeFakePost(pro: FakeProfileProfile, post: social.Post) {  // eg timeline.posts, or photos
+export function writeFakePost(directory: string, post: s.Post) {  // eg timeline.posts, or photos
 
     const id = post.id
-    const path = "data/" + pro.item.directory + "/lists/posts/"
+    const path = "data/" + directory + "/lists/posts/"
 
-    console.log(post)
+    //console.log(post)
     const theDay = Math.floor(id / 1000000000)
     const dirpath = path + theDay + "/" // "data/lists/"+folder+"/" + theDay
     const fname = "" + id
@@ -677,25 +862,21 @@ function writeFakePost(pro: FakeProfileProfile, post: social.Post) {  // eg time
             fs.mkdirSync(tmpPath);
         }
     })
-    fs.writeFile(wholepath, fbody, function (err) {
-        if (err) {
-            return console.error(err);
-        }
-        //console.log(" makeFakePost File created!");
-    });
+    fs.writeFileSync(wholepath, fbody )
 }
 
-function writeComment(pro: FakeProfileProfile, comment: social.Comment) {  // eg timeline.posts, or photos
+
+export function writeComment(directory: string, comment: s.Comment) {  // eg timeline.posts, or photos
 
     const id = comment.id
-    const path = "data/" + pro.item.directory + "/lists/comments/"
+    const path = "data/" + directory + "/lists/comments/"
 
-    console.log("writing comments", comment)
+    //console.log("writing comments", comment)
     const theDay = Math.floor(id / 1000000000)
     const dirpath = path + theDay + "/" // "data/lists/"+folder+"/" + theDay
     const fname = "" + id
     const wholepath = dirpath + fname
-    var fbody = JSON.stringify(comment,null,2)
+    var fbody = JSON.stringify(comment, null, 2)
 
     var pathParts = dirpath.split("/")
     var tmpPath = ""
@@ -705,13 +886,60 @@ function writeComment(pro: FakeProfileProfile, comment: social.Comment) {  // eg
             fs.mkdirSync(tmpPath);
         }
     })
-    fs.writeFile(wholepath, fbody, function (err) {
-        if (err) {
-            return console.error(err);
-        }
-        //console.log(" comment File created!");
-    });
+
+    const ref = s.StringRefNew(comment)
+    if ( ref === "210513013544588 Joan_Joyce_Catherine" ){
+        console.error("break here writeComment");
+    }
+    var fbody = JSON.stringify(comment, null, 2)
+    fs.writeFileSync(wholepath, fbody)
+   
 }
+
+function writeTimeline(pro: FakeProfileProfile, timeline: s.TimelineItem[]) {  // eg timeline.posts, or photos
+
+    var list = timeline
+
+    // warning: todo: there's duplicates
+
+    var prefRef : s.Reference = {
+        id: 0,
+        by: "",
+    }
+
+    while (list.length > 0) {
+
+        const path = "data/" + pro.item.directory + "/lists/timeline/"
+
+        if (!fs.existsSync(path)) {
+            fs.mkdirSync(path);
+        }
+
+        var aday = (""+list[0].id).slice(0, 6)
+        //console.log("writing timeline", aday)
+        var i = 1
+        for (i = 1; i < list.length; i++) {
+            if ( (""+list[i].id).slice(0, 6) !== aday) {
+                break
+            }
+        }
+        var daysTimeline = list.slice(0, i)
+        list = list.slice(i)
+        var wholepath = path + aday
+        var stringed : string[] = []
+        for ( const d of daysTimeline) {
+            if ( prefRef.id === d.id && prefRef.by === d.by ){
+                continue
+            }
+            stringed.push(JSON.stringify(d))
+            prefRef = d
+        }
+        const body =  stringed.join("\n") // JSON.stringify(daysTimeline, null, 2)
+        fs.writeFileSync(wholepath, body )
+    }
+}
+
+
 
 
 

@@ -15,18 +15,18 @@
 //import fs from 'fs'
 
 //import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
-import * as util from '../server/Util';
+import * as util from '../mqtt/Util';
 
 import ApiCommand from "./Api"
 import * as api from "./Api"
 //import * as config from "../server/Config"
-import * as broadcast from "../server/BroadcastDispatcher"
+import * as broadcast from "../mqtt/BroadcastDispatcher"
 
-import * as mqttclient from "../server/MqttClient";
+import * as mqttclient from "../mqtt/MqttClient";
 
 //import * as cardutil from '../components/CardUtil'
 
-//import * as social from '../server/SocialTypes'
+//import * as s from '../server/SocialTypes'
 
 // to run just this file :
 // node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/api1/Event

@@ -17,15 +17,16 @@ import { ReactElement, FC } from "react";
 
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 
-import * as social from "../server/SocialTypes"
+import * as s from "../gotohere/mqtt/SocialTypes"
 
 import Box from "@material-ui/core/Box";
 
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
+import CardHeader from '@material-ui/core/CardHeader'
 
 import Typography from '@material-ui/core/Typography';
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown, { propTypes } from 'react-markdown'
 import CardActions from '@material-ui/core/CardActions'
 import Button from '@material-ui/core/Button'
 
@@ -34,14 +35,14 @@ import Tooltip from '@material-ui/core/Tooltip'
 import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
 import FavoriteIcon from '@material-ui/icons/Favorite';
 
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import ExpandLessIcon from '@material-ui/icons/ExpandLess';
+//import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+//import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 
 
-import * as menus_card from '../menus/Card'
-import * as util from '../server/Util'
-import * as likesapi from "../api1/IncrementLikes"
-
+import * as menus_card from '../menus/CardMenu'
+import * as util from '../gotohere/mqtt/Util'
+import * as likesapi from "../gotohere/api1/IncrementLikes"
+ 
 
 // define css-in-js
 const useStyles = makeStyles((theme: Theme) =>
@@ -50,14 +51,14 @@ const useStyles = makeStyles((theme: Theme) =>
         root: {
         },
 
-        title: {
-            fontSize: 14,
-            padding: "4px 4px",
-        },
+        // title: {
+        //     fontSize: 12,
+        //     padding: "4px 4px",
+        // },
         // pos: {
         //     marginBottom: 12,
         // },
-        theText: {
+        theTextStyle: {
             display: "flex",
             padding: "0px 0px",
             height: 120, // 
@@ -86,8 +87,8 @@ const useStyles = makeStyles((theme: Theme) =>
         button: {
             margin: "0px 0px",
             padding: "0px 0px",
-            height: "24",
-            width: "24"
+            height: "20",
+            width: "20"
         },
 
         // scrollingEdit : {
@@ -98,11 +99,14 @@ const useStyles = makeStyles((theme: Theme) =>
 
 // define interface to represent component props
 export interface Props {
-    post: social.Post
+    post: s.Post
     username: string
     commentsOpen: boolean
-    isComment: number // the depth in the tree
-    toggleOpened: (ref: social.StringRef) => any
+    parentOpen: boolean
+    depth: number // the depth in the tree of comment indentation
+    why: string // for the timeline
+    toggleOpened: (ref: s.StringRef) => any
+    toggleParent: (ref: s.StringRef) => any
 }
 
 export const PostItem: FC<Props> = (props: Props): ReactElement => {
@@ -111,26 +115,56 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
 
     const classes = useStyles();
 
-    const isComment = props.isComment
-    const byLine = isComment ? (props.post.by + ":" + props.post.title) : props.post.title
-    const hasComments = props.post.comments.length !== 0
+    const depth = props.depth
+  
+    //const hasComments = props.post.comments.length !== 0
 
-    // width not working. How do I do it? 
-    const getOpenButton = (post: social.Post) => {
+    const getOpenButton = (post: s.Post) => {
         if (post.comments.length !== 0) {
+            return (  
+                <a href="#" onClick={handleCommentClick}>{props.commentsOpen ? "🔼" : "🔽" } {"  "}</a>
+            )
+            // return (
+            //     // <div style={{  width:"12px", margin:"0 0",  padding: "0px 0px" } } >
+            //     // <Tooltip title={props.commentsOpen?"Hide comments":"Show comments"}  >
+            //     {/* <Button variant="contained"
+            //         size="small"
+            //         color="secondary"
+            //         className={classes.button}
+            //         style={{backgroundColor:"white", color:"black" , margin:"0 0" } }
+            //         disableElevation
+            //         onClick={handleCommentClick} >
+            //         {/* {props.commentsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon /> } */}
+            //         <a href="#" onClick={handleCommentClick}>{props.commentsOpen ? "🔼" : "🔽" } {"  "}</a>
+                    
+            //     {/* </Button> */}
+            //     {/* </Tooltip>
+            //     </div> */}
+            // )
+        } else {
             return (
-                <div style={{  width:"8px", margin:"0 0",  padding: "0px 0px" } } >
-                <Tooltip title={props.commentsOpen?"Hide comments":"Show comments"}  >
-                <Button variant="contained"
+                <></>
+            )
+        }
+    }
+
+    const getParentButton = (post: s.Post) => {
+        if (post.parent !== undefined) {
+            return (
+                // <div style={{  width:"8px", margin:"0 0",  padding: "0px 0px" } } >
+                <Tooltip title={props.parentOpen?"Hide parent":"Show parent"}  >
+                {/* <Button variant="contained"
                     size="small"
                     color="secondary"
                     className={classes.button}
-                    style={{backgroundColor:"white", color:"black" , margin:"0 0" } }
-                    onClick={handleCommentClick} >
-                    {props.commentsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon /> }
-                </Button>
+                    style={{backgroundColor:"white", color:"black" , margin:"0 0" , width:24} }
+                    disableElevation
+                    onClick={handleParentClick} >
+                    {/* {props.commentsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon /> } */}
+                <a href="#" onClick={handleParentClick}>{props.parentOpen ? "🔼" : "🔽" }{"  "}</a>
+               {/* </Button> */}
                 </Tooltip>
-                </div>
+                // </div>
             )
         } else {
             return (
@@ -139,9 +173,15 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
         }
     }
 
+    var byLine = (depth>0) ? (props.post.by + ":" + props.post.title) : props.post.title
+
+    if ( props.why !== "" ){
+        byLine = props.why
+    }
+
     // todo: add from  {post.from}: <b>{post.title}</b>
     // if it's a comment and name != props.username   
-    const getTitleStuff = (post: social.Post) => {
+    const getTopLine = (post: s.Post) => {
         var dom = (
             <Box
                 display="flex"
@@ -149,10 +189,11 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
                 p={1}
                 m={1}
                 bgcolor="background.paper"
-
                 className={classes.pushedright}
+                style={{height:"8px"}}
             >
-                <b>{byLine}</b>
+                {getParentButton(post)}
+                <span>{byLine}</span>
                 <span className={classes.centered} >
                     {post.id !== 0 ? util.FormatDateNumber(post.id) : ""}
                 </span>
@@ -187,31 +228,63 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
     };
 
     const handleCommentClick = () => {
-        props.toggleOpened(social.StringRefNew(props.post))
+        props.toggleOpened(s.StringRefNew(props.post))
     }
 
-    const renderTheCard = (post: social.Post) => {
+    const handleParentClick = () => {
+        props.toggleParent(s.StringRefNew(props.post))
+    }
+
+    type funtype = () => any
+
+    const stringToFunction = ( fname: any ) : funtype => {
+        if ( fname === "handleCommentClick" ){
+            console.log("stringToFunction returning " + fname)
+            return handleCommentClick
+        }
+        console.log("ERROR unhandled fname " + fname)
+        return () => {}
+    }
+
+    // <a href="#" onClick={handleCommentClick}>{props.commentsOpen ? "🔼" : "🔽" } {"  "}</a>
+
+    const renderTheCard = (post: s.Post) => {
 
         var posStyle = {
             marginLeft: 0
         }
-        if ( isComment > 0 ){
-            posStyle.marginLeft = 12 * isComment
+        if ( depth > 0 ){
+            posStyle.marginLeft = 12 * depth
+        }
+
+        var TheText = post.theText //+ " [show comments](handleCommentClick 'show/hide comments') "
+        if ( props.why !== ""){
+            // the why is in the title. todo: less tricky
+            TheText = "**" + post.title + "**  \n" + post.theText
         }
 
         return (
             <>
                 <Card elevation={2} className={classes.nopadding} key={post.id} style = {posStyle} >
-
+                    <CardHeader style={{justifyContent:"center", height: "4", width:"8px", margin:"0 0",  padding: "0px 0px", marginLeft: 120  }} /> 
                     <CardContent className={classes.nopadding}  >
-                        {getTitleStuff(post)}
-                        <Typography variant="body2" color="textSecondary" component="div" className={classes.theText}  >
-                            <ReactMarkdown className={classes.theText} children={post.theText}/>
+                        {getTopLine(post)}
+                        <Typography variant="body2" color="textSecondary" component="div" className={classes.theTextStyle}  >
+                            <ReactMarkdown className={classes.theTextStyle} 
+                            children={TheText}
+                            components={{
+                                // Map `h1` (`# heading`) to use `h2`s.
+                                h1: 'h4',
+                                // Rewrite links to be onClick
+                                a: ({node, ...props}) => <a  href="#" onClick={stringToFunction(props.href)}  >{props.children}</a>
+                              }}
+                            />
+                            {/* {getOpenButton(post)} */}
                         </Typography>
                     </CardContent>
-                    <CardActions style={{justifyContent:"center",  width:"8px", margin:"0 0",  padding: "0px 0px",marginLeft: 120  }}>
-                    {getOpenButton(post)}
-                    </CardActions>
+                    <CardActions style={{justifyContent:"center", height: "4", width:"8px", margin:"0 0",  padding: "0px 0px", marginLeft: 120  }}>
+                    {getOpenButton(post)} 
+                    </CardActions> 
                 </Card>
             </>
         )

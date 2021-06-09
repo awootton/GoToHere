@@ -24,10 +24,10 @@ import Button from '@material-ui/core/Button'
 import Grid from '@material-ui/core/Grid'
 import Box from '@material-ui/core/Box'
 
-import * as generalapi from '../api1/GeneralApi'
-import * as broadcast from "../server/BroadcastDispatcher"
-import * as event from "../api1/Event"
-import * as util from "../server/Util"
+import * as generalapi from '../gotohere/api1/GeneralApi'
+import * as broadcast from "../gotohere/mqtt/BroadcastDispatcher"
+import * as event from "../gotohere/api1/Event"
+import * as util from "../gotohere/mqtt/Util"
  
 // This is both a component and the body of an 'edit' dialog. 
 
@@ -124,7 +124,6 @@ export const GeneralInfoLayout: FC<Props> = (props: Props) => {
             console.log("got reply.generalInfo", cmd.generalInfo)
           } else {
             console.log("ERROR  generalInfo cmd undefiend")
-        
         }
       }
     }

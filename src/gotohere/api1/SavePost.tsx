@@ -15,30 +15,28 @@
 import fs from 'fs'
 
 
-import * as util from '../server/Util';
+import * as util from '../mqtt/Util';
 
 import * as api from "./Api"
 
 import ApiCommand, { WaitingRequest, SendApiReplyBack, SendApiCommandOut} from './Api';
 
-import * as config from "../server/Config"
+import * as config from "../mqtt/Config"
 
-import * as cardutil from '../components/CardUtil'
+import * as cardutil from '../../components/CardUtil'
 
-import * as social from '../server/SocialTypes'
-
-import * as mqttclient from "../server/MqttClient";
+import * as s from '../mqtt/SocialTypes'
 
 // to run just this file :
 // node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/api1/SavePost
 
  
 export interface SavePostCmd extends ApiCommand {
-    post: social.Post
+    post: s.Post
 }
 
 export interface SavePostReply  extends ApiCommand {
-    post: social.Post
+    post: s.Post
 }
 
 export const SavePostReplyEmpty: SavePostReply = {
@@ -50,7 +48,7 @@ export type SavePostReceiver = (reply: SavePostReply, error: any) => any
 
 export const defaultRetry = 20
 
-export function IssueTheCommand(username: string, post: social.Post, receiver: SavePostReceiver) {
+export function IssueTheCommand(username: string, post: s.Post, receiver: SavePostReceiver) {
 
     var cmd: SavePostCmd = {
         cmd: "SavePost",
@@ -109,7 +107,7 @@ export function getWr(): api.WaitingRequest {
 
 
 // writePostToFile ripped off from initFake
-function writePostToFile(path: string, post: social.Post) {
+function writePostToFile(path: string, post: s.Post) {
     
     console.log(" savepost writePostToFile", post.id)
     const theDay = Math.floor(post.id / 1000000000)
@@ -150,7 +148,7 @@ function handleSavePostApi(wr: WaitingRequest, err: any) {
     }
     // if the id exists then it's an edit and not a new. 
     if ( cmd.post.id === 0 ) {
-        var newid: social.DateNumber = util.getCurrentDateNumber()
+        var newid: s.DateNumber = util.getCurrentDateNumber()
         cmd.post.id = newid
     }
     const post = cmd.post
@@ -172,8 +170,8 @@ function handleSavePostApi(wr: WaitingRequest, err: any) {
                 // console.log("have reply savepost ", jsonstr  )
     SendApiReplyBack(wr, Buffer.from(jsonstr), null)
 
-    const mostlyEmptyPost: social.Post = {
-        ...social.emptyPost,
+    const mostlyEmptyPost: s.Post = {
+        ...s.emptyPost,
         id : cmd.post.id
     }
     cmd.post = mostlyEmptyPost //FIXME: use BroadcastCommand 

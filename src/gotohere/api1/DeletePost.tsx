@@ -15,13 +15,13 @@
 import fs from 'fs'
 
 //import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
-import * as util from '../server/Util';
+import * as util from '../mqtt/Util';
 
 import ApiCommand from "./Api"
 import * as api from "./Api"
-import * as config from "../server/Config"
+import * as config from "../mqtt/Config"
 
-import * as social from '../server/SocialTypes'
+import * as s from '../mqtt/SocialTypes'
  
 
 // to run just this file :
@@ -30,7 +30,7 @@ import * as social from '../server/SocialTypes'
 
 export interface DeletePostCmd extends ApiCommand {
     //cmd: string
-    id: social.DateNumber
+    id: s.DateNumber
     // constructor(cmd: string, id: social.DateNumber) {
     //     //super(cmd)
     //     this.cmd = cmd
@@ -40,7 +40,7 @@ export interface DeletePostCmd extends ApiCommand {
 
 export interface DeletePostReply extends ApiCommand {
     //cmd: string
-    id: social.DateNumber
+    id: s.DateNumber
     // constructor(cmd: string, id: social.DateNumber) {
     //     //super(cmd)
     //     this.cmd = cmd
@@ -57,7 +57,7 @@ export type DeletePostReceiver = (reply: DeletePostReply, error: any) => any
 
 export const defaultRetry = 20
 
-export function IssueTheCommand(username: string, id: social.DateNumber, receiver: DeletePostReceiver, retries?: number) {
+export function IssueTheCommand(username: string, id: s.DateNumber, receiver: DeletePostReceiver, retries?: number) {
 
     var cmd: DeletePostCmd = {
         cmd: "DeletePost",
@@ -121,7 +121,7 @@ export function getWr(): api.WaitingRequest {
 
 
 // writePostToFile ripped off from initFake
-function deletePostFile(path: string, id: social.DateNumber) {
+function deletePostFile(path: string, id: s.DateNumber) {
     //console.log(" DeletePost deletePostFile", path, post)
     const theDay = Math.floor(id / 1000000000)
     const dirpath:string = path + "lists/posts/" + theDay + "/" // "data/lists/"+folder+"/" + theDay

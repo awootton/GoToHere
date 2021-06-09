@@ -24,6 +24,8 @@ import Typography from '@material-ui/core/Typography';
 
 //import PostList from './PostList';
 
+import * as timemgr from "./TimelineManager"
+
 import * as reactlisttest from  './PostListManager2';
 
 export interface TabPropsType {
@@ -78,7 +80,7 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.background.paper,
   },
   tabLabel : {
-     fontSize: 12,
+     fontSize: 14,
      height: 18,
      textTransform: 'capitalize'
     },
@@ -112,11 +114,11 @@ export const  SimpleTabs : FC<SimpleTabsProps> = (props: SimpleTabsProps) => {
       </AppBar>
 
       <TabPanel value={value} index={0} username = {props.username}>
-      <reactlisttest.PostListManager2 message={"none"} folder = {"lists/posts/"} username = {props.username}  ></reactlisttest.PostListManager2>
+      <reactlisttest.PostListManager2 message={"none"}   username = {props.username}  ></reactlisttest.PostListManager2>
       </TabPanel>
 
       <TabPanel value={value} index={1} username = {props.username}  >
-        <reactlisttest.PostListManager2 message={"none"} folder = {"lists/events/"} username = {props.username}  ></reactlisttest.PostListManager2>
+        < timemgr.TimelineManager  username = {props.username}  ></timemgr.TimelineManager>
       </TabPanel>
 
     </div>

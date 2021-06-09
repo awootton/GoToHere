@@ -17,7 +17,7 @@ import { FC } from "react";
 
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 
-import * as social from "../server/SocialTypes"
+import * as s from "../gotohere/mqtt/SocialTypes"
 
 import Card from '@material-ui/core/Card'
 //import CardContent from '@material-ui/core/CardContent'
@@ -33,7 +33,7 @@ import Button from '@material-ui/core/Button'
 //import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
 
-import * as deletepostapi from '../api1/DeletePost'
+import * as deletepostapi from '../gotohere/api1/DeletePost'
 //import * as savepostapi from '../api1/SavePost'
 //import * as cardutil from '../components/CardUtil'
 
@@ -49,7 +49,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 type Props = {
-    post: social.Post
+    post: s.Post
     username: string
     cancel: () => any
 }
@@ -81,7 +81,7 @@ export const FillDeletePost: FC<Props> = (props: Props) => {
 
     }
 
-    const renderEditCard = (post: social.Post) => {
+    const renderEditCard = (post: s.Post) => {
         return (
             <Box className={classes.root} borderColor="secondary.main"  >
                 <Card elevation={2} key={post.id} >

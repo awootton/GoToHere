@@ -12,25 +12,26 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
-import { mqttServerThing } from '../server/MqttClient';
-import * as util from '../server/Util';
 
-import * as mqttclient from '../server/MqttClient';
- 
-import * as eventapi from '../api1/Event';
-import * as deletepostapi from '../api1/DeletePost';
-import * as generalapi from '../api1/GeneralApi';
-import * as commentsapi from '../api1/GetComments';
-import * as friendsapi from '../api1/GetFriends';
-import * as getpostsapi from '../api1/GetPosts';
-import * as likesapi from '../api1/IncrementLikes';
-import * as pingapi from '../api1/Ping';
-import * as savepostapi from '../api1/SavePost';
+import { mqttServerThing } from '../mqtt/MqttClient';
+import * as util from '../mqtt/Util';
+
+import * as mqttclient from '../mqtt/MqttClient';
+
+import * as eventapi from './Event';
+import * as deletepostapi from './DeletePost';
+import * as generalapi from './GeneralApi';
+import * as commentsapi from './GetComments';
+import * as friendsapi from './GetFriends';
+import * as getpostsapi from './GetPosts';
+import * as likesapi from './IncrementLikes';
+import * as pingapi from './Ping';
+import * as savepostapi from './SavePost';
+import * as timeapi from './GetTimeline';
  
 
-export function getAllHooks()  : WaitingRequest[] {
-    var res : WaitingRequest[] = []
+export function getAllHooks(): WaitingRequest[] {
+    var res: WaitingRequest[] = []
 
     res.push(eventapi.getWr())
     res.push(deletepostapi.getWr())
@@ -42,7 +43,8 @@ export function getAllHooks()  : WaitingRequest[] {
     res.push(savepostapi.getWr())
     res.push(eventapi.getWr())
     res.push(likesapi.getWr())
-    
+    res.push(timeapi.getWr())
+
     return res
 }
 
@@ -79,8 +81,8 @@ export type WaitingRequest = {
     isPing?: boolean
     isEvent?: boolean
 
-    context? : util.Context
-    debug?:boolean
+    context?: util.Context
+    debug?: boolean
 }
 
 // Who is this from? The util.getProfileName() ? 
@@ -124,7 +126,7 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
 
         options: new Map<string, string>(),
         returnAddress: mqttServerThing.myReplyChannel,
-        context : context
+        context: context
     }
 
     // when the reply arrives it will have the rand24 as its api1 id and that will match with this:
@@ -137,7 +139,7 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
     var message = jsonstr
     // packet.properties.userProperties
     // let utf8Encode = new TextEncoder();
-    var options : util.LooseObject = {
+    var options: util.LooseObject = {
         retain: false,
         qos: 0,
         properties: {
@@ -150,14 +152,14 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
             }
         }
     };
-    if ( commandWr.debug === true ){
+    if (commandWr.debug === true) {
         options.properties.userProperties["debg"] = "12345678" // trace publish in knotfree
     }
 
     const weShouldSkipCrypto: boolean = !BoxItUp || isPingPacket
     if (weShouldSkipCrypto) {
 
-        if ( mqttServerThing.client === undefined) {
+        if (mqttServerThing.client === undefined) {
             console.log("ERROR mqttServerThing.client === undefined")
             return
         }
@@ -174,7 +176,7 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
 
         const boxed: Buffer = util.BoxItItUp(Buffer.from(message), Buffer.from(random24), theirPubk, ourSecret)
 
-        if ( mqttServerThing.client === undefined) {
+        if (mqttServerThing.client === undefined) {
             console.log("ERROR mqttServerThing.client === undefined")
             return
         }
@@ -247,14 +249,14 @@ export const SendApiReplyBack = (wr: WaitingRequest, replyData: Buffer, err: any
     } else { // in handleSendReplyCallback
         //   needs crypto  - box it up
         // added pubk to options
-            // can we reuse the nonce? 
+        // can we reuse the nonce? 
         const nonce = Buffer.from(waitingHandlerId)
-        const passedPubk:string = wr.options.get("pubk") || "" // but what if ...?
+        const passedPubk: string = wr.options.get("pubk") || "" // but what if ...?
         const theirPublicKey = util.fromBase64Url(passedPubk)// it was sent to us
-        
+
         const ourSecretKey = context.ourSecretKey
 
-        const boxed = util.BoxItItUp(replyData,nonce,theirPublicKey,ourSecretKey[0])
+        const boxed = util.BoxItItUp(replyData, nonce, theirPublicKey, ourSecretKey[0])
 
         mqttServerThing.client.publish(topic, boxed, options)
     }
@@ -329,50 +331,50 @@ export function HandleApiReplyArrival(mqttThing: mqttclient.MqttTestServerTricks
     isApi: string,
     handler: WaitingRequest) {
 
-        if ( handler.permanent) {
-            console.log("oops, this is the handler for replies which are not permanent")
+    if (handler.permanent) {
+        console.log("oops, this is the handler for replies which are not permanent")
+    }
+
+    const msg: string = Buffer.from(handler.message).toString('utf-8')
+
+    // needs crypto  - unbox it now
+    const isPingPacket = handler.isPing === true
+    var weShouldSkipCrypto: boolean = !BoxItUp || isPingPacket
+    if (weShouldSkipCrypto) {
+
+        //console.log("calling return handler callbask")// if call a callbask yiu turn to stone 
+        handler.waitingCallbackFn(handler)
+
+    } else {
+
+        if (handler.context == undefined) {
+            console.log("ERROR context was supposed to be set by SendApiCommandOut ")
         }
-     
-        const msg: string = Buffer.from(handler.message).toString('utf-8')
-    
-        // needs crypto  - unbox it now
-        const isPingPacket = handler.isPing === true
-        var weShouldSkipCrypto: boolean = !BoxItUp || isPingPacket
-        if (weShouldSkipCrypto) {
-    
-            //console.log("calling return handler callbask")// if call a callbask yiu turn to stone 
-            handler.waitingCallbackFn(handler)
-    
+        const message: Buffer = Buffer.from(handler.message)
+
+        const nonce: Buffer = Buffer.from(handler.options.get("nonc") || "")
+        if (nonce.length === 0) {
+            console.log("ERROR missing nonc ")
+        }
+        const theirPubk: string = handler.options.get("pubk") || ""
+        if (theirPubk.length === 0) {
+            console.log("ERROR missing pubk ")
+        }
+        const theirPublicKey: Buffer = util.fromBase64Url(theirPubk)
+        const context = handler.context || util.emptyContext// was set when we started this request
+
+        const secret: Buffer = context.ourSecretKey[0]
+
+        const unboxed: Buffer = util.UnBoxIt(message, nonce, theirPublicKey, secret)
+        handler.message = unboxed
+
+        if (unboxed.length === 0) {
+            console.log("unboxing disaster inHandleApi1PacketIn  ")
         } else {
-
-            if ( handler.context == undefined) {
-                console.log("ERROR context was supposed to be set by SendApiCommandOut ")
-            }
-            const message: Buffer = Buffer.from(handler.message)
-    
-            const nonce: Buffer = Buffer.from(handler.options.get("nonc") || "")
-            if (nonce.length === 0) {
-                console.log("ERROR missing nonc ")
-            }
-            const theirPubk: string = handler.options.get("pubk") || ""
-            if (theirPubk.length === 0) {
-                console.log("ERROR missing pubk ")
-            }
-            const theirPublicKey: Buffer = util.fromBase64Url(theirPubk)
-            const context = handler.context || util.emptyContext// was set when we started this request
-
-            const secret: Buffer = context.ourSecretKey[0]
-    
-            const unboxed: Buffer = util.UnBoxIt(message, nonce, theirPublicKey, secret)
-            handler.message = unboxed
-    
-            if (unboxed.length === 0) {
-                console.log("unboxing disaster inHandleApi1PacketIn  ")
-            } else {
-                //console.log("HandleApi1PacketIn HandleApiReplyArrival calling waitingCallbackFn ", unboxed.toString('utf8'))
-                handler.waitingCallbackFn(handler)
-            }
+            //console.log("HandleApi1PacketIn HandleApiReplyArrival calling waitingCallbackFn ", unboxed.toString('utf8'))
+            handler.waitingCallbackFn(handler)
         }
+    }
 
 }
 

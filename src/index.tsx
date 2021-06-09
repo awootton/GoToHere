@@ -21,8 +21,8 @@ import reportWebVitals from './reportWebVitals';
 
 // should we pushContext with profileContext() here
 
-import * as pingapi from "./api1/Ping"
-import * as util from "./server/Util"
+import * as pingapi from "./gotohere/api1/Ping"
+import * as util from "./gotohere/mqtt/Util"
 
 import GoToHereApp from "./sites/GoToHere"
 import KnotFreeApp from "./sites/KnotFree"

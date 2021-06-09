@@ -15,12 +15,11 @@
 import fs from 'fs'
 
 import { WaitingRequest, SendApiReplyBack } from './Api';
-import * as util from '../server/Util';
+import * as util from '../mqtt/Util';
 import ApiCommand from "./Api"
 import * as api from "./Api"
-import * as config from "../server/Config"
-
-import * as mqttclient from "../server/MqttClient";
+import * as config from "../mqtt/Config"
+ 
 
 export interface GetFriendsCmd extends ApiCommand {
 
@@ -36,6 +35,11 @@ export interface GetFriendsReply extends ApiCommand {
     blocked: string[]
     name2keys: Map<string, string[]> // name to it's public keys
 }
+
+// GlobalFriendsMap is a profile name, lower case, to friends. usually GetProfileName
+// it has some public keys.
+export var GlobalFriendsMap: Map<string,GetFriendsReply> = new Map()
+
 
 export const GetFriendsReplyEmpty: GetFriendsReply = {
 
@@ -77,7 +81,7 @@ function myIssueTheCommand(username: string, count: number, offset: number, rece
     api.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
 
         var strdata = new TextDecoder().decode(data)
-        console.log("getFriends return ", error)
+        console.log("getFriends return err=", error)
         if (error !== undefined) {
             // try again, in a sec.
             console.log("GetFriends SendApiCommandOut error, retrying ", username)

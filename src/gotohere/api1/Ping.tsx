@@ -15,10 +15,10 @@
 import { WaitingRequest, SendApiReplyBack } from './Api';
 import ApiCommand from "./Api"
 import * as api from './Api';
-import * as util from '../server/Util';
+import * as util from '../mqtt/Util';
 //import * as c_util from '../components/CryptoUtil';
 
-import * as mqttclient from "../server/MqttClient";
+import * as mqttclient from "../mqtt/MqttClient";
 
 export interface PingCmd extends ApiCommand {
     pub: string // a public key in base64url
@@ -28,6 +28,7 @@ export type PingReceiver = ( cmd: PingCmd, error: any) => any
 
 export function IssueTheCommand(from : string,to: string, receiver: PingReceiver) {
 
+    from = from.toLowerCase()
     const fromcontext: util.Context = util.getNameToContext(from)
 
     const cmd: PingCmd = {
@@ -39,7 +40,8 @@ export function IssueTheCommand(from : string,to: string, receiver: PingReceiver
 
     const wr: WaitingRequest = pingsWaitingRequest
     const topic = to
-    //console.log(" Ping IssueTheCommand using topic ", topic , from, to )
+    
+    console.log(" Ping IssueTheCommand using topic ", topic , from, to )
      
     api.SendApiCommandOut(wr, topic, jsonstr, (data: Uint8Array, error: any) => {
 

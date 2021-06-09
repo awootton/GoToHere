@@ -25,8 +25,8 @@ import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 
 import MenuIcon from '@material-ui/icons/Menu';
 
-import * as dialogs_about from '../dialogs/About'
-import * as dialogs_editpost from '../dialogs/EditPost'
+import * as about from '../dialogs/About'
+import * as editpost from '../dialogs/EditPost'
 import * as general from '../dialogs/General'
 import * as cardutil from './CardUtil'
 
@@ -168,7 +168,7 @@ const Header: FC<Props> = (props: Props): ReactElement => {
         open={openAbout}
         onClose={handleDialogClose}
       >
-        <dialogs_about.FillAbout></dialogs_about.FillAbout>
+        <about.FillAbout></about.FillAbout>
       </Dialog>
 
 
@@ -189,7 +189,10 @@ const Header: FC<Props> = (props: Props): ReactElement => {
         onClose={handleDialogClose}
       >
         <DialogTitle>New Post</DialogTitle>
-        <dialogs_editpost.FillEditPost username={ourName} post={cardutil.makeEditCard(props.username)} cancel={handleDialogClose}/>
+        <editpost.FillEditPost username={ourName} 
+                    post={cardutil.makeEditCard(props.username)} 
+                 //   parent={cardutil.makeEmptyCard(props.username)}
+                    cancel={handleDialogClose}/>
       </Dialog>
 
     </div>
