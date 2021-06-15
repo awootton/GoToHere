@@ -13,12 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import * as config from "./Config"
-
-// TODO: merge this with the loader. Can's because th eloader includes fs and th eclient hates that.
+// Can't merge this with the loader because the loader includes fs and the client hates that.
 
 // to run this:
 // node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/server/config
+
+export {}
 
 export var StrangerPublicKey: string = "jcQ9YJGsLEPheD-Pni5dUxf0c6WadsuuCuNjIoGyodI"
 export var StrangerPrivateKey: string = "cc0Obtu-3pBttENYZ2TqIMmbHH0Iv10U8SA8HXzEi0CNxD1gkawsQ-F4P4-eLl1TF_RzpZp2y64K42MigbKh0g"
@@ -49,18 +49,18 @@ export type ServerConfigList = {
   items: ServerConfigItem[]
 }
 
-export var EmptyServerConfigList: config.ServerConfigList = {
+export var EmptyServerConfigList: ServerConfigList = {
   token: "dummy",
   items: []
 }
 
-export var itemsList: config.ServerConfigList = config.EmptyServerConfigList
+export var itemsList: ServerConfigList = EmptyServerConfigList
 
-export function  GetName2Config( name: string ) : config.ServerConfigItem {
+export function  GetName2Config( name: string ) : ServerConfigItem {
   for (let item of itemsList.items) {
      if ( item.name === name ){
         return item
      }
   }
-  return config.EmptyServerConfigItem
+  return EmptyServerConfigItem
 }

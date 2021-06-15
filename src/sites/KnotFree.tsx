@@ -14,22 +14,36 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import { FC, useState, useEffect } from "react";
+import React,{ FC, useState } from "react";
 
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 
-import TextField from '@material-ui/core/TextField';
+//import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
 
-import Card from '@material-ui/core/Card'
-import Button from '@material-ui/core/Button'
+//import Card from '@material-ui/core/Card'
+//import Button from '@material-ui/core/Button'
 import Grid from '@material-ui/core/Grid'
-import Box from '@material-ui/core/Box'
-
+ 
+import * as paypal from "../components/PayPal"
 import ReactMarkdown from 'react-markdown'
 
-import * as util from "../gotohere/mqtt/Util"
+import ReactGA from 'react-ga';
 
+import * as getfree from "../components/FreeToken"
+import * as util from "../gotohere/knotservice/Util"
+
+//ReactGA.initialize('UA-62339543-1');
+ReactGA.initialize('UA-198012996-1', {
+   // debug: true,
+    titleCase: false,
+    gaOptions: {
+      //userId: '123',
+      siteSpeedSampleRate: 100
+    }
+  } );
+
+ReactGA.pageview(window.location.pathname + window.location.search + "knotfree");
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -91,7 +105,8 @@ const aStyle = {
 
 export const KnotFreeApp: FC<Props> = (props: Props) => {
 
-    const [state, setState] = useState(emptyState)
+    const [isBuyToken, setBuyToken] = React.useState(false);
+    const [isGetFreeToken, setGetFreeToken] = React.useState(false);
 
     const classes = useStyles();
 
@@ -99,17 +114,38 @@ export const KnotFreeApp: FC<Props> = (props: Props) => {
 
     console.log(" in KnotFreeApp page is ", page)
 
-    const handleDialogClose = (value: any) => {
-        if ( page === "") {
-            return
-        }
-        var loc = window.location.href
-        const i = loc.indexOf(page) // eg getFreeToken
-        if ( i >= 0 ){
-            loc = loc.slice(0,i)
-        }
-        window.location.replace(loc)
-    };
+    const handleDialogClose = () => {
+        setBuyToken(false);
+        setGetFreeToken(false);
+    }
+    const buyToken = () => {
+        ReactGA.event({
+            category: 'User',
+            action: 'Clicked buyToken'
+          });
+        setBuyToken(true)
+    }
+    const getFreeToken = () => {
+        ReactGA.event({
+            category: 'User',
+            action: 'Clicked getFreeToken'
+          });
+        setGetFreeToken(true)
+    }
+
+    type funtype = () => any
+    const stringToFunction = (fname: any): funtype | undefined => {
+        if (fname === "buyToken") {
+            console.log("stringToFunction returning " + fname)
+            return buyToken
+        } else if (fname === "getFreeToken") {
+            console.log("stringToFunction returning " + fname)
+            return getFreeToken
+        } 
+        return undefined // () => { }
+    }
+
+    const stos = (s: any): string => { return "" + s }
 
     return (
         <div style={aStyle} >
@@ -119,15 +155,37 @@ export const KnotFreeApp: FC<Props> = (props: Props) => {
             <ReactMarkdown children={theText} 
                 className={classes.divstyle} 
                 linkTarget={"_blank"}
+                components={{
+                    // Rewrite links to be onClick
+                    a: ({ node, ...props }) => { 
+                        var thefunct  = stringToFunction(props.href)
+                        var theHref = stos(props.href)
+                        if ( thefunct === undefined ){
+                            thefunct = ()=>{}
+                        } else {
+                            theHref = "#"
+                        }
+                        console.log(" ReactMarkdown components href ", theHref )
+
+                        return(<a href={theHref} onClick={thefunct}  >{props.children}</a>) }
+                }}
                 />
             </Grid>
+
+            <Dialog style={{width: 600, height:800, padding:24}}
+                className={classes.root}
+                open={isBuyToken}
+                onClose={handleDialogClose}
+            >
+                <paypal.PalPalDialog title="Please buy a token here. Computers aren't free." />
+            </Dialog>
 
             <Dialog
                 className={classes.root}
                 open={page === "getFreeToken"}
                 onClose={handleDialogClose}
             >
-                <div>get free token  here TODO: write this</div>
+                <getfree.FreeToken title="This page will dispense a free token." />
             </Dialog>
 
         </div>
@@ -153,18 +211,18 @@ and your phone is going to require a new internet. This one: the knot free net.
 The cheap, and weak, free tokens expire in months but more powerful 
 and long lived tokens are available.
 
-You can [buy tokens](buyTokens) here and the small ones are being [given out for free](getFreeToken).
+You can [buy tokens](buyToken) here and the small ones are being [given out for free](getFreeToken). 
 
-The main user of this network is the decentralised social platform [GoToHere.com](GoToHere.com).
+The main user of this network is the decentralised social platform [GoToHere.com](http://GoToHere.com).
 
-#### If you are in favor of this movement, and you would wish it to grow, [follow it on Twitter](https://twitter.com/GotohereC?ref_src=twsrc%5Etfw"). 
+#### If you are in favor of this movement, and you wish it to grow, [follow it on Twitter](https://twitter.com/GotohereC?ref_src=twsrc%5Etfw"). 
 This is the single most important thing to do.
 
 [All the code is open source](https://github.com/awootton/knotfreeiot).
 
 Those who know about mqtt (one of the services) and ports and addresses 
-[should check out the technical documentatiom](https://github.com/awootton/GoToHere/wiki/KnotFree.net-ports-and-services.)
-Later we'll have some IOT examples for arduino and examples for other uses.
+[should check out the technical documentation](https://github.com/awootton/GoToHere/wiki/KnotFree.net-ports-and-services.)
+Later we'll have some examples for arduino and other uses.
 
-atw - 6/2/21
+atw - 6/14/21 - launch day!
 `

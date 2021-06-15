@@ -25,9 +25,9 @@ import Grid from '@material-ui/core/Grid'
 import Box from '@material-ui/core/Box'
 
 import * as generalapi from '../gotohere/api1/GeneralApi'
-import * as broadcast from "../gotohere/mqtt/BroadcastDispatcher"
+import * as broadcast from "../gotohere/knotservice/BroadcastDispatcher"
 import * as event from "../gotohere/api1/Event"
-import * as util from "../gotohere/mqtt/Util"
+import * as util from "../gotohere/knotservice/Util"
  
 // This is both a component and the body of an 'edit' dialog. 
 
@@ -86,7 +86,7 @@ export const GeneralInfoLayout: FC<Props> = (props: Props) => {
         height: "800px",
         width:  "800px"
     };
-    if (props.editing == false) {
+    if (props.editing === false) {
         theCardStyle.height = "200px"
         theCardStyle.width = "200px"
     }

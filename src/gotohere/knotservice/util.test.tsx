@@ -24,9 +24,89 @@ import { ZeroPadLeft3, ConvertFromMsToDateNumber } from './Util'
 
 import * as util from "./Util"
 
+// node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/gotohere/knotservice/util.test
+
+const b64ch = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+
+var b64reverse : Buffer = Buffer.alloc(128)
+for ( var i=0;  i < b64reverse.length ; i ++  ){
+  b64reverse[i] = 0
+}
+for ( var i=0;  i < b64ch.length ; i ++  ){
+  var tmp = b64ch.charCodeAt(i)
+  b64reverse[tmp] = i
+}
+
+function encode( bytes : Uint8Array ) : string {
+  var dest = Buffer.alloc( Math.floor(bytes.length * 4 / 3 ) + 1 )
+  
+  var s = 0
+  for ( var i=0;  i < bytes.length ;  ){
+
+    const zero = bytes[i]
+    i += 1
+    const one = i<bytes.length ?  bytes[i] : 0
+    i += 1
+    const two = i<bytes.length ?  bytes[i] : 0
+    i += 1
+
+    var sum = 0
+
+    var tmp = zero >> 2
+    sum = b64ch.charCodeAt(tmp)
+    dest[s++] = sum
+
+    tmp = ((zero & 3) << 4)+ (one >> 4)
+    sum = b64ch.charCodeAt(tmp)
+    dest[s++] = sum
+
+    tmp =  ((one & 0x0F) << 2) + (two >> 6)
+    sum = b64ch.charCodeAt(tmp)
+    dest[s++] = sum
+
+    tmp =  (two & 0x03F) 
+    sum = b64ch.charCodeAt(tmp)
+    dest[s++] = sum
+  }
+  return dest.toString('utf8')
+}
+
+function decode( str : string ) : Buffer {
+  var dest = Buffer.alloc( Math.floor(str.length * 3 / 4 ) )
+
+  return dest
+}
+
+// var charsOf64 : number[] = []
+// for ( var c = 'A' ; c < )
+
+
+//test('stupid base64url', () => {
+function testb64() {
+
+  console.log("just log stupid base64url")
+
+  for ( var len = 1; len < 10; len++ ){
+    const test = new Uint8Array(len)
+    for ( var i=0;  i < test.length ; i ++){
+      test[i] = i + 7
+    }
+    const str = encode(test)
+    console.log("have  ", str)
+    console.log("need  ", util.toBase64Url(Buffer.from(test)))
+  }
+};
+
+testb64()
+
+if ( test === undefined ){
+  const test = ( a: string , cb: () => any ) => {
+  }
+}
+
 // FIXME atw
 test('check out some utilities', () => {
-  console.log("just log to console")
+ 
 
   const startDate = new Date()
   const start = startDate.getTime()

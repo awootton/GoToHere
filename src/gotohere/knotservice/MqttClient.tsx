@@ -27,7 +27,6 @@ import * as broadcast from './BroadcastDispatcher'
 import { WaitingRequest } from '../api1/Api';  
 import * as api from '../api1/Api';  
 import * as eventapi from '../api1/Event';  
- 
 import * as pingapi from '../api1/Ping'  
 
 type MqttServerPropsType = {
@@ -118,6 +117,8 @@ export class MqttTestServerTricks {
   client: any // mqtt client
   //timerID: NodeJS.Timeout
 
+  isClient : boolean // we're in the browser if true. otherwise, node.js
+
   //state: MqttTestScreenState
   connectStatus: string
 
@@ -132,28 +133,35 @@ export class MqttTestServerTricks {
 
   restartCallback: () => any
 
+  host : string
+  mqttOptions: MqttOptionsType
+  successCallback: (err: string) => any 
+
   constructor(props: MqttServerPropsType, restartCallback: () => any) {
 
     this.restartCallback = restartCallback
+    this.host = "later"
+    this.mqttOptions = SomeMqttOptions
+    this.successCallback = (err: string) => {}
 
     this.server_config = props.config
     this.cleanerIntervalID = setInterval(cleaner, 1000 * 1); //  
 
     this.myReplyChannel = "=" + util.randomString(32)
     //this.topic2port = new Map<string, string>()
+    this.isClient = props.isClient
     if (props.isClient === false) {
-
       // fixme with config
       for (let item of props.config.items) {
-        topic2portset(item.name, item.port)
-        topic2datafolderset(item.name, item.directory)
+        topic2portset(item.name.toLowerCase(), item.port)
+        topic2datafolderset(item.name.toLowerCase(), item.directory)
       }
 
       topic2port.forEach((value: string, key: string) => {
-        var k2 = util.KnotNameHash(key)
+        var k2 = util.KnotNameHash(key.toLowerCase())
         k2 = "=" + k2
         //console.log(" new k,v ", k2, value)
-        this.hashed2name.set(k2, key)
+        this.hashed2name.set(k2, key.toLowerCase())
       })
 
       // load up the api with handlers for the various api's
@@ -171,7 +179,7 @@ export class MqttTestServerTricks {
 
     this.connectStatus = "closed"
 
-    var timeout = 240 * 1000 //4*60*1000
+    var timeout = 30000 // 240 * 1000 //4*60*1000
     console.log("initializing ping setInterval")
     
     //this.timerID = 
@@ -189,14 +197,24 @@ export class MqttTestServerTricks {
     console.log("mqtt ping")
  
     const receiver: pingapi.PingReceiver = (cmd: pingapi.PingCmd, error: any) => {
-      console.log("mqtt client ping receiver",error)//: pingapi.PingReceiver ", cmd, error)
+      console.log("mqtt client ping receiver", (error) ? "ERROR:"+error: "OK")//: pingapi.PingReceiver ", cmd, error)
+      if ( (error!=undefined) && this.isClient !== true ){
+        console.log("mqtt client ping ERROR RESTARTING err=",error) 
+        this.client.end(() => {
+          console.log("Calling connect again") 
+          this.client = mqtt.connect(this.host, this.mqttOptions)
+          console.log("finished connect ")
+          this.setupClient()
+        });
+      }
     }
     pingapi.IssueTheCommand("Anonymous", "Anonymous", receiver) // todo: intercept in knotfree, reserve name Anonymous forever.
   }
 
   CloseTheConnect() {
 
-    // don't do anything. The client will reconnect.
+    // don't do anything. The client will reconnect. see the error of ping
+    // and the onError
 
     // console.log("mqtt CloseTheConnect is a messy mess ")
     // if (this.client) {
@@ -213,9 +231,6 @@ export class MqttTestServerTricks {
     //   }
     // }, timeout);
     // //}
-
-
-
   }
 
   subscribeFunc = (key: string) => {
@@ -251,12 +266,183 @@ export class MqttTestServerTricks {
       }
     });
   }
+  
+  setupClient = () => {
+    this.client.on("connect", () => {
+      console.log(" Have on connect cb ")
+      var complaints = ""
+      if (!this.client.connected) {
+        console.log("ERROR ERROR Mqtt failed to connect to " + this.host + " with token. ")
+        complaints = "Mqtt failed to connect to " + this.host + " with token. "
+        this.successCallback(complaints)
+        this.successCallback = () => { } // nothing
+        this.CloseTheConnect()
+        return;
+      }
+      if (this.client) {
+        topic2port.forEach((value: string, key: string) => {
+          //console.log("will now be subscribing to ", key, value);
+        });
+
+        this.subscribeFunc(this.myReplyChannel)
+        topic2port.forEach((value: string, key: string) => { this.subscribeFunc(key) })
+        
+        broadcast.SubscribeAll()
+
+        this.successCallback("") // no complaints
+        this.successCallback = () => { } // nothing
+
+      } else {
+        // what do we do when client is null reconnect? 
+        this.successCallback("mqtt client was null") //   complaints
+        this.successCallback = () => { } // nothing
+      }
+      setTimeout(() => { this.sendAPing() }, 500);
+   
+    });
+
+    this.client.on("error", (err: any) => {
+      console.error("MQTT error: ", err);
+      this.successCallback("MQTT error: " + err) //   complaints
+      this.successCallback = () => { } // nothing
+      this.CloseTheConnect()
+      console.log("mqtt client ERROR RESTARTING err=",err) 
+        this.client.end(() => {
+          console.log("Calling connect again2") 
+          this.client = mqtt.connect(this.host, this.mqttOptions)
+          console.log("finished connect2 ")
+          this.setupClient()
+        });
+    });
+    this.client.on("failure", (message: any) => {
+      console.error("MQTT failure: ", message);
+      this.successCallback("MQTT failure: " + message)
+      this.successCallback = () => { } // nothing
+      this.CloseTheConnect()
+    });
+    this.client.on("reconnect", () => {
+      console.log("MQTT Reconnecting " + new Date() + " to " + this.host)
+      // repeat the subscriptions should this be setupClient ?
+      this.subscribeFunc(this.myReplyChannel)
+      topic2port.forEach((value: string, key: string) => { this.subscribeFunc(key) })
+      broadcast.SubscribeAll()
+    });
+    this.client.on("message", (topic: any, message: any, packet: any) => {
+
+      // this is where the deliveries arrive fresh from mqtt
+      // console.log("mqtt_stuff have on message ", message.toString('utf8'))
+      // console.log("have on  message packet ", packet)
+      // console.log("have user data ", packet.properties.userProperties)
+
+      const returnAddress = packet.properties.responseTopic// has responseTopic: and userProperties:
+      // console.log("have top of on message returnAddress ", returnAddress)
+      // console.log("mqtt_stuff have a message: " + msgstring.substr(0, end))
+      // console.log("have topic " + topic)
+
+      // we need to unpack this bad boy right here
+      const gotOptions: Map<string, string> = util.UnpackMqttOptions(packet)
+      const isApi = gotOptions.get("api1")
+      // console.log("found user val for api1 ", isApi) // should be a big key, or short api name
+
+      if (isApi !== undefined) {
+
+        // the are several possibilities now.
+        // 1) it's an api call. Normally this means we're on the server. 
+        // 2) it's a return. Normally this mean we're in the client. 
+        // Event can happen. Ping can happen. Ping's are api1 but no crypto. 
+
+        const returnHandler = returnsWaitingMap.get(isApi)
+        if (returnHandler !== undefined) {
+
+          returnHandler.message = message
+          returnHandler.options = gotOptions
+          returnHandler.topic = topic
+          returnHandler.returnAddress = returnAddress
+
+          if (returnHandler.permanent) {  // an api call
+
+            api.HandleApiIncoming(this, isApi, returnHandler)
+
+          } else { // a return
+
+            returnsWaitingMap.delete(isApi)
+            api.HandleApiReplyArrival(this, isApi, returnHandler)
+
+          }
+
+        } else {
+          // if returnHandler is undefined then this packet is not for us.
+          // no returnHandler found
+          console.log("ERROR had api1 but unknown cmd. did you forget to 'load up the api with handlers for the various'? cmd was:", isApi)
+
+        }
+        // var ourParams: WaitingRequest = {
+        //   id: "unknown",
+        //   when: 0,
+        //   permanent: false,
+        //   topic: topic,
+        //   message: message,
+        //   packet: packet,
+        //   replydata: Buffer.from(""),
+        //   waitingCallbackFn: (wr: WaitingRequest, err: any) => { },
+        //   options: gotOptions,
+        //   returnAddress: packet.properties.responseTopic,
+        //   //callerPublicKey64: "unknown"
+        // }
+
+        // mqtt_util.HandleApi1PacketIn(this, isApi, ourParams)
+
+
+      } else {
+        // the proxy route - has no crypto
+        // maybe
+        const str = Buffer.from(message).toString('utf8')
+        if (!str.startsWith("GET ")) {
+          console.log("Spooky: Have unknown packet. not api1 and not GET ", topic, str)
+        } else {
+          // the proxy route 
+          const realname = this.hashed2name.get(topic)
+          if (!realname) {
+            console.log("failed to find topic in map", topic, this.hashed2name)
+            if (topic === this.myReplyChannel) {
+              console.log("myReplyChannel has a proxy request??", topic, this.hashed2name)
+            }
+            //var gotOptions: Map<string, string> = mqtt_util.UnpackMqttOptions(packet)
+            console.log("failed to find topic. Options:", gotOptions)
+
+            // TODO: this is where the billing errors come through eg  BILLING ERROR 330.38766 bytes out > 128/s
+            // FIXME: push to somewhere. It's in the client so ...  
+            console.log("failed to find topic. Message:", Buffer.from(message).toString('utf8'))
+
+            // FIXME: systemErrorReceiver( Buffer.from(message).toString('utf8') )
+
+          } else {
+            var portStr = topic2port.get(realname)
+            if (portStr === undefined) {
+              console.log("ERROR we really need to know a port for EVERY name ", realname, topic)
+              portStr = "9090"
+            }
+            // message is supposed to be a GET
+
+            console.log("in the proxy route now", topic)
+            // i guess. what todo with non api1 packets?
+            // fall back and handle packet as proxy request
+            var callParams = new PacketCallParams(message, topic, packet)
+            var ppi = new ProxyPortInstance(this, topic, returnAddress, portStr, callParams)
+            ppi.go()
+          }
+        }
+      }
+    });
+  } 
 
   handleMqttConnect = (host: string,
     mqttOptions: MqttOptionsType,
     successCallback: (err: string) => any) => {
 
-    console.log("have handleMqttConnect", host)
+    console.log("have handleMqttConnect only call this ONCE", host)
+
+    this.successCallback = successCallback
 
     mqttOptions.password = this.server_config.token
     mqttOptions.clientId = "someweirdclientid2345"
@@ -264,6 +450,8 @@ export class MqttTestServerTricks {
     mqttOptions.protocol = "ws"
 
     host = 'ws://' + host + '/mqtt'
+    this.host = host
+    this.mqttOptions = mqttOptions
     this.client = mqtt.connect(host, mqttOptions)
 
     //console.log("have client ? ", typeof this.client)
@@ -271,180 +459,17 @@ export class MqttTestServerTricks {
     console.log("host ", host)
     //console.log("options ", mqttOptions)
 
-    if (this.client) {
+    if (this.client) { 
 
-      this.client.on("connect", () => {
-        console.log(" Have on connect cb ")
-        var complaints = ""
-        if (!this.client.connected) {
-          console.log("Mqtt failed to connect to " + host + " with token. ")
-          complaints = "Mqtt failed to connect to " + host + " with token. "
-          successCallback(complaints)
-          successCallback = () => { } // nothing
+      this.setupClient()
 
-          this.CloseTheConnect()
-          return;
-        }
-        if (this.client) {
-          topic2port.forEach((value: string, key: string) => {
-            //console.log("will now be subscribing to ", key, value);
-          });
-
-          this.subscribeFunc(this.myReplyChannel)
-          topic2port.forEach((value: string, key: string) => { this.subscribeFunc(key) })
-          
-          broadcast.SubscribeAll()
-
-          successCallback("") // no complaints
-          successCallback = () => { } // nothing
-
-        } else {
-          // what do we do when client is null reconnect? 
-          successCallback("mqtt client was null") //   complaints
-          successCallback = () => { } // nothing
-        }
-        setTimeout(() => { this.sendAPing() }, 500);
-        // setTimeout(() => { this.sendAPing() }, 600);
-        // setTimeout(() => { this.sendAPing() }, 700);
-        // setTimeout(() => { this.sendAPing() }, 800);
-        // setTimeout(() => { this.sendAPing() }, 900);
-      });
-
-      this.client.on("error", (err: any) => {
-        console.error("MQTT error: ", err);
-        successCallback("MQTT error: " + err) //   complaints
-        successCallback = () => { } // nothing
-        this.CloseTheConnect()
-      });
-      this.client.on("failure", (message: any) => {
-        console.error("MQTT failure: ", message);
-        successCallback("MQTT failure: " + message)
-        successCallback = () => { } // nothing
-        this.CloseTheConnect()
-      });
-      this.client.on("reconnect", () => {
-        console.log(" Reconnecting " + new Date())
-        // repeat the subscriptions
-        this.subscribeFunc(this.myReplyChannel)
-        topic2port.forEach((value: string, key: string) => { this.subscribeFunc(key) })
-        broadcast.SubscribeAll()
-
-      });
-      this.client.on("message", (topic: any, message: any, packet: any) => {
-
-        // this is where the deliveries arrive fresh from mqtt
-        //console.log("mqtt_stuff have on message ", message.toString('utf8'))
-        // see notes 
-        // console.log("have on  message packet ", packet)
-        //console.log("have user data ", packet.properties.userProperties)
-
-        const returnAddress = packet.properties.responseTopic// has responseTopic: and userProperties:
-        //console.log("have top of on message returnAddress ", returnAddress)
-        //console.log("mqtt_stuff have a message: " + msgstring.substr(0, end))
-        //console.log("have topic " + topic)
-
-        // we need to unpack this bad boy right here
-        const gotOptions: Map<string, string> = util.UnpackMqttOptions(packet)
-        const isApi = gotOptions.get("api1")
-        //console.log("found user val for api1 ", isApi) // should be a big key, or short api name
-
-        if (isApi !== undefined) {
-
-          // the are several possibilities now.
-          // 1) it's an api call. Normally this means we're on the server. 
-          // 2) it's a return. Normally this mean we're in the client. 
-          // Event can happen. Ping can happen. Ping's are api1 but no crypto. 
-
-          const returnHandler = returnsWaitingMap.get(isApi)
-          if (returnHandler !== undefined) {
-
-            returnHandler.message = message
-            returnHandler.options = gotOptions
-            returnHandler.topic = topic
-            returnHandler.returnAddress = returnAddress
-
-            if (returnHandler.permanent) {  // an api call
-
-              api.HandleApiIncoming(this, isApi, returnHandler)
-
-            } else { // a return
-
-              returnsWaitingMap.delete(isApi)
-              api.HandleApiReplyArrival(this, isApi, returnHandler)
-
-            }
-
-          } else {
-            // if returnHandler is undefined then this packet is not for us.
-            // no returnHandler found
-            console.log("ERROR had api1 but unknown cmd. did you forget to 'load up the api with handlers for the various'? cmd was:", isApi)
-
-          }
-          // var ourParams: WaitingRequest = {
-          //   id: "unknown",
-          //   when: 0,
-          //   permanent: false,
-          //   topic: topic,
-          //   message: message,
-          //   packet: packet,
-          //   replydata: Buffer.from(""),
-          //   waitingCallbackFn: (wr: WaitingRequest, err: any) => { },
-          //   options: gotOptions,
-          //   returnAddress: packet.properties.responseTopic,
-          //   //callerPublicKey64: "unknown"
-          // }
-
-          // mqtt_util.HandleApi1PacketIn(this, isApi, ourParams)
-
-
-        } else {
-          // the proxy route - has no crypto
-          // maybe
-          const str = Buffer.from(message).toString('utf8')
-          if (!str.startsWith("GET ")) {
-            console.log("Spooky: Have unknown packet. not api1 and not GET ", topic, str)
-          } else {
-            // the proxy route 
-            const realname = this.hashed2name.get(topic)
-            if (!realname) {
-              console.log("failed to find topic in map", topic, this.hashed2name)
-              if (topic === this.myReplyChannel) {
-                console.log("myReplyChannel has a proxy request??", topic, this.hashed2name)
-              }
-              //var gotOptions: Map<string, string> = mqtt_util.UnpackMqttOptions(packet)
-              console.log("failed to find topic. Options:", gotOptions)
-
-              // TODO: this is where the billing errors come through eg  BILLING ERROR 330.38766 bytes out > 128/s
-              // FIXME: push to somewhere. It's in the client so ...  
-              console.log("failed to find topic. Message:", Buffer.from(message).toString('utf8'))
-
-              // FIXME: systemErrorReceiver( Buffer.from(message).toString('utf8') )
-
-            } else {
-              var portStr = topic2port.get(realname)
-              if (portStr === undefined) {
-                console.log("ERROR we really need to know a port for EVERY name ", realname, topic)
-                portStr = "9090"
-              }
-              // message is supposed to be a GET
-
-              console.log("in the proxy route now", topic)
-              // i guess. what todo with non api1 packets?
-              // fall back and handle packet as proxy request
-              var callParams = new PacketCallParams(message, topic, packet)
-              var ppi = new ProxyPortInstance(this, topic, returnAddress, portStr, callParams)
-              ppi.go()
-            }
-          }
-        }
-      });
     } else {
       console.error("ERROR client was null")
     }
   };
 
   handleDisconnect = () => {
-    console.log("have handleDisconnect ")
+    console.log("ERROR   !!!   have handleDisconnect ")
     if (this.client) {
       this.client.end(() => {
         this.client = null
@@ -529,6 +554,7 @@ export function StartClientMqtt(aToken: string, aServer: string, successCb: (msg
   util.pushContext(profileContext)
 
   const start = () => {
+
     var ourConfig: config.ServerConfigList = {
       token: aToken,
       items: []
@@ -537,9 +563,10 @@ export function StartClientMqtt(aToken: string, aServer: string, successCb: (msg
       config: ourConfig,
       isClient: true
     }
+
     mqttServerThing = new MqttTestServerTricks(props, () => {
-      console.log("RE-StartClientMqtt called")
-      start()
+      console.log("RE-StartClientMqtt called") // this is a dead feature
+      // no no no no start()
     })
 
     const options = SomeMqttOptions
@@ -548,21 +575,6 @@ export function StartClientMqtt(aToken: string, aServer: string, successCb: (msg
   }
 
   start()
-
-  // var ourConfig: config.ServerConfigList = {
-  //   token: aToken,
-  //   items: []
-  // }
-  // const props: MqttServerPropsType = {
-  //   config: ourConfig,
-  //   isClient: true
-  // }
-  // mqttServerThing = new MqttTestServerTricks(props)
-
-  // const options = SomeMqttOptions
-
-  // mqttServerThing.handleMqttConnect(aServer, options, successCb)
-
 }
 
 export function StartServerMqtt(ourConfig: config.ServerConfigList) {
@@ -589,12 +601,13 @@ export function StartServerMqtt(ourConfig: config.ServerConfigList) {
     mqttServerThing = new MqttTestServerTricks(props, () => {
       
       console.log("RE-StartServerMqtt called")
+      console.log("RE-StartServerMqtt called")
+      console.log("RE-StartServerMqtt called")
 
       //start()
-      mqttServerThing.handleMqttConnect( server, options, (msg: string) => {
-        console.log("RE- handleMqttConnect complete with:", msg)
-      })
-
+      // mqttServerThing.handleMqttConnect( server, options, (msg: string) => {
+      //   console.log("RE- handleMqttConnect complete with:", msg)
+      // })
     })
 
     const options = SomeMqttOptions

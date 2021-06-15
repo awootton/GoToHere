@@ -13,10 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { mqttServerThing } from '../mqtt/MqttClient';
-import * as util from '../mqtt/Util';
+import { mqttServerThing } from '../knotservice/MqttClient';
+import * as util from '../knotservice/Util';
 
-import * as mqttclient from '../mqtt/MqttClient';
+import * as mqttclient from '../knotservice/MqttClient';
 
 import * as eventapi from './Event';
 import * as deletepostapi from './DeletePost';
@@ -28,7 +28,14 @@ import * as likesapi from './IncrementLikes';
 import * as pingapi from './Ping';
 import * as savepostapi from './SavePost';
 import * as timeapi from './GetTimeline';
- 
+import * as fsutil from './FsUtil';
+import * as configloader from '../knotservice/ConfigLoader'
+
+var ourFs : fsutil.OurFsAdapter 
+
+export function SetFs( anFs : fsutil.OurFsAdapter ){
+    ourFs = anFs
+}
 
 export function getAllHooks(): WaitingRequest[] {
     var res: WaitingRequest[] = []
@@ -47,6 +54,24 @@ export function getAllHooks(): WaitingRequest[] {
 
     return res
 }
+
+export function setAllFs( anfs: fsutil.OurFsAdapter)  {
+  
+ //   eventapi.SetFs()
+    deletepostapi.SetFs(anfs)
+    generalapi.SetFs(anfs)
+    commentsapi.SetFs(anfs)
+    friendsapi.SetFs(anfs)
+    getpostsapi.SetFs(anfs)
+ //   pingapi.SetFs(anfs)
+    savepostapi.SetFs(anfs)
+ //   eventapi.SetFs(anfs)
+    likesapi.SetFs(anfs)
+    timeapi.SetFs(anfs)
+    fsutil.SetFs(anfs)
+    configloader.SetFs(anfs)
+}
+
 
 export default interface ApiCommand {
     cmd: string
@@ -189,11 +214,8 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
         if (timeoutThing !== undefined) {
             clearTimeout(timeoutThing)
         }
-        timeoutThing = setTimeout(() => { mqttServerThing.sendAPing() }, 100);
-        // setTimeout(() => { mqttServerThing.sendAPing() }, 110);// FIXME: (atw)
-        // setTimeout(() => { mqttServerThing.sendAPing() }, 120);// FIXME: (atw)
-        // setTimeout(() => { mqttServerThing.sendAPing() }, 130);// FIXME: (atw)
-        // setTimeout(() => { mqttServerThing.sendAPing() }, 140);// FIXME: (atw)
+        // some kind of weird race condition? 
+        timeoutThing = setTimeout(() => { mqttServerThing.sendAPing() }, 100);        
     }
 }
 

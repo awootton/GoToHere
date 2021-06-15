@@ -15,11 +15,10 @@
 import { WaitingRequest, SendApiReplyBack } from './Api';
 import ApiCommand from "./Api"
 import * as api from './Api';
-import * as util from '../mqtt/Util';
+import * as util from '../knotservice/Util';
 //import * as c_util from '../components/CryptoUtil';
 
-import * as mqttclient from "../mqtt/MqttClient";
-
+ 
 export interface PingCmd extends ApiCommand {
     pub: string // a public key in base64url
 }

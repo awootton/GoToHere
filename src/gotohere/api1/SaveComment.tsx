@@ -12,20 +12,24 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import fs from 'fs'
+//import fs from 'fs'
 
 
-import * as util from '../mqtt/Util';
+import * as util from '../knotservice/Util';
 
 import * as api from "./Api"
 
 import ApiCommand, { WaitingRequest, SendApiReplyBack, SendApiCommandOut} from './Api';
 
-import * as config from "../mqtt/Config"
+import * as config from "../knotservice/Config"
 
-import * as cardutil from '../../components/CardUtil'
+import * as s from '../knotservice/SocialTypes'
 
-import * as s from '../mqtt/SocialTypes'
+import * as fsutil from "./FsUtil" 
+var fs : fsutil.OurFsAdapter
+export function SetFs( anFs : fsutil.OurFsAdapter ){
+    fs = anFs
+}
 
 // to run just this file :
 // node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/api1/SaveComment
@@ -41,7 +45,7 @@ export interface SaveCommentReply  extends ApiCommand {
 
 export const SaveCommentReplyEmpty: SaveCommentReply = {
     cmd: "SaveComment",
-    comment: cardutil.makeEmptyComment("anon err"),
+    comment: util.emptyComment("anon err"),
 }
 
 export type SaveCommentReceiver = (reply: SaveCommentReply, error: any) => any
@@ -116,14 +120,16 @@ function writeCommentToFile(path: string, comment: s.Comment) {
     const wholepath = dirpath + fname
     var fbody = JSON.stringify(Comment,null,2)
 
-    var pathParts = dirpath.split("/")
-    var tmpPath = ""
-    pathParts.forEach((part, i, arr) => {
-        tmpPath += part + "/"
-        if (!fs.existsSync(tmpPath)) {
-            fs.mkdirSync(tmpPath);
-        }
-    })
+    fs.mkdirs(dirpath,fs.dummyCb)
+
+    // var pathParts = dirpath.split("/")
+    // var tmpPath = ""
+    // pathParts.forEach((part, i, arr) => {
+    //     tmpPath += part + "/"
+    //     if (!fs.existsSync(tmpPath)) {
+    //         fs.mkdirSync(tmpPath);
+    //     }
+    // })
 
     console.log(" writeCommentToFile writing ", wholepath);
 

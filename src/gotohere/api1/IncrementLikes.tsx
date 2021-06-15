@@ -12,18 +12,24 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import fs from 'fs'
+//import fs from 'fs'
 
 //import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
-import * as util from '../mqtt/Util';
+import * as util from '../knotservice/Util';
 
 import ApiCommand from "./Api"
 import * as api from "./Api"
-import * as config from "../mqtt/Config"
+import * as config from "../knotservice/Config"
 
-import * as s from '../mqtt/SocialTypes'
+import * as s from '../knotservice/SocialTypes'
 
-import * as mqttclient from "../mqtt/MqttClient";
+
+import * as fsutil from "./FsUtil" 
+var fs : fsutil.OurFsAdapter
+export function SetFs( anFs : fsutil.OurFsAdapter ){
+    fs = anFs
+}
+
 
 export interface IncrementLikesCmd extends ApiCommand {
     id: s.DateNumber
@@ -148,8 +154,7 @@ function IncrementLikesFile(path: string,
         }
     })
 
-
-    //fs.writeFile(wholepath, fbody, function (err) {
+    // fs.writeFile(wholepath, fbody, function (err) {
     // fs.unlink(wholepath, function (err) {
     //         if (err) {
     //         return console.error(err);

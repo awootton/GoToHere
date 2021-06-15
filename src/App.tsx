@@ -20,7 +20,7 @@ import { ReactElement, FC, useState, useEffect } from "react";
 //import Dialog from '@material-ui/core/Dialog';
 import { unstable_createMuiStrictModeTheme } from '@material-ui/core/styles'; // makeStyles,
 
-import * as util from "./gotohere/mqtt/Util"
+import * as util from "./gotohere/knotservice/Util"
 
 import * as apputil from "./AppUtil"
 
@@ -61,7 +61,7 @@ export const App: FC<Props> = (props: Props): ReactElement => {
       })
     }
    
-  } , [sequence])
+  } , [sequence, initialized])
 
   console.log("top of APP sequence=",sequence)
 

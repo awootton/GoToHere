@@ -12,19 +12,25 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import fs from 'fs'
+//import fs from 'fs'
 
-import * as s from '../mqtt/SocialTypes';
+import * as s from '../knotservice/SocialTypes';
 import { WaitingRequest, SendApiReplyBack } from './Api';
 import ApiCommand from "./Api"
 
 import * as fsApi from './FsUtil';
-import * as util from '../mqtt/Util';
+import * as util from '../knotservice/Util';
 import * as api from "./Api"
 
-import * as config from "../mqtt/Config"
+import * as config from "../knotservice/Config"
 import * as   getter from './Getter';
 
+
+import * as fsutil from "./FsUtil" 
+var fs : fsutil.OurFsAdapter
+export function SetFs( anFs : fsutil.OurFsAdapter ){
+    fs = anFs
+}
 
 export type TimelineNeed = {
     when: s.DateNumber
@@ -139,9 +145,7 @@ function handleGetTimelineApi(wr: WaitingRequest, err: any) {
     var path = "data/" + configItem.directory + "lists/timeline/"
 
     // make the directories if missing.
-    if (!fs.existsSync(path)) {
-        fs.mkdirSync(path);
-    }
+    fs.mkdirs(path,fs.dummyCb)
 
     if (count !== 0) {
         // add end date ? 

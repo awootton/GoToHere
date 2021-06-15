@@ -3,5 +3,6 @@
     "version": "0.0.1",
     "description": "api1 is gotohere social commands (posts, etc) over the knotfree net",
     "main": "index.js",
-    "dependencies": {}
+    "dependencies": {},
+    "type": "module"
 }

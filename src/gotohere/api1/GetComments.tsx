@@ -12,23 +12,28 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import fs from 'fs'
+//import fs from 'fs'
 
-import * as s from '../mqtt/SocialTypes';
+import * as s from '../knotservice/SocialTypes';
 import { WaitingRequest, SendApiReplyBack } from './Api';
 import ApiCommand from "./Api"
 
-import * as fsApi from './FsUtil';
-import * as util from '../mqtt/Util';
+//import * as fsApi from './FsUtil';
+import * as util from '../knotservice/Util';
 import * as api from "./Api"
 //import * as c_util from "../components/CryptoUtil"
-import * as config from "../mqtt/Config"
+import * as config from "../knotservice/Config"
 
 import * as friendsapi from "./GetFriends"
 import * as   pingapi from './Ping';
 
 import * as   getter from './Getter';
 
+import * as fsutil from "./FsUtil" 
+var fs : fsutil.OurFsAdapter
+export function SetFs( anFs : fsutil.OurFsAdapter ){
+    fs = anFs
+}
 
 class CommentGetterClass extends getter.Getter<s.Reference, s.Comment> {
 
@@ -209,10 +214,8 @@ function handleGetCommentApi(wr: WaitingRequest, err: any) {
     var ppath = "data/" + configItem.directory + "lists/posts/"
 
     // make the directories if missing.
-    if (!fs.existsSync(cpath)) {
-        fs.mkdirSync(cpath);
-    }
-
+    fs.mkdirs(cpath,fs.dummyCb)
+    
     const needed = cmd.refs.length
     var tried = 0
     var found: s.Comment[] = []
@@ -221,16 +224,44 @@ function handleGetCommentApi(wr: WaitingRequest, err: any) {
         const day = ("" + ref.id).substr(0, 6)
         var fname = cpath + day + "/" + ref.id
         const fname2 = ppath + day + "/" + ref.id
-        if (fs.existsSync(fname2)) { // FIXME: not sync
-            fname = fname2
-        }
+        // if (fs.existsSync(fname2)) { // FIXME: not sync
+        //     fname = fname2
+        // }
         var comment = s.emptyComment
         comment.id = ref.id;
         fs.readFile(fname, (error: any, data: any) => {
+            tried += 1
             if (error) {
-                comment.title = "Oops..."
-                comment.theText = "We don't seem to be able to find this comment. Perhaps it was deleted. <sub>Err code:" + error + "<</sub> "
-                tried += 1
+                // try again with fname2 
+                fs.readFile(fname2, (error: any, data: any) => {
+                    if (error) {
+                    comment.title = "Oops..."
+                    comment.theText = "We don't seem to be able to find this comment. Perhaps it was deleted. <sub>Err code:" + error + "<</sub> "
+                   
+                    } else {
+                        const buff = Buffer.from(data)
+                        const str = buff.toString('utf8')
+                        //console.log("GetComments parsing ", str)
+                        try {
+                            const thecomment: s.Comment = JSON.parse(str)
+                            comment = thecomment
+                        } catch {
+                            console.log("GetComments ERROR bad json", str)
+                            comment.title = "Load fail: ERROR bad json" + " from " + fname
+                            comment.theText = str
+                            comment.id = ref.id
+                            comment.by = ref.by
+                        }
+                    }
+                    found.push(comment)
+                    if ( tried >= needed) {
+                        // we're good
+                        var jsonstr = JSON.stringify(found)
+                        //console.log("have reply GetComments ", jsonstr)
+                        SendApiReplyBack(wr, Buffer.from(jsonstr), null)
+                    }
+                })
+              
             } else {
                 const buff = Buffer.from(data)
                 const str = buff.toString('utf8')
@@ -245,7 +276,6 @@ function handleGetCommentApi(wr: WaitingRequest, err: any) {
                     comment.id = ref.id
                     comment.by = ref.by
                 }
-                tried += 1
             }
             found.push(comment)
             if ( tried >= needed) {

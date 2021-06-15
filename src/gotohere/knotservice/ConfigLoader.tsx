@@ -1,9 +1,15 @@
 
-import fs from 'fs'
+//import fs from 'fs'
 // crypto-js/sha256 is banned for life for not using uint8array import sha256 from 'crypto-js/sha256';
 
 import * as config from "./Config"
 import * as util from "./Util"
+
+import * as fsutil from "../api1/FsUtil"
+var fs: fsutil.OurFsAdapter
+export function SetFs(anFs: fsutil.OurFsAdapter) {
+  fs = anFs
+}
 
 function first3bytes(b: Buffer): string {
   return b[0] + "," + b[1] + "," + b[2]
@@ -20,18 +26,18 @@ function logcontext(c: util.Context) {
     var n = c.username + "                                                                           "
     n = n.slice(0, 30)
     console.log("have name, pass, keys for ", c.username,
-    first3bytes(c.ourPublicKey[i]), util.toBase64Url(c.ourPublicKey[i]).slice(0, 4),
-    first3bytes(c.ourSecretKey[i]), util.toBase64Url(c.ourSecretKey[i]).slice(0, 4))
+      first3bytes(c.ourPublicKey[i]), util.toBase64Url(c.ourPublicKey[i]).slice(0, 4),
+      first3bytes(c.ourSecretKey[i]), util.toBase64Url(c.ourSecretKey[i]).slice(0, 4))
 
   }
 }
 
-export function readServerConfig(specialpath?: string): config.ServerConfigList {
+export function readServerConfig(specialpath: string, done: (cfg: config.ServerConfigList) => any) {
 
   util.cleanContexts()
 
   var path = "data/server_config.json"
-  if (specialpath) {
+  if (specialpath != "" ) {
     path = specialpath
   }
 
@@ -47,54 +53,56 @@ export function readServerConfig(specialpath?: string): config.ServerConfigList 
 
   console.log("reading config frm ", path)
 
-  var bytes = fs.readFileSync(path)
+  fs.readFile(path, (err: any, bytes: Buffer) => {
+    var itemsList: config.ServerConfigList = JSON.parse(bytes.toString("utf8"))
 
-  var itemsList: config.ServerConfigList = JSON.parse(bytes.toString("utf8"))
+    // check the token? 
 
-  // check the token? 
+    // check the paths
 
-  // check the paths
+    // check the private keys how? 
 
-  // check the private keys how? 
+    // for (let item of itemsList.items) {
+    //   const userName = item.name
+    //   const phrase = item.passphrase
+    //   //const keypair: nacl.BoxKeyPair = util.getBoxKeyPairFromPassphrase(userName, phrase)
+    //   //item.publicLey = Buffer.from(keypair.publicKey)
+    //   //item.privateKey = Buffer.from(keypair.secretKey)
+    // };
 
-  // for (let item of itemsList.items) {
-  //   const userName = item.name
-  //   const phrase = item.passphrase
-  //   //const keypair: nacl.BoxKeyPair = util.getBoxKeyPairFromPassphrase(userName, phrase)
-  //   //item.publicLey = Buffer.from(keypair.publicKey)
-  //   //item.privateKey = Buffer.from(keypair.secretKey)
-  // };
+    for (let item of itemsList.items) {
+      if (!item.directory.endsWith("/")) {
+        item.directory = item.directory + "/"
 
-  for (let item of itemsList.items) {
-    if (!item.directory.endsWith("/")) {
-      item.directory = item.directory + "/"
-      if (!fs.existsSync("data/" + item.directory)) {
-        fs.mkdirSync("data/" + item.directory)
+        fs.mkdirs("data/" + item.directory, fs.dummyCb)
+
+        // if (!fs.existsSync("data/" + item.directory)) {
+        //   fs.mkdirSync("data/" + item.directory)
+        // }
       }
     }
-  }
 
-  for (let item of itemsList.items) { // init the c_util
-    var con: util.Context = {
-      ...util.emptyContext,
-      username: item.name,
-      password: item.passphrase,
-      tokenFromApp: itemsList.token,
-      //config: item
+    for (let item of itemsList.items) { // init the c_util
+      var con: util.Context = {
+        ...util.emptyContext,
+        username: item.name,
+        password: item.passphrase,
+        tokenFromApp: itemsList.token,
+        //config: item
+      }
+      util.initContext(con)
+      util.pushContext(con)
+      logcontext(con)
     }
-    util.initContext(con)
-    util.pushContext(con)
-    logcontext(con)
-  }
-  // we probably need some maps and here would a a good place
-  // TODO: add maps to lookup items
+    // we probably need some maps and here would a a good place
+    // TODO: add maps to lookup items
 
-  config.itemsList.token = itemsList.token
-  for (let item of itemsList.items) {
-    config.itemsList.items.push(item)
-  }
-
-  return itemsList
+    config.itemsList.token = itemsList.token
+    for (let item of itemsList.items) {
+      config.itemsList.items.push(item)
+    }
+    done(itemsList)
+  })
 }
 
 const sampleItemsList: config.ServerConfigList = {
@@ -128,7 +136,7 @@ const sampleItemsList: config.ServerConfigList = {
 export function saveSample() {
   var str = JSON.stringify(sampleItemsList, null, 2) // indented json pretty
   console.log(str)
-  fs.writeFileSync("sample_server_config.json", str)
+  fs.writeFile("sample_server_config.json", str, fs.dummyCb)
 }
 
 //saveSample()

@@ -3,7 +3,7 @@
 
 
 # run this is a terminal window
-# it will build the project, copy it docs/_sites2
+# it will build the project, copy it to docs/_sites2
 # in the knot free project
 
 yarn build

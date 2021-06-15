@@ -28,9 +28,9 @@ import * as  fakeTextMonacle from './fakeTextMonacle'
 import * as  fakeTextSpace from './fakeTextSpace'
 import * as  words from './wordlist'
 
-import * as  util from '../gotohere/mqtt/Util'
-import * as  s from '../gotohere/mqtt/SocialTypes'
-import * as config from "../gotohere/mqtt/Config"
+import * as  util from '../gotohere/knotservice/Util'
+import * as  s from '../gotohere/knotservice/SocialTypes'
+import * as config from "../gotohere/knotservice/Config"
 
 import Rand32 from './Rand32'
 import { NamePairs } from './namePairs'
@@ -342,7 +342,7 @@ export function initPeople(item?: config.ServerConfigItem) {
         pro.generalinfo.name = pro.item.name
         pro.generalinfo.publickey = "",
             pro.generalinfo.location = "Silicon Valley USA"
-        pro.generalinfo.about = makeRandWords(rand, 12).replaceAll("_", " ")
+        pro.generalinfo.about = makeRandWords(rand, 12," ") 
         pro.generalinfo.tags = "fakepeople demo random"
 
         pro.generalinfo.twitter = "https://twitter.com/alan_wootton"
@@ -662,11 +662,11 @@ function makeRandName(rand: Rand32, size: number): string {
     return result
 }
 
-function makeRandWords(rand: Rand32, size: number): string {
+function makeRandWords(rand: Rand32, size: number, delim: string): string {
     var result = ""
     for (var i = 0; i < size; i++) {
         if (i != 0) {
-            result += "_"
+            result += delim
         }
         const r = rand.next()
         const which: number = Math.floor(r * wordArray.length)
@@ -751,9 +751,9 @@ function getSomeFakeText(wordCount: number, which: string): string {
         fakeText = tmp
     }
 
-    fakeText.fakeText = fakeText.fakeText.replaceAll("\n", " ")
-    fakeText.fakeText = fakeText.fakeText.replaceAll("  ", " ")
-    fakeText.fakeText = fakeText.fakeText.replaceAll("  ", " ")
+    // fakeText.fakeText = fakeText.fakeText.replaceAll("\n", " ")
+    // fakeText.fakeText = fakeText.fakeText.replaceAll("  ", " ")
+    // fakeText.fakeText = fakeText.fakeText.replaceAll("  ", " ")
 
     var originalTextPos = fakeText.pos
     var someText = fakeText.fakeText

@@ -12,9 +12,60 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import fs from 'fs'
-import * as timeapi from "./GetTimeline"
-import * as s from "../mqtt/SocialTypes"
+//import fs from 'fs'
+//import * as timeapi from "./GetTimeline"
+//import * as s from "../mqtt/SocialTypes"
+
+type errorcb = (err:any) => any
+type errordatacb = (err:any,data:Buffer) => any
+
+// use this instead of fs because fs doesn't work in react-native
+export class OurFsAdapter  {
+
+    isTesting : boolean
+
+    constructor() {
+        this.isTesting = false
+    }
+
+    writeFile(path : string , data: any, cb: errorcb ) {
+        cb("unimplemented-override-me")
+    }
+
+    readFile(path : string , cb: errordatacb ) {
+        cb("unimplemented-override-me",Buffer.from(""))
+    }  
+
+    readdir(path : string , cb: (err:any, items: string[])=>any ) {
+        cb("unimplemented-override-me",[])
+    }  
+
+    dummyCb = (err:any) => {
+        if (err) {
+            console.log("ERROR dummy ", err);
+        } else {
+            //console.log("dummy ok");
+        }
+    }
+
+    // override me
+    unlink( fname: string, cb: (err:any)=> any) {
+        cb("unimplemented-override-me")
+    }
+    // make dirs as necessary
+    mkdirs( path: string , cb: (err:any)=> any) {
+        cb("unimplemented-override-me")
+    }
+}
+
+export default OurFsAdapter
+
+var fs : OurFsAdapter
+export function SetFs( anFs : OurFsAdapter ){
+    fs = anFs
+}
+
+
 
 type haveOneType = (data: Buffer, err: any) => any
 

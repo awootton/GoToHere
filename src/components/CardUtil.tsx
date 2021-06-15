@@ -14,7 +14,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import * as s from '../gotohere/mqtt/SocialTypes'
+import * as s from '../gotohere/knotservice/SocialTypes'
 
 export {}
 
@@ -78,7 +78,7 @@ export function makeEmptyCard( username: string ) : s.Post {
     return apost
 }
 
-export function makeEmptyComment( username: string ) : s.Comment {
+export function emptyComment( username: string ) : s.Comment {
 
     var apost : s.Comment = {
         id : 0,

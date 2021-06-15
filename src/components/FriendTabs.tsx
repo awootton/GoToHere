@@ -35,8 +35,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import * as dialogs_apptest from '../dialogs/AppFrame'
 
 import * as friendsapi from '../gotohere/api1/GetFriends'
-import * as util from "../gotohere/mqtt/Util"
-import { MqttClient } from 'mqtt';
+import * as util from "../gotohere/knotservice/Util"
 
 const useStyles = makeStyles((theme) => ({
 
@@ -155,20 +154,20 @@ export const FriendTabs: FC<FriendTabsProps> = (props: FriendTabsProps) => {
 
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [showing, setShowing] = React.useState("friends");
-    const [sequence, setSequence] = React.useState(0);
+  //  const [sequence, setSequence] = React.useState(0);
 
     const [friendsData, setFriendsData] = React.useState(friendsapi.GetFriendsReplyEmpty);
 
-    const loadTheData = () => {
-        console.log("in useEffect of FriendTabs")
-        // call the api for our friends! 
-        friendsapi.IssueTheCommand(props.username, 9999, 0, gotFriendsReceiver)
-        setTimeout(()=>{
-            setSequence(sequence+1)
-        },10)
-    }
+    // const loadTheData = () => {
+    //     console.log("in useEffect of FriendTabs")
+    //     // call the api for our friends! 
+    //     friendsapi.IssueTheCommand(props.username, 9999, 0, gotFriendsReceiver)
+    //     setTimeout(()=>{
+    //         setSequence(sequence+1)
+    //     },10)
+    // }
 
-    useEffect( () => { loadTheData() }, [] )// once
+    useEffect( () => { friendsapi.IssueTheCommand(props.username, 9999, 0, gotFriendsReceiver)  }, [props.username]  )// once
 
     const gotFriendsReceiver = (reply: friendsapi.GetFriendsReply, error: any) => {
         //console.log("have friends data", reply)

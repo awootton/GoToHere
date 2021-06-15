@@ -108,7 +108,7 @@ export const  SimpleTabs : FC<SimpleTabsProps> = (props: SimpleTabsProps) => {
       <AppBar position="static">
         <Tabs value={value} onChange={handleChange} aria-label="simple tabs example">
           <Tab label={<span className={classes.tabLabel}>Posts</span>} {...a11yProps(0)} />
-          <Tab label={<span className={classes.tabLabel}>Notices</span>} {...a11yProps(1)} />
+          <Tab label={<span className={classes.tabLabel}>Events</span>} {...a11yProps(1)} />
           {/* <Tab label={<span className={classes.tabLabel}>Media</span>} {...a11yProps(2)} /> */}
         </Tabs>
       </AppBar>

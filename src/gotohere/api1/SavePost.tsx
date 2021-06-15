@@ -12,20 +12,26 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import fs from 'fs'
+//import fs from 'fs'
 
 
-import * as util from '../mqtt/Util';
+import * as util from '../knotservice/Util';
 
 import * as api from "./Api"
 
 import ApiCommand, { WaitingRequest, SendApiReplyBack, SendApiCommandOut} from './Api';
 
-import * as config from "../mqtt/Config"
+import * as config from "../knotservice/Config"
 
-import * as cardutil from '../../components/CardUtil'
+//import * as cardutil from '../../components/CardUtil'
 
-import * as s from '../mqtt/SocialTypes'
+import * as s from '../knotservice/SocialTypes'
+
+import * as fsutil from "./FsUtil" 
+var fs : fsutil.OurFsAdapter
+export function SetFs( anFs : fsutil.OurFsAdapter ){
+    fs = anFs
+}
 
 // to run just this file :
 // node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/api1/SavePost
@@ -41,7 +47,7 @@ export interface SavePostReply  extends ApiCommand {
 
 export const SavePostReplyEmpty: SavePostReply = {
     cmd: "SavePost",
-    post: cardutil.makeEmptyCard("anon err"),
+    post: util.makeEmptyCard("anon err"),
 }
 
 export type SavePostReceiver = (reply: SavePostReply, error: any) => any
@@ -116,18 +122,11 @@ function writePostToFile(path: string, post: s.Post) {
     const wholepath = dirpath + fname
     var fbody = JSON.stringify(post,null,2)
 
-    var pathParts = dirpath.split("/")
-    var tmpPath = ""
-    pathParts.forEach((part, i, arr) => {
-        tmpPath += part + "/"
-        if (!fs.existsSync(tmpPath)) {
-            fs.mkdirSync(tmpPath);
-        }
-    })
+    fs.mkdirs(dirpath,fs.dummyCb)
 
     console.log(" writePostToFile writing ", wholepath);
 
-    fs.writeFile(wholepath, fbody, function (err) {
+    fs.writeFile(wholepath, Buffer.from(fbody), function (err) {
         if (err) {
             return console.error(err);
         }

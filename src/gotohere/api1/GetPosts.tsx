@@ -12,18 +12,25 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import fs from 'fs'
+//import fs from 'fs'
 
-import * as s from '../mqtt/SocialTypes';
+import * as s from '../knotservice/SocialTypes';
 import { WaitingRequest, SendApiReplyBack } from './Api';
 import ApiCommand from "./Api"
 
 import * as fsApi from './FsUtil';
-import * as util from '../mqtt/Util';
+import * as util from '../knotservice/Util';
 import * as api from "./Api"
 //import * as c_util from "../components/CryptoUtil"
-import * as config from "../mqtt/Config"
+import * as config from "../knotservice/Config"
 import * as   getter from './Getter';
+
+
+import * as fsutil from "./FsUtil" 
+var fs : fsutil.OurFsAdapter
+export function SetFs( anFs : fsutil.OurFsAdapter ){
+    fs = anFs
+}
 
 
 export type PostNeed = {
@@ -51,7 +58,17 @@ export class PostGetterClass extends getter.Getter<PostNeed, s.Post> {
                 console.log("ERROR useTheApi commentsReceiver has error",error)
             } else {
                 var client = this.getClient(ref)
+                // just clear the ones that match: 
                 client.pending.clear()
+                // but the pending keys are unavailable 
+                // and the dates don't match.
+
+                // var clearkeys = []
+                // client.pending.forEach((value: PostNeed, key: string) => {
+                //     console.log("postsListReceiver kdjdhbfuf", key, value);
+                //     if ( value.username ==  )
+                // });
+                 
                 cb(postslist)
             }
         }
@@ -80,9 +97,7 @@ export function IssueTheCommand(username: string, top: string, count: number, re
     var cmd: GetPostsCmd = {
         cmd: "getPosts",
         top: top,
-      //  fold: fold,
         count: count,
-     //   old: old
     }
  
     const jsonstr = JSON.stringify(cmd)
@@ -160,9 +175,7 @@ function handleGetPostApi(wr: WaitingRequest, err: any) {
     var path = "data/" + configItem.directory + "lists/posts/" 
 
     // make the directories if missing.
-    if (!fs.existsSync(path)){
-        fs.mkdirSync(path);
-    }
+    fs.mkdirs(path,fs.dummyCb)
 
     if (count !== 0) {
         // add end date ? 

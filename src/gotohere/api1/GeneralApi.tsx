@@ -12,15 +12,19 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import fs from 'fs'
+//import fs from 'fs'
 
 import { WaitingRequest, SendApiReplyBack } from './Api';
-import * as util from '../mqtt/Util';
+import * as util from '../knotservice/Util';
 import ApiCommand from "./Api"
 import * as api from "./Api"
-import * as config from "../mqtt/Config"
+import * as config from "../knotservice/Config"
 
-import * as mqttclient from "../mqtt/MqttClient";
+import * as fsutil from "./FsUtil" 
+var fs : fsutil.OurFsAdapter
+export function SetFs( anFs : fsutil.OurFsAdapter ){
+    fs = anFs
+}
 
 export {} // i want to beeee a module
 
@@ -135,22 +139,9 @@ const GeneralApiWaitingRequest: WaitingRequest = {
     //callerPublicKey64: "unknown"
 }
 
-//   function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
-
-//     GeneralApiWaitingRequest.options.set("api1", GeneralApiWaitingRequest.id)
-//     // returnsWaitingMap map is handling incoming packets in mqttclient 
-//     returnsWaitingMap.set(GeneralApiWaitingRequest.id, GeneralApiWaitingRequest)
-// }
-
-
-//mqttclient.returnsWaitingMapset(GeneralApiWaitingRequest.id, GeneralApiWaitingRequest)
-
-
 export function getWr(): WaitingRequest {
     return GeneralApiWaitingRequest
 }
-
- 
 
 function handleGeneralApi(wr: WaitingRequest, err: any) {
 
@@ -183,12 +174,11 @@ function handleGeneralApi(wr: WaitingRequest, err: any) {
 
     if (cmd.generalInfo != undefined) { // it's a save
         const data = JSON.stringify(cmd.generalInfo, null,2)
-        fs.writeFile(path, data, (err) => {
+        fs.writeFile(path, Buffer.from(data), (err) => {
             // when it's just a save
             if (err) {
                 console.log(" write GeneralInfo error " + path, err)
             } else {
-               
             }
             done(data)
         })

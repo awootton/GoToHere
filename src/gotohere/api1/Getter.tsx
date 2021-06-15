@@ -75,15 +75,19 @@ export class Getter<NeedType, GotType> {
 
     // if it's not pending then queue  in needed.
     // if it exists, and is in owned, that will be dealt with later
-    need(ref: string, array: NeedType[]) {
+    // we return isNew for convenience
+    need(ref: string, array: NeedType[]) : boolean {
+        var isNew = false
         var client = this.getClient(ref)
         for (const r of array) {
             const key = this.keyofN(r)
             const ispending = client.pending.get(key)
             if (ispending === undefined) {
                 client.needed.set(key, r)
+                isNew = true
             }
         }
+        return isNew
     }
 
     subscribe(ref: string, callback: (ready: GotType[]) => any) {
@@ -115,9 +119,8 @@ export class Getter<NeedType, GotType> {
                 }
             });
             client.needed.clear()
-             // magically convert an array of needtype to and array of gottype
 
-            const dataArriving = ( gots : GotType[] ) => {
+            const dataArrivingCb = ( gots : GotType[] ) => {
                 for ( var got of gots ){
                     const key = this.keyofG(got)
                     client.owned.set(key,got)
@@ -125,13 +128,13 @@ export class Getter<NeedType, GotType> {
                     // client.pending.delete(key) // assumes the key compare 
                 }
             }
-            // magically convert an array of needtype to and array of gottype
+            // magically convert an array of needtype to an array of gottype
             if ( getting.length > 0 ) { 
                 // move the getting to pending
                 for ( const g of getting){
                     client.pending.set( this.keyofN(g) , g)
                 }
-                this.useTheApi( key, getting,  dataArriving)
+                this.useTheApi( key, getting,  dataArrivingCb)
             }
             
             // move the ready to the callback 

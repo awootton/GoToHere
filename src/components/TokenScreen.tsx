@@ -30,8 +30,8 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 
 //import * as mqttclient from '../server/MqttClient';
 
-import * as util from "../gotohere/mqtt/Util"
-import * as mqttclient from "../gotohere/mqtt/MqttClient"
+import * as util from "../gotohere/knotservice/Util"
+import * as mqttclient from "../gotohere/knotservice/MqttClient"
 
 
 import * as nacl from 'tweetnacl-ts'
@@ -208,18 +208,6 @@ export const TokenScreen: FC<Props> = (props: Props): ReactElement => {
                 } else {
                     console.log("mqtt 2 success in TokenScreen 2")
                     
-                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 100);
-                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 200);
-                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 300);
-                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 400);
-                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 500);
-                    
-                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 2100);
-                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 2200);
-                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 2300);
-                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 2400);
-                    // setTimeout(() => { mqttstuff.mqttServerThing.sendAPing() }, 2500);
-
                     const context: util.Context = util.getNameToContext(util.getProfileName()) 
                     console.log("TokenScreen ping will use this name", context.username)  
                     const profileName = util.getProfileName()

@@ -19,6 +19,7 @@
 import * as nacl from 'tweetnacl-ts'
 //import * as crypto from 'crypto'
 // this acts differently in browser !!!!!  import { createHash } from "crypto";
+ 
 import base64url from 'base64url'
 
 import sha256 from "fast-sha256";
@@ -563,4 +564,33 @@ export function hashCode(str: string): number {
         h = 31 * h + str.charCodeAt(i);
     }
     return h & 0xFFFFFFFF
+}
+
+export function emptyComment( username: string ) : s.Comment {
+
+    var apost : s.Comment = {
+        id : 0,
+        title : "",
+        theText: "",
+        likes: 0,
+        retweets : [],
+        comments: [] ,
+        by : username,
+        parent: ""
+    }
+    return apost
+}
+
+export function makeEmptyCard( username: string ) : s.Post {
+
+    var apost : s.Post = {
+        id : 0,
+        title : "",
+        theText: "",
+        likes: 0,
+        retweets : [],
+        comments: [] ,
+        by : username
+    }
+    return apost
 }

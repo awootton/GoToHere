@@ -3,6 +3,7 @@
     "version": "0.0.1",
     "description": "libraries for gotohere social commands (posts, etc) over the knotfree net",
     "main": "index.js",
+    "type": "module",
     "dependencies": {},
     "license": "MIT",
     "directories": {

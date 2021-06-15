@@ -15,10 +15,12 @@
 
 import fetch from 'cross-fetch';
 
+import 'abortcontroller-polyfill/dist/polyfill-patch-fetch'
+
 import * as nacl from 'tweetnacl-ts'
 
-import * as util from "./gotohere/mqtt/Util"
-import * as mqttclient from "./gotohere/mqtt/MqttClient"
+import * as util from "./gotohere/knotservice/Util"
+import * as mqttclient from "./gotohere/knotservice/MqttClient"
 import * as pingapi from "./gotohere/api1/Ping"
 import * as friendsapi from './gotohere/api1/GetFriends'
 
@@ -38,14 +40,14 @@ export function setisTestingNotClient() {
   isTestingNotClient = true
 }
 
-var timerId: NodeJS.Timeout | undefined = undefined
+//var timerId: NodeJS.Timeout | undefined = undefined
 
-var delay = 1000
-var showDialogs = false // to see it in the ui
+//var delay = 1000
+//var showDialogs = false // to see it in the ui
 
 var pending = false
 
-var reschedules = 0
+//var reschedules = 0
 var pingsDone = 0
 
 // function reschedule() {
@@ -89,7 +91,7 @@ export function bootSequence( callback: (done:boolean) => any ) {
       var sname: string
       var complaints: string
       [sname, complaints] = util.VerifyToken(savedToken)
-      if (complaints == "") {
+      if (complaints === "") {
         console.log("got token from local knotfree_access_token_v2 server = ", sname)
         // let's use the servername from the window serverName = sname
         setToken(savedToken)
@@ -112,11 +114,11 @@ export function bootSequence( callback: (done:boolean) => any ) {
           // now, ask the server for a token.
           const aname = util.getServerName()
           pending = true
-          getFreeToken(aname, (ok: boolean) => {
+          getFreeToken(aname, (ok: boolean,tok:string) => {
             pending = false
             console.log("back from apputil.getFreeToken, ", ok)
             if (ok) {
-              console.log("have token , ", theToken)
+              console.log("have token , ", tok)
               bootPhase = 1
               callback(false)//reschedule()
             } else {
@@ -268,7 +270,7 @@ export function startTheMqtt(done: (ok: boolean) => any) {
   })
 }
 
-export function getFreeToken(serverName: string, done: (ok: boolean) => any) {
+export function getFreeToken(serverName: string, done: (ok: boolean, tok:string) => any) {
   //var serverName = util.getServerName()
   if (process.env.NODE_ENV === "development") {
     serverName = serverName.replace("3000", "8085")
@@ -276,7 +278,8 @@ export function getFreeToken(serverName: string, done: (ok: boolean) => any) {
   if (!serverName.endsWith("/")) {
     serverName += "/"
   }
-  const hoststr = "http://" + util.getProfileName() + "." + serverName + "api1/getToken"
+  //const hoststr = "http://" + util.getProfileName() + "." + serverName + "api1/getToken"
+  const hoststr = "http://" + serverName + "api1/getToken"
 
   //console.log("it's ftech time again ... for a Token !!", hoststr)
   var data = getSampleKnotFreeTokenRequest()
@@ -303,7 +306,7 @@ export function getFreeToken(serverName: string, done: (ok: boolean) => any) {
         if (gotTok === undefined) {
           console.log("FAILURE decoded free token fetch result ", gotTok)
           //setState({ ...state, complaints: "Failed to get free token" })
-          done(false)
+          done(false,"")
         } else {
           const asciiTok = Buffer.from(gotTok).toString("utf8")
           console.log("have decoded free token  fetch result ", asciiTok)
@@ -312,14 +315,14 @@ export function getFreeToken(serverName: string, done: (ok: boolean) => any) {
           // localStorage.setItem('knotfree_access_token_v1', asciiTok);
           // setState(newState)
           // props.setAppHasToken(newState)// tell the app 
-          done(true)
+          done(true,theToken)
         }
       })
     }
     else {
       // resp not OK 
       console.log("have get free token fetch problem ", resp)
-      setTimeout( () => { done(false) },2000)
+      setTimeout( () => { done(false,"") },2000)
     }
   }
   )
@@ -356,16 +359,16 @@ export function pingServer(serverName: string, done: (ok: boolean) => any) {
 }
 
 async function fetchWithTimeout(resource: string, options: object) {
-  const timeout: number = 1000//  } = options;
+  //const timeout: number = 1000//  } = options;
 
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
+  //const controller = new AbortController();
+  //const id = setTimeout(() => controller.abort(), timeout);
 
   const response = await fetch(resource, {
     ...options,
-    signal: controller.signal
+  //  signal: controller.signal
   });
-  clearTimeout(id);
+//  clearTimeout(id);
 
   return response;
 }

@@ -26,7 +26,7 @@ import Header from './Header'
 
 import GeneralInfoLayout from '../dialogs/General'
 
-import * as util from '../gotohere/mqtt/Util'
+import * as util from '../gotohere/knotservice/Util'
 
 //import { unstable_createMuiStrictModeTheme as createMuiTheme } from '@material-ui/core';
 //import * as tok from "./TokenScreen"

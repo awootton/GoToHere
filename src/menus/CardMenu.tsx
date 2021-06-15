@@ -38,8 +38,8 @@ import MenuIcon from '@material-ui/icons/Menu';
  
 import * as postedit from '../dialogs/EditPost'
 import * as postdelete from '../dialogs/DeletePost'
-import * as s from "../gotohere/mqtt/SocialTypes"
-import * as util from "../gotohere/mqtt/Util"
+import * as s from "../gotohere/knotservice/SocialTypes"
+import * as util from "../gotohere/knotservice/Util"
 import * as cardutil from "../components/CardUtil"
 
 import Dialog from '@material-ui/core/Dialog';
@@ -124,7 +124,8 @@ export const CardMenu: FC<CardMenuProps> = (props: CardMenuProps): ReactElement 
 
     return (
         <>
-            <Button onClick={handleClick} className={classes.button}>
+            <Button onClick={handleClick} 
+            className={classes.button} style={{ minWidth: "30px", maxWidth: "30px" }} >
                 <MenuIcon />
             </Button>
 

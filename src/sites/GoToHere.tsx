@@ -14,26 +14,42 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import React, { FC, useState, useEffect } from "react";
-import { Redirect } from 'react-router-dom';
+import React, { FC } from "react";
+//import { Redirect } from 'react-router-dom';
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import ReactMarkdown from 'react-markdown'
-import TextField from '@material-ui/core/TextField';
+//import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
 
-import CardActions from '@material-ui/core/CardActions'
-import Button from '@material-ui/core/Button'
+//import CardActions from '@material-ui/core/CardActions'
+//import Button from '@material-ui/core/Button'
 import Grid from '@material-ui/core/Grid'
-import Box from '@material-ui/core/Box'
-import Paper from '@material-ui/core/Paper'
+//import Box from '@material-ui/core/Box'
+//import Paper from '@material-ui/core/Paper'
 
-import * as util from "../gotohere/mqtt/Util"
+import * as util from "../gotohere/knotservice/Util"
+
+import * as paypal from "../components/PayPal"
+import * as getfree from "../components/FreeToken"
+
+import ReactGA from 'react-ga';
+
+//ReactGA.initialize('UA-62339543-1');
+ReactGA.initialize('UA-198012996-1', {
+    //debug: true,
+    titleCase: false,
+    gaOptions: {
+      //userId: '123',
+      siteSpeedSampleRate: 100
+    }
+  } );
+  
+ReactGA.pageview(window.location.pathname + window.location.search+ "gotohere");
 
 
 // FIXME add remark-gfm 
 // remarkPlugins={[gfm]}
 // import gfm from 'remark-gfm'
-
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -88,44 +104,98 @@ const aStyle = {
 
 export const GoToHereApp: FC<Props> = (props: Props) => {
 
+    //const [anchorEl, setAnchorEl] = React.useState(null);
+    const [isBuyToken, setBuyToken] = React.useState(false);
+    const [isGetFreeToken, setGetFreeToken] = React.useState(false);
+    const [isBuyDonation, setBuyDonation] = React.useState(false);
+
+
+    const handleDialogClose = () => {
+        setBuyToken(false);
+        setGetFreeToken(false);
+        setBuyDonation(false);
+    };
     const classes = useStyles();
 
     const page = util.getServerPage()
 
     console.log(" in GoToHereApp page is ", page)
 
-    const handleDialogClose = (value: any) => {
-        if ( page === "") {
-            return
-        }
-        var loc = window.location.href
-        const i = loc.indexOf(page) // eg getFreeToken
-        if ( i >= 0 ){
-            loc = loc.slice(0,i)
-        }
-        window.location.replace(loc)
-    };
+    const buyToken = () => {
+        setBuyToken(true)
+        ReactGA.event({
+            category: 'User',
+            action: 'gth Clicked buyToken'
+          });
+    }
+    const getFreeToken = () => {
+        ReactGA.event({
+            category: 'User',
+            action: 'gth Clicked getFreeToken'
+          });
+        setGetFreeToken(true)
+    }
+    const buyDonation = () => {
+        ReactGA.event({
+            category: 'User',
+            action: 'gth Clicked getFreeToken'
+          });
+        setBuyDonation(true)
+    }
+
+    type funtype = () => any
+    const stringToFunction = (fname: any): funtype | undefined => {
+        if (fname === "buyToken") {
+            console.log("stringToFunction returning " + fname)
+            return buyToken
+        } else if (fname === "getFreeToken") {
+            console.log("stringToFunction returning " + fname)
+            return getFreeToken
+        } else if (fname === "buyDonation") {
+            console.log("stringToFunction returning " + fname)
+            return buyDonation
+        } //else
+        //    console.log("ERROR unhandled fname " + fname)
+        return undefined // () => { }
+    }
+
+    const stos = (s: any): string => { return "" + s }
 
     // this does NOT do what I thought. shit.
-    const linkTargetFilter = (href:string, children:any, title : any) : string  => {
-        if (href === "getFreeToken"){
-            return href
-        }
-        return "_blank"
-    }
+    // const linkTargetFilter = (href:string, children:any, title : any) : string  => {
+    //     if (href === "getFreeToken"){
+    //         return href
+    //     }
+    //     return "_blank"
+    // }
     // <a class="twitter-timeline"
     //  class="twitter-follow-button"
+
     return (
         <div style={aStyle} >
             <Grid className={classes.root} container direction="column" component="div"   >
 
-            {/* <div><a href="https://twitter.com/GotohereC?ref_src=twsrc%5Etfw" data-show-count="false">Follow @GotohereC</a><script async src="https://platform.twitter.com/widgets.js"  ></script>
+                {/* <div><a href="https://twitter.com/GotohereC?ref_src=twsrc%5Etfw" data-show-count="false">Follow @GotohereC</a><script async src="https://platform.twitter.com/widgets.js"  ></script>
                 </div> */}
 
 
-                <ReactMarkdown children={theText} 
-                className={classes.divstyle} 
-                linkTarget={linkTargetFilter}
+                <ReactMarkdown children={theText}
+                    className={classes.divstyle}
+                    //    linkTarget={linkTargetFilter}
+                    components={{
+                        // Rewrite links to be onClick
+                        a: ({ node, ...props }) => { 
+                            var thefunct  = stringToFunction(props.href)
+                            var theHref = stos(props.href)
+                            if ( thefunct === undefined ){
+                                thefunct = ()=>{}
+                            } else {
+                                theHref = "#"
+                            }
+                            console.log(" ReactMarkdown components href ", theHref )
+
+                            return(<a href={theHref} onClick={thefunct}  >{props.children}</a>) }
+                    }}
                 />
 
                 {/* <Paper className={classes.divstyle} >
@@ -136,16 +206,37 @@ export const GoToHereApp: FC<Props> = (props: Props) => {
 
             </Grid>
 
-            <Dialog
+            <Dialog style={{width: 600, height:800, padding:24}}
                 className={classes.root}
-                open={page === "getFreeToken"}
+                open={isBuyToken}
                 onClose={handleDialogClose}
             >
-                <div>get free token  here</div>
+                <paypal.PalPalDialog title="Please buy a token here. Computers aren't free." />
+            </Dialog>
+
+            <Dialog style={{width: 600, height:800, padding:24}}
+                className={classes.root}
+                open={isGetFreeToken}
+                onClose={handleDialogClose}
+            >
+                <getfree.FreeToken title="This page will eventually dispense a free token." />
+            </Dialog>
+
+            <Dialog style={{width: 600, height:800, padding:24}}
+                className={classes.root}
+                open={isBuyDonation}
+                onClose={handleDialogClose}
+            >
+                <paypal.PalPalDialog title="Please donate to this worthy cause and you will receive a complementary token." />
             </Dialog>
         </div>
     )
 }
+
+// const [isBuyToken, setBuyToken] = React.useState(false);
+// const [isGetFreeToken, setGetFreeToken] = React.useState(false);
+// const [isBuyDonation, setBuyDonation] = React.useState(false);
+
 
 export default GoToHereApp;
 
@@ -167,34 +258,48 @@ The posts don't take a detour to visit the mothership (like with the middlemen t
 so the posts cannot be examined or blocked or modified.
 
 To pull off this trick actually required writing a new form of the internet with advanced capabilities. 
-That new internet, the knot free net, is at [KnotFree.net](http://KnotFree.net). 
+That new internet, the knot free net, is at [KnotFree.net](http://KnotFree.net) and is useful for IOT and many other things. 
 Instead of requiring email registration to use that network it uses 'tokens'. 
-Think of arcade tokens. You can buy them from [KnotFree.net](http://KnotFree.net), or [here](buyTokens). 
-Small tokens are being [given out](getFreeToken) for free.
+Think of arcade tokens. [You can buy them here](buyToken) or from [KnotFree.net](http://KnotFree.net). 
+Small tokens are being [given out for free.](getFreeToken)
 
-#### If you are in favor of this movement, and you would wish it to grow, [follow it on Twitter](https://twitter.com/GotohereC?ref_src=twsrc%5Etfw"). 
+#### If you are in favor of this movement, and you wish it to grow, [follow it on Twitter](https://twitter.com/GotohereC?ref_src=twsrc%5Etfw"). 
 This is the single most important thing to do.
+
+Please [donate](buyDonation). This is a worthy cause that might die without support. With support it will grow to challenge the tech monopolies.
 
 The smart-phone apps are not ready but brave souls can now [create profiles](https://github.com/awootton/GoToHere/wiki/Create-a-GoToHere-profile.) on GoToHere.  
 
-please [donate](buyDonation)
+Here are some test profiles so you can get an idea: (and because Alice, Bob, and Charlie are the traditional subjects of crypto demos).
 
-See essays at medium
+*  [alice_vociferous_mcgrath](http://alice_vociferous_mcgrath.gotohere.com/)
+*  [building_bob_bottomline_boldness](http://building_bob_bottomline_boldness.gotohere.com/)
+*  [charles_everly_erudite](http://charles_everly_erudite.gotohere.com/)
+*  [Ruth_Anna_Amanda](http://Ruth_Anna_Amanda.gotohere.com/)
+*  [Carl_Austin_Alexander](http://Carl_Austin_Alexander.gotohere.com/)
+*  [Beverly_Grace_Lauren](http://Beverly_Grace_Lauren.gotohere.com/)
+*  [Kenneth_Randy_Jeffrey](http://Kenneth_Randy_Jeffrey.gotohere.com/)
+*  [Roy_Logan_Christian](http://Roy_Logan_Christian.gotohere.com/)
+*  [James_Vincent_Nicholas](http://James_Vincent_Nicholas.gotohere.com/)
+*  [Edward_Larry_Zachary](http://Edward_Larry_Zachary.gotohere.com/)
+*  [Ashley_Andrea_Melissa](http://Ashley_Andrea_Melissa.gotohere.com/)
+*  [Philip_Ronald_Daniel](http://Philip_Ronald_Daniel.gotohere.com/)
+*  [Roger_Sean_Randy](http://Roger_Sean_Randy.gotohere.com/)
+*  [Rachel_Teresa_Doris](http://Rachel_Teresa_Doris.gotohere.com/)
+*  [Bruce_Charles_Logan](http://Bruce_Charles_Logan.gotohere.com/)
+*  [Kyle_Russell_Gerald](http://Kyle_Russell_Gerald.gotohere.com/)
+*  [Lisa_Margaret_Sharon](http://Lisa_Margaret_Sharon.gotohere.com/)
+*  [Susan_Rebecca_Amanda](http://Susan_Rebecca_Amanda.gotohere.com/)
+*  [Joyce_Joyce_Rose](http://Joyce_Joyce_Rose.gotohere.com/)
+*  [Joan_Joyce_Catherine](http://Joan_Joyce_Catherine.gotohere.com/)
 
-Ask questions on the forum.
+These test profiles are literally running on my desk on my laptop and are made available worldwide by the new network. Soon we shall have some real people. 
 
-[Technicle documentation is here](https://github.com/awootton/GoToHere/wiki) at this wiki.
+[Technical documentation is here](https://github.com/awootton/GoToHere/wiki) at this wiki.
 
-[Source code](https://github.com/awootton/GoToHere) is available.
+[Source code](https://github.com/awootton/GoToHere) is publicly available.
 
-needs:
-
-* reserve a name how to
-* donate please paypal
-* how to make a new profile.
-* finish getFreeToken.
-
-atw - 6/2/21
+atw - 6/14/21 - launch day!
 `
 
-//    😃 
+//    😃   

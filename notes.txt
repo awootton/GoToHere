@@ -1,4 +1,9 @@
 
+
+yarn add react-native-fs
+
+
+
 we have had a problem with sha256 being different in browser. don't use 'crypto'
 
 yarn add fast-sha256
@@ -9,7 +14,7 @@ adding the server:
 copy paste the whole folder
 
 add this to package.json
-    "server": "node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings server/index.tsx",
+    "server": "node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings gotohere/mqtt/index.tsx",
 
 yarn add ts-node
 
@@ -19,7 +24,7 @@ yarn add express
 
 yarn add mqtt
 
-yarn add crypto-js
+yarn add XXXX crypto-js
 npm i --save-dev @types/crypto-js
 banned now add: declare module 'crypto-js/sha256' etc to react-app.d.ts
 

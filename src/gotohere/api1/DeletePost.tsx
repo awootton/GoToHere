@@ -12,21 +12,24 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import fs from 'fs'
+
+//import RNFS from "react-native-fs" 
+//import fs from "fs" 
 
 //import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
-import * as util from '../mqtt/Util';
+import * as util from '../knotservice/Util';
 
 import ApiCommand from "./Api"
 import * as api from "./Api"
-import * as config from "../mqtt/Config"
+import * as config from "../knotservice/Config"
 
-import * as s from '../mqtt/SocialTypes'
- 
+import * as s from '../knotservice/SocialTypes'
 
-// to run just this file :
-// node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/api1/DeletePost
-
+import * as fsutil from "./FsUtil" 
+var fs : fsutil.OurFsAdapter
+export function SetFs( anFs : fsutil.OurFsAdapter ){
+    fs = anFs
+}
 
 export interface DeletePostCmd extends ApiCommand {
     //cmd: string
@@ -69,7 +72,7 @@ export function IssueTheCommand(username: string, id: s.DateNumber, receiver: De
 
     const theRetries = retries || defaultRetry
 
-    const wr: api.WaitingRequest = DeletePostWaitingRequest 
+    const wr: api.WaitingRequest = DeletePostWaitingRequest
 
     api.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
 
@@ -81,7 +84,7 @@ export function IssueTheCommand(username: string, id: s.DateNumber, receiver: De
         if (error !== undefined && (theRetries > 0)) {
 
             receiver(reply, error)
-            
+
             // try again, in a sec.
             // setTimeout(() => {
             //     const newretries = theRetries - 1
@@ -124,29 +127,28 @@ export function getWr(): api.WaitingRequest {
 function deletePostFile(path: string, id: s.DateNumber) {
     //console.log(" DeletePost deletePostFile", path, post)
     const theDay = Math.floor(id / 1000000000)
-    const dirpath:string = path + "lists/posts/" + theDay + "/" // "data/lists/"+folder+"/" + theDay
-    const fname:string = ""+id
+    const dirpath: string = path + "lists/posts/" + theDay + "/" // "data/lists/"+folder+"/" + theDay
+    const fname: string = "" + id
     const wholepath = dirpath + fname
     //var fbody = JSON.stringify(post)
 
-    // var pathParts = dirpath.split("/")
-    // var tmpPath = ""
-    // pathParts.forEach((part, i, arr) => {
-    //     tmpPath += part + "/"
-    //     if (!fs.existsSync(tmpPath)) {
-    //         fs.mkdirSync(tmpPath);
-    //     }
-    // })
-
+    fs.mkdirs(dirpath, (err:any) => {if (err) console.log("mkdirs err",err)} )
+            
     console.log(" deletePostFile writing ", wholepath);
 
-    //fs.writeFile(wholepath, fbody, function (err) {
-    fs.unlink(wholepath, function (err) {
-            if (err) {
-            return console.error(err);
+    fs.unlink(wholepath, function (err: any) {
+        if (err) {
+            console.log("ERROR deletePostFile");
         }
         console.log(" deletePostFile File deleted!");
     });
+
+    // unlink(filepath: string)
+    // RNFS.unlink(`${RNFS.DocumentDirectoryPath}/temp/`).then(res => {
+    //     console.log(" deletePostFile File deleted2!");
+    // }).catch(err => {
+    //     console.log("deletePostFile", err.message, err.code);
+    // });
 
 }
 
@@ -154,7 +156,7 @@ function handleDeletePostApi(wr: api.WaitingRequest, err: any) {
 
     console.log("in the handleDeletePostApi with ", wr.topic, wr.message.toString())
 
-    var cmd: DeletePostCmd = JSON.parse(wr.message.toString(),reviver)
+    var cmd: DeletePostCmd = JSON.parse(wr.message.toString(), reviver)
 
     // if (cmd.post == undefined) {
     //     console.log("in the handleDeletePostApi error undefined post ", wr.topic, wr.message.toString())
@@ -164,7 +166,7 @@ function handleDeletePostApi(wr: api.WaitingRequest, err: any) {
     //const post = cmd.post
 
     var cryptoContext = util.getHashedTopic2Context(wr.topic)
-    var configItem =  config.GetName2Config(cryptoContext.username)
+    var configItem = config.GetName2Config(cryptoContext.username)
     var path = "data/" + configItem.directory
 
     //var newid: social.DateNumber = util.getCurrentDateNumber()
@@ -175,11 +177,11 @@ function handleDeletePostApi(wr: api.WaitingRequest, err: any) {
     deletePostFile(path, cmd.id)
 
     // now send reply
-    const reply : DeletePostReply = {
-        cmd : "DeletePost",
-        id : cmd.id
+    const reply: DeletePostReply = {
+        cmd: "DeletePost",
+        id: cmd.id
     }
-    var jsonstr = JSON.stringify(reply,replacer)
+    var jsonstr = JSON.stringify(reply, replacer)
     // console.log("have reply DeletePost ", jsonstr  )
     api.SendApiReplyBack(wr, Buffer.from(jsonstr), null)
 
@@ -197,7 +199,7 @@ function replacer(key: any, value: any) {
             dataType: 'Map',
             value: Array.from(value.entries()), // or with spread: value: [...value]
         };
-      } else {
+    } else {
         return value;
     }
 }

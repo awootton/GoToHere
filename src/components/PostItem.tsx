@@ -17,7 +17,7 @@ import { ReactElement, FC } from "react";
 
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 
-import * as s from "../gotohere/mqtt/SocialTypes"
+import * as s from "../gotohere/knotservice/SocialTypes"
 
 import Box from "@material-ui/core/Box";
 
@@ -26,7 +26,7 @@ import CardContent from '@material-ui/core/CardContent'
 import CardHeader from '@material-ui/core/CardHeader'
 
 import Typography from '@material-ui/core/Typography';
-import ReactMarkdown, { propTypes } from 'react-markdown'
+import ReactMarkdown from 'react-markdown'
 import CardActions from '@material-ui/core/CardActions'
 import Button from '@material-ui/core/Button'
 
@@ -40,7 +40,7 @@ import FavoriteIcon from '@material-ui/icons/Favorite';
 
 
 import * as menus_card from '../menus/CardMenu'
-import * as util from '../gotohere/mqtt/Util'
+import * as util from '../gotohere/knotservice/Util'
 import * as likesapi from "../gotohere/api1/IncrementLikes"
  
 
@@ -121,26 +121,25 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
 
     const getOpenButton = (post: s.Post) => {
         if (post.comments.length !== 0) {
-            return (  
-                <a href="#" onClick={handleCommentClick}>{props.commentsOpen ? "🔼" : "🔽" } {"  "}</a>
-            )
-            // return (
-            //     // <div style={{  width:"12px", margin:"0 0",  padding: "0px 0px" } } >
-            //     // <Tooltip title={props.commentsOpen?"Hide comments":"Show comments"}  >
-            //     {/* <Button variant="contained"
-            //         size="small"
-            //         color="secondary"
-            //         className={classes.button}
-            //         style={{backgroundColor:"white", color:"black" , margin:"0 0" } }
-            //         disableElevation
-            //         onClick={handleCommentClick} >
-            //         {/* {props.commentsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon /> } */}
-            //         <a href="#" onClick={handleCommentClick}>{props.commentsOpen ? "🔼" : "🔽" } {"  "}</a>
-                    
-            //     {/* </Button> */}
-            //     {/* </Tooltip>
-            //     </div> */}
+            // return (  
+            //     <a href="none" onClick={handleCommentClick}>{props.commentsOpen ? "🔼" : "🔽" } {"  "}</a>
             // )
+            return (
+                <div style={{  width:"12px", margin:"0 0",  padding: "0px 0px" } } >
+                <Tooltip title={props.commentsOpen?"Hide comments":"Show comments"}  >
+                <Button variant="contained"
+                    size="small"
+                    color="secondary"
+                    className={classes.button}
+                    style={{backgroundColor:"transparent", color:"black" , margin:"0 0", float:"right", minWidth: "20px", maxWidth: "20px"} }
+                    disableElevation
+                    onClick={handleCommentClick} >
+                    {/* {props.commentsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon /> } */}
+                    {props.commentsOpen ? "🔼" : "🔽" }
+                 </Button>  
+                 </Tooltip>
+                </div> 
+            )
         } else {
             return (
                 <></>
@@ -150,21 +149,25 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
 
     const getParentButton = (post: s.Post) => {
         if (post.parent !== undefined) {
+
+            // <a href="#" onClick={handleParentClick}>{props.parentOpen ? "🔼" : "🔽" }{"  "}</a>
+
             return (
-                // <div style={{  width:"8px", margin:"0 0",  padding: "0px 0px" } } >
+                <div style={{ margin:"0 0",  padding: "0px 0px"  } } >
                 <Tooltip title={props.parentOpen?"Hide parent":"Show parent"}  >
-                {/* <Button variant="contained"
+                <Button variant="contained"  
                     size="small"
                     color="secondary"
                     className={classes.button}
-                    style={{backgroundColor:"white", color:"black" , margin:"0 0" , width:24} }
+                    style={{backgroundColor:"transparent", color:"black" , margin:"0 0" ,  minWidth: "20px", maxWidth: "20px" } }
                     disableElevation
                     onClick={handleParentClick} >
                     {/* {props.commentsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon /> } */}
-                <a href="#" onClick={handleParentClick}>{props.parentOpen ? "🔼" : "🔽" }{"  "}</a>
-               {/* </Button> */}
+                    {props.parentOpen ? "🔼" : "🔽" }
+                
+               </Button>
                 </Tooltip>
-                // </div>
+                </div>
             )
         } else {
             return (
@@ -191,10 +194,10 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
                 bgcolor="background.paper"
                 className={classes.pushedright}
                 style={{height:"8px"}}
+                alignItems="center"
             >
-                {getParentButton(post)}
                 <span>{byLine}</span>
-                <span className={classes.centered} >
+                <span className={classes.centered} style={{}} >
                     {post.id !== 0 ? util.FormatDateNumber(post.id) : ""}
                 </span>
                 <span className={classes.pushedright} >
@@ -204,12 +207,13 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
 
                             <Tooltip title={post.likes.toString() + " likes"}  >
 
-                                <Button onClick={handleClickHeart} className={classes.button} >
+                                <Button onClick={handleClickHeart} className={classes.button} style = {{ minWidth: "24px", maxWidth: "24px"}}>
                                     {post.likes === 0 ? <FavoriteBorderIcon /> : <FavoriteIcon />}
                                 </Button>
 
                             </Tooltip>
                             <menus_card.CardMenu post={post} username={props.username} />
+                            {getParentButton(post)}
                         </>
                     ) : (<></>)
                     }
@@ -235,16 +239,16 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
         props.toggleParent(s.StringRefNew(props.post))
     }
 
-    type funtype = () => any
+    // type funtype = () => any
 
-    const stringToFunction = ( fname: any ) : funtype => {
-        if ( fname === "handleCommentClick" ){
-            console.log("stringToFunction returning " + fname)
-            return handleCommentClick
-        }
-        console.log("ERROR unhandled fname " + fname)
-        return () => {}
-    }
+    // const stringToFunction = ( fname: any ) : funtype => {
+    //     if ( fname === "handleCommentClick" ){
+    //         console.log("stringToFunction returning " + fname)
+    //         return handleCommentClick
+    //     }
+    //     console.log("ERROR unhandled fname " + fname)
+    //     return () => {}
+    // }
 
     // <a href="#" onClick={handleCommentClick}>{props.commentsOpen ? "🔼" : "🔽" } {"  "}</a>
 
@@ -262,27 +266,30 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
             // the why is in the title. todo: less tricky
             TheText = "**" + post.title + "**  \n" + post.theText
         }
+        //   <CardHeader style={{justifyContent:"center", height: "4", width:"8px", margin:"0 0",  padding: "0px 0px", marginLeft: 120  }} /> 
 
         return (
             <>
                 <Card elevation={2} className={classes.nopadding} key={post.id} style = {posStyle} >
-                    <CardHeader style={{justifyContent:"center", height: "4", width:"8px", margin:"0 0",  padding: "0px 0px", marginLeft: 120  }} /> 
+                    {/* {getParentButton(post)} */}
+
+                    <CardHeader style={{justifyContent:"center", height: "4", width:"8px", margin:"0 0",  padding: "0px 0px"   }} /> 
                     <CardContent className={classes.nopadding}  >
                         {getTopLine(post)}
                         <Typography variant="body2" color="textSecondary" component="div" className={classes.theTextStyle}  >
                             <ReactMarkdown className={classes.theTextStyle} 
                             children={TheText}
-                            components={{
-                                // Map `h1` (`# heading`) to use `h2`s.
-                                h1: 'h4',
-                                // Rewrite links to be onClick
-                                a: ({node, ...props}) => <a  href="#" onClick={stringToFunction(props.href)}  >{props.children}</a>
-                              }}
+                            // components={{
+                            //     // Map `h1` (`# heading`) to use `h2`s.
+                            //    // h1: 'h4',
+                            //     // Rewrite links to be onClick
+                            //     a: ({node, ...props}) => <a  href="#dummy" onClick={stringToFunction(props.href)}  >{props.children}</a>
+                            //   }}
                             />
                             {/* {getOpenButton(post)} */}
                         </Typography>
                     </CardContent>
-                    <CardActions style={{justifyContent:"center", height: "4", width:"8px", margin:"0 0",  padding: "0px 0px", marginLeft: 120  }}>
+                    <CardActions style={{justifyContent:"center", height: "4", width:"8px", margin:"0 0",  padding: "0px 0px" }}>
                     {getOpenButton(post)} 
                     </CardActions> 
                 </Card>
@@ -299,13 +306,13 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
     //         </>
     //     );
     // } else 
-    {
+   // {
         return (
             <>
                 {renderTheCard(props.post)}
             </>
         );
-    }
+   // }
 };
 
 

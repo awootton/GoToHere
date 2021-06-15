@@ -19,13 +19,26 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+import ReactGA from 'react-ga';
+
 // should we pushContext with profileContext() here
 
-import * as pingapi from "./gotohere/api1/Ping"
-import * as util from "./gotohere/mqtt/Util"
+import * as util from "./gotohere/knotservice/Util"
 
 import GoToHereApp from "./sites/GoToHere"
 import KnotFreeApp from "./sites/KnotFree"
+
+//ReactGA.initialize('UA-62339543-1');
+ReactGA.initialize('UA-198012996-1', {
+  //debug: true,
+  titleCase: false,
+  gaOptions: {
+    //userId: '123',
+    siteSpeedSampleRate: 100
+  }
+} );
+
+ReactGA.pageview(window.location.pathname + window.location.search + util.getProfileName());
 
 function getApp() {
   console.log("index getApp starting ", util.getProfileName() )

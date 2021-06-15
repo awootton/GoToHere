@@ -12,25 +12,17 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//import fs from 'fs'
 
-//import { WaitingRequest, ApiCommand, handleSendReplyCallback } from './Api';
-import * as util from '../mqtt/Util';
+ 
+import * as util from '../knotservice/Util';
 
 import ApiCommand from "./Api"
 import * as api from "./Api"
 //import * as config from "../server/Config"
-import * as broadcast from "../mqtt/BroadcastDispatcher"
-
-import * as mqttclient from "../mqtt/MqttClient";
-
-//import * as cardutil from '../components/CardUtil'
-
-//import * as s from '../server/SocialTypes'
+import * as broadcast from "../knotservice/BroadcastDispatcher"
 
 // to run just this file :
 // node --loader ts-node/esm.mjs  --es-module-specifier-resolution=node --trace-warnings src/api1/Event
-
 
 export interface EventCmd extends ApiCommand {
     //cmd: string

@@ -13,19 +13,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import React, { ReactElement, FC, useEffect, useCallback } from "react";
+import React, { ReactElement, FC, useEffect } from "react";
 import ReactList from 'react-list';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 
-import * as s from "../gotohere/mqtt/SocialTypes"
+import * as s from "../gotohere/knotservice/SocialTypes"
 import * as postitem from "./PostItem"
 import * as cards from "./CardUtil"
-import * as util from "../gotohere/mqtt/Util"
+import * as util from "../gotohere/knotservice/Util"
 import * as event from "../gotohere/api1/Event"
-import * as broadcast from "../gotohere/mqtt/BroadcastDispatcher"
+import * as broadcast from "../gotohere/knotservice/BroadcastDispatcher"
 import * as commentsapi from "../gotohere/api1/GetComments"
 import * as timeapi from "../gotohere/api1/GetTimeline"
-import RefreshIndicator from "material-ui/RefreshIndicator";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -84,43 +83,68 @@ export const TimelineManager: FC<Props> = (props: Props): ReactElement => {
   console.log("TimelineManager redraw", state.random)
   const n = "timeline" + props.username + state.random
 
-  const handleGotTimes = (ready: s.TimelineItem[]) => {
-    var newState = cloneState(state)
-    for (var tli of ready) {
-      newState.timeItems.push(tli)
-    }
-    if (ready.length != 10) { // 10 is  the amt in in teh Need type
-      // we must have run out. 
-      newState.full = true
-    }
-    // sort them?
-    recalculate(newState)
-  }
+  // const handleGotTimes = (ready: s.TimelineItem[]) => {
+  //   var newState = cloneState(state)
+  //   for (var tli of ready) {
+  //     newState.timeItems.push(tli)
+  //   }
+  //   if (ready.length !== 10) { // 10 is  the amt in in teh Need type
+  //     // we must have run out. 
+  //     newState.full = true
+  //   }
+  //   // sort them?
+  //   recalculate(newState)
+  //   setState(newState)
+  // }
 
-  const handleGotComments = (ready: s.Comment[]) => {
-    console.log(" timeline handleGotComments", ready)
-    var newState = cloneState(state)
-    for (var com of ready) {
-      const key = s.StringRefNew(com)
-      newState.pomments.set(key, com)
-    }
-    recalculate(newState)
-  }
+  // const handleGotComments = (ready: s.Comment[]) => {
+  //   console.log(" timeline handleGotComments", ready)
+  //   var newState = cloneState(state)
+  //   for (var com of ready) {
+  //     const key = s.StringRefNew(com)
+  //     newState.pomments.set(key, com)
+  //   }
+  //   recalculate(newState)
+  //   setState(newState)
+  // }
 
   useEffect(() => {
     const n = "timeline" + props.username + state.random
-    timeapi.TimelineGetter.subscribe(n, handleGotTimes.bind(this))
-    commentsapi.CommentGetter.subscribe(n, handleGotComments.bind(this))
+    timeapi.TimelineGetter.subscribe(n, (ready: s.TimelineItem[])=>{
+      var newState = cloneState(state)
+      for (var tli of ready) {
+        newState.timeItems.push(tli)
+      }
+      if (ready.length !== 10) { // 10 is  the amt in in teh Need type
+        // we must have run out. 
+        newState.full = true
+      }
+      // sort them?
+      recalculate(newState)  
+      setState(newState)
+    })
+    commentsapi.CommentGetter.subscribe(n,  (ready: s.Comment[]) => {
+      console.log(" timeline handleGotComments", ready)
+      var newState = cloneState(state)
+      for (var com of ready) {
+        const key = s.StringRefNew(com)
+        newState.pomments.set(key, com)
+      }
+      recalculate(newState)
+      setState(newState)
+    })
     return () => {
       const n = "timeline" + props.username + state.random
       timeapi.TimelineGetter.unsubscribe(n)
       commentsapi.CommentGetter.unsubscribe(n)
     };
-  }, [state]);
+  }, [state,props.username]);
 
 
+  // without this notifications of changes isn't working. 
   const handleEvent = (event: event.EventCmd) => {
     // see the version in postlistmgr for hints
+    // FIXME: atw 
   }
 
   useEffect(() => {
@@ -130,90 +154,88 @@ export const TimelineManager: FC<Props> = (props: Props): ReactElement => {
       //console.log("TimelineManager UNsubscribe folder,user,count", props.folder,props.username, dates.length)
       broadcast.Unsubscribe(props.username, "timeline" + props.username + state.random)
     };
-  }, [state]);
+  }, [state,props.username]);
 
-  const addCommentChildren = (newState: State, tli: s.Reference, depth: number) => {
-    const ref = s.StringRefNew(tli)
-    const post = newState.pomments.get(ref)
-    if (post !== undefined) {
-      if (post.comments.length > 0) {
-        const opened = newState.opened.get(ref)
-        if (opened) {
-          for (const child of post.comments) {
-            const childref = s.ReferenceFromStr(child)
-            const tli: IndentedItem = {
-              ...childref,
-              why: "",
-              depth: depth
-            }
-            newState.references.push(tli)
-            addCommentChildren(newState, s.ReferenceFromStr(child), depth + 1)
-          }
-        }
-      }
-    }
-  }
+  // const addCommentChildren = (newState: State, tli: s.Reference, depth: number) => {
+  //   const ref = s.StringRefNew(tli)
+  //   const post = newState.pomments.get(ref)
+  //   if (post !== undefined) {
+  //     if (post.comments.length > 0) {
+  //       const opened = newState.opened.get(ref)
+  //       if (opened) {
+  //         for (const child of post.comments) {
+  //           const childref = s.ReferenceFromStr(child)
+  //           const tli: IndentedItem = {
+  //             ...childref,
+  //             why: "",
+  //             depth: depth
+  //           }
+  //           newState.references.push(tli)
+  //           addCommentChildren(newState, s.ReferenceFromStr(child), depth + 1)
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
-  const addCommentParent = (newState: State, tli: s.Reference, depth: number): number => {
-    var finalDepth = depth
-    const ref = s.StringRefNew(tli)
-    const post = newState.pomments.get(ref)
-    if (post !== undefined) {
-      if (post.parent !== undefined) {
-        const opened = newState.parentOpened.get(ref)
-        if (opened) {
-          var d = addCommentParent(newState, s.ReferenceFromStr(post.parent), depth + 1)
-          finalDepth += d
-          // now we can add ourselves to the list
+  // const addCommentParent = (newState: State, tli: s.Reference, depth: number): number => {
+  //   var finalDepth = depth
+  //   const ref = s.StringRefNew(tli)
+  //   const post = newState.pomments.get(ref)
+  //   if (post !== undefined) {
+  //     if (post.parent !== undefined) {
+  //       const opened = newState.parentOpened.get(ref)
+  //       if (opened) {
+  //         var d = addCommentParent(newState, s.ReferenceFromStr(post.parent), depth + 1)
+  //         finalDepth += d
+  //         // now we can add ourselves to the list
 
-          const parentref = s.ReferenceFromStr(post.parent)
-          const tli: IndentedItem = {
-            ...parentref,
-            why: "",
-            depth: depth
-          }
-          newState.references.push(tli)
-        }
-      }
-    }
-    return finalDepth
-  }
+  //         const parentref = s.ReferenceFromStr(post.parent)
+  //         const tli: IndentedItem = {
+  //           ...parentref,
+  //           why: "",
+  //           depth: depth
+  //         }
+  //         newState.references.push(tli)
+  //       }
+  //     }
+  //   }
+  //   return finalDepth
+  // }
 
+  // const recalculate = (newState: State) => {
 
+  //   console.log("ReactListTest recalculate ")
 
-  const recalculate = (newState: State) => {
+  //   var sortedArray: s.TimelineItem[] = newState.timeItems.sort((n1, n2) => (n2.id > n1.id) ? 1 : ((n2.id === n1.id) ? 0 : -1));
+  //   var prev: s.TimelineItem = {
+  //     id: 0,
+  //     by: "",
+  //     why: ""
+  //   }
+  //   var deduped: s.TimelineItem[] = []
+  //   for (const tli of sortedArray) {
+  //     if (tli !== prev) {
+  //       deduped.push(tli)
+  //     }
+  //     prev = tli
+  //   }
+  //   newState.timeItems = deduped
 
-    console.log("ReactListTest recalculate ")
-
-    var sortedArray: s.TimelineItem[] = newState.timeItems.sort((n1, n2) => (n2.id > n1.id) ? 1 : ((n2.id === n1.id) ? 0 : -1));
-    var prev: s.TimelineItem = {
-      id: 0,
-      by: "",
-      why: ""
-    }
-    var deduped: s.TimelineItem[] = []
-    for (const tli of sortedArray) {
-      if (tli !== prev) {
-        deduped.push(tli)
-      }
-      prev = tli
-    }
-    newState.timeItems = deduped
-
-    var references: IndentedItem[] = []
-    newState.references = references
-    for (const tli of newState.timeItems) {
-      var parentDepth = addCommentParent(newState, tli, 0)
-      // check for parents
-      const indented: IndentedItem = {
-        ...tli,
-        depth: 0 + parentDepth
-      }
-      references.push(indented)
-      addCommentChildren(newState, tli, 1 + parentDepth)
-    }
-    setState(newState)
-  }
+  //   var references: IndentedItem[] = []
+  //   newState.references = references
+  //   for (const tli of newState.timeItems) {
+  //     var parentDepth = addCommentParent(newState, tli, 0)
+  //     // check for parents
+  //     const indented: IndentedItem = {
+  //       ...tli,
+  //       depth: 0 + parentDepth
+  //     }
+  //     references.push(indented)
+  //     addCommentChildren(newState, tli, 1 + parentDepth)
+  //   }
+  //   setState(newState)
+  // }
 
   const toggleOpened = (ref: s.StringRef) => {
     var newState: State = cloneState(state)
@@ -221,6 +243,7 @@ export const TimelineManager: FC<Props> = (props: Props): ReactElement => {
     const open: boolean = newState.opened.get(ref) || false
     newState.opened.set(ref, !open)
     recalculate(newState)
+    setState(newState)
   }
 
   const toggleParent = (ref: s.StringRef) => {
@@ -229,6 +252,7 @@ export const TimelineManager: FC<Props> = (props: Props): ReactElement => {
     const open: boolean = newState.parentOpened.get(ref) || false
     newState.parentOpened.set(ref, !open)
     recalculate(newState)
+    setState(newState)
   }
 
 
@@ -244,8 +268,11 @@ export const TimelineManager: FC<Props> = (props: Props): ReactElement => {
       var post = state.pomments.get(s.StringRefNew(indentedTli))
       if (post === undefined) {
         post = cards.makeTopCard(props.username)
-        post.theText = "Loading:" + indentedTli.why + ". Who might be offline." + indentedTli.id
-        commentsapi.CommentGetter.need(n, [indentedTli])
+        post.theText = "Loading:" + indentedTli.why + ". Who might be offline." + indentedTli.id + " by " + indentedTli.by
+        const isNew = commentsapi.CommentGetter.need(n, [indentedTli])
+        if (isNew) {
+          console.log("Need new comment loaded", indentedTli)
+        }
       }
       const got = state.opened.get(s.StringRefNew(indentedTli))
       isOpen = got || isOpen
@@ -263,7 +290,10 @@ export const TimelineManager: FC<Props> = (props: Props): ReactElement => {
         amt: 10
       }
       if (state.full === false) {
-        timeapi.TimelineGetter.need("timeline" + props.username + state.random, [tln])
+        const isNew = timeapi.TimelineGetter.need("timeline" + props.username + state.random, [tln])
+        if (isNew) {
+          console.log("Need new timeline loaded", tln)
+        }
       }
       post = cards.makeTopCard(props.username)
       post.title = ""
@@ -341,4 +371,87 @@ function cloneState(state: State): State {
     full: state.full
   }
   return newState
+}
+
+
+function addCommentParent (newState: State, tli: s.Reference, depth: number): number   {
+  var finalDepth = depth
+  const ref = s.StringRefNew(tli)
+  const post = newState.pomments.get(ref)
+  if (post !== undefined) {
+    if (post.parent !== undefined) {
+      const opened = newState.parentOpened.get(ref)
+      if (opened) {
+        var d = addCommentParent(newState, s.ReferenceFromStr(post.parent), depth + 1)
+        finalDepth += d
+        // now we can add ourselves to the list
+
+        const parentref = s.ReferenceFromStr(post.parent)
+        const tli: IndentedItem = {
+          ...parentref,
+          why: "",
+          depth: depth
+        }
+        newState.references.push(tli)
+      }
+    }
+  }
+  return finalDepth
+}
+
+const addCommentChildren = (newState: State, tli: s.Reference, depth: number) => {
+  const ref = s.StringRefNew(tli)
+  const post = newState.pomments.get(ref)
+  if (post !== undefined) {
+    if (post.comments.length > 0) {
+      const opened = newState.opened.get(ref)
+      if (opened) {
+        for (const child of post.comments) {
+          const childref = s.ReferenceFromStr(child)
+          const tli: IndentedItem = {
+            ...childref,
+            why: "",
+            depth: depth
+          }
+          newState.references.push(tli)
+          addCommentChildren(newState, s.ReferenceFromStr(child), depth + 1)
+        }
+      }
+    }
+  }
+}
+
+
+const recalculate = (newState: State) => {
+
+  console.log("Timelinemanager recalculate ")
+
+  var sortedArray: s.TimelineItem[] = newState.timeItems.sort((n1, n2) => (n2.id > n1.id) ? 1 : ((n2.id === n1.id) ? 0 : -1));
+  var prev: s.TimelineItem = {
+    id: 0,
+    by: "",
+    why: ""
+  }
+  var deduped: s.TimelineItem[] = []
+  for (const tli of sortedArray) {
+    if (tli !== prev) {
+      deduped.push(tli)
+    }
+    prev = tli
+  }
+  newState.timeItems = deduped
+
+  var references: IndentedItem[] = []
+  newState.references = references
+  for (const tli of newState.timeItems) {
+    var parentDepth = addCommentParent(newState, tli, 0)
+    // check for parents
+    const indented: IndentedItem = {
+      ...tli,
+      depth: 0 + parentDepth
+    }
+    references.push(indented)
+    addCommentChildren(newState, tli, 1 + parentDepth)
+  }
+  // setState(newState)
 }

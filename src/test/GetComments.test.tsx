@@ -14,15 +14,15 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import fs from 'fs'
+//import fs from 'fs'
 import assert from 'assert'
 
 
-import * as s from '../gotohere/mqtt/SocialTypes';
+import * as s from '../gotohere/knotservice/SocialTypes';
 import * as commapi from '../gotohere/api1/GetComments';
 import * as fake from '../fake/initFakeData';
 import * as apputil from '../AppUtil'
-import * as util from '../gotohere/mqtt/Util'
+import * as util from '../gotohere/knotservice/Util'
 
 //const assert = require('assert');
 
@@ -34,7 +34,14 @@ export {}
 
 // test('try the Getter', done => {
 //     // not sure this works testBody(done)
+//     console.log("these tests don't really work as unit tests. More like system tests.")
 // } )
+
+
+test('just log to console', () => {
+    console.log("just log to console from GetComments.test")
+  });
+  
 
 export function testBody ( done : ()=>any ) {
 
@@ -59,9 +66,9 @@ export function testBody ( done : ()=>any ) {
     const dotherest = () => {
         var path = 'data/dummy/lists/comments'
 
-        if (fs.existsSync(path)) {
-            // you suck fs.unlinkSync(path);
-        }
+        // if (fs.existsSync(path)) {
+        //     // you suck fs.unlinkSync(path);
+        // }
         //fs.mkdirSync(path);
 
         // 21 05 12 01:30:44 588ms gmt

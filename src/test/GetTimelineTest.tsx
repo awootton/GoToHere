@@ -15,12 +15,12 @@
  
 import assert from 'assert'
 
-import * as s from '../gotohere/mqtt/SocialTypes';
+import * as s from '../gotohere/knotservice/SocialTypes';
 import * as timeapi from '../gotohere/api1/GetTimeline';
 import * as fake from '../fake/initFakeData';
 import * as apputil from '../AppUtil'
-import * as util from '../gotohere/mqtt/Util'
-import * as config from '../gotohere/mqtt/Config'
+import * as util from '../gotohere/knotservice/Util'
+import * as config from '../gotohere/knotservice/Config'
 
 export {} 
 

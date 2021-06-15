@@ -17,7 +17,7 @@ import React, { FC, useState } from "react";
 
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 
-import * as s from "../gotohere/mqtt/SocialTypes"
+import * as s from "../gotohere/knotservice/SocialTypes"
 
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
