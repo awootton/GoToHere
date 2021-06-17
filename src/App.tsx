@@ -42,43 +42,44 @@ export const theme = unstable_createMuiStrictModeTheme({
 interface Props {
 }
 
-// type okCallback = ( ok: boolean)=> any
-// export var LatestCallbackPointer : okCallback |  undefined = undefined
-
 export const App: FC<Props> = (props: Props): ReactElement => {
 
   const [initialized, setInitialized] = useState(false);
-  const [sequence, setSequence] = useState(0);
+  const initialSequence : string [] = []
+  const [sequence, setSequence] = useState(initialSequence);
 
   useEffect( () => {
     if ( ! initialized ){
-      apputil.bootSequence(( done: boolean) => {
+      console.log("starting apputil.bootSequence sequence=",sequence)
+      apputil.bootSequence(( done: boolean, why: string) => {
         if ( done ){
           setInitialized(true)
         } else {
-          setSequence(sequence+1)
+          var news: string[] = []
+          for ( const s of sequence){
+            news.push(s)
+          }     
+          news.push(why)
+          setSequence(news)
         }
       })
     }
-   
   } , [sequence, initialized])
 
   console.log("top of APP sequence=",sequence)
 
-    // apputil.bootSequence((finished: boolean) => {
-    //   if (finished) {
-    //     console.log("App is initialized")
-    //     setTimeout( () => {
-    //       console.log("App Incrementing finally")
-    //       SetSequence(sequence + 1)
-    //       SetInitialized(true)
-    //     }, 10)
-    //   } else {
-    //     console.log("Incrementing APP sequence=",sequence)
-    //     SetSequence(sequence + 1)
-    //   }
-    // })
- 
+  function getSequenceElements( )  {
+    const items = []
+    for (const s of sequence) {
+      const item = (
+        <div>
+          {s}
+         </div> 
+      )
+      items.push(item)
+    }
+    return items
+  }
 
   function makeApp() {
 
@@ -97,7 +98,8 @@ export const App: FC<Props> = (props: Props): ReactElement => {
       // todo: add log of boot sequence.
       return (
         <div style={{ display: 'flex', textAlign: 'center', alignItems: "center", justifyContent: "center" }}>
-          <div>Waiting for server to respond: {sequence} {initialized} </div>
+          <div>Waiting for server to respond:</div>
+          <div> {getSequenceElements( )}  </div> 
         </div>
       );
     }

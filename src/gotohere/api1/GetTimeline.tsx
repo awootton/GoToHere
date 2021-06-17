@@ -38,23 +38,33 @@ export type TimelineNeed = {
     amt: number
 }
 
-export class TimelineGetterClass extends getter.Getter<TimelineNeed, s.TimelineItem> {
+export type TimelineGetReply = {
+    username: string
+    when: s.DateNumber
+  
+    items: s.TimelineItem[]
+}
+
+export class TimelineGetterClass extends getter.Getter<TimelineNeed, TimelineGetReply> {
 
     keyofN(t: TimelineNeed): string {
         return "" + t.when + " " + t.username
     }
-    keyofG(t: s.TimelineItem): string {
-        return s.StringRefNew(t)
+    keyofG(t: TimelineGetReply): string {
+        return "" + t.when + " " + t.username
     }
     // don't forget to delete the pending
-    useTheApi(ref: string, needing: TimelineNeed[], cb: (gots: s.TimelineItem[]) => any) {
-        // countRequested feature not working
-        const timelineListReceiver = (postslist: s.TimelineItem[], countRequested: number, error: any) => {
+    useTheApi(ref: string, needing: TimelineNeed[], cb: (gots: TimelineGetReply[]) => any) {
+      
+        const timelineListReceiver = (postslist: TimelineGetReply[], error: any) => {
             if (error) {
-                console.log("ERROR useTheApi commentsReceiver has error", error)
+                console.log("ERROR useTheApi timelineListReceiver has error", error)
             } else {
                 var client = this.getClient(ref)
-                client.pending.clear()
+                for ( const treply of postslist ) {
+                    
+                    client.pending.delete(this.keyofG(treply))
+                }
                 cb(postslist)
             }
         }
@@ -68,12 +78,11 @@ export var TimelineGetter: TimelineGetterClass = new TimelineGetterClass()
 
 export default interface GetTimelineCmd extends ApiCommand {
     // Timeline are in reverse order, id's are YYMMDDHHMMSSmmm
-
     top: string // a newer data, typically now() or in 2031 
     count: number // get this many
 }
 
-export type TimelineListReceiver = (Timelinelist: s.TimelineItem[], countRequested: number, error: any) => any
+export type TimelineListReceiver = (Timelinelist: TimelineGetReply[], error: any) => any
 
 export function IssueTheCommand(username: string, top: string, count: number, receiver: TimelineListReceiver) {
 
@@ -97,7 +106,7 @@ export function IssueTheCommand(username: string, top: string, count: number, re
 
         console.log("GetTimelineCmd returns w err ", error)
 
-        var Timelinelist: s.TimelineItem[] = strdata.length > 0 ? JSON.parse(strdata) : []
+        var TimelineGetReply: [] = strdata.length > 0 ? JSON.parse(strdata) : []
 
         if (error !== undefined) {
             console.log("GetTimelineCmd SendApiCommandOut have error,user ", error, username, util.getSecondsDisplay())
@@ -108,7 +117,7 @@ export function IssueTheCommand(username: string, top: string, count: number, re
             }, 3000)
         } else {
             //console.log("GteTimeline SendApiCommandOut receiver " )
-            receiver(Timelinelist, count, error)
+            receiver(TimelineGetReply, error)
         }
     })
 }
@@ -189,9 +198,14 @@ function handleGetTimelineApi(wr: WaitingRequest, err: any) {
             }
 
             if (items.length >= count && done === false) {
-                var listBytes = JSON.stringify(items)
+                const repl : TimelineGetReply = {
+                    items: items,
+                    username: cryptoContext.username,
+                    when: +getTimelineCmd.top
+                }
+                var replbytes = JSON.stringify([repl])
                 //console.log("GetTimeline calling handleSendReplyCallback with",listBytes )
-                SendApiReplyBack(wr, Buffer.from(listBytes), null)
+                SendApiReplyBack(wr, Buffer.from(replbytes), null)
                 // and, we're done here
                 done = true
             }

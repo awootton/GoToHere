@@ -21,10 +21,8 @@ import ApiCommand from "./Api"
 import * as fsApi from './FsUtil';
 import * as util from '../knotservice/Util';
 import * as api from "./Api"
-//import * as c_util from "../components/CryptoUtil"
 import * as config from "../knotservice/Config"
 import * as   getter from './Getter';
-
 
 import * as fsutil from "./FsUtil" 
 var fs : fsutil.OurFsAdapter
@@ -32,48 +30,47 @@ export function SetFs( anFs : fsutil.OurFsAdapter ){
     fs = anFs
 }
 
-
 export type PostNeed = {
     username: string
     when: s.DateNumber
     amt: number
+    //trackingId : string
 }
- 
-export class PostGetterClass extends getter.Getter<PostNeed, s.Post> {
+
+export type PostGetReply = {
+    username: string
+    when: s.DateNumber
+  //  trackingId : string
+    posts: s.Post[]
+}
+
+export class PostGetterClass extends getter.Getter<PostNeed, PostGetReply> {
 
     keyofN(t: PostNeed): string {
-        return  "" + t.when + " " + t.username
+        return  "" + t.when + " " + t.username 
     }
-
     // override me
-    keyofG(t: s.Post): string {
-        return s.StringRefNew(t)
+    keyofG(t: PostGetReply): string {
+        return "" + t.when + " " + t.username  
     }
 
-    // don't forget to delete the pending
-    useTheApi( ref: string , needing: PostNeed[], cb: (gots: s.Post[]) => any) {
+    // don't forget to delete the pending - or not. They should never repeat
+    useTheApi( ref: string , needing: PostNeed[], cb: (gots: PostGetReply[]) => any) {
 
-        const postsListReceiver = (postslist: s.Post[], countRequested:number, error: any) => {
+        const postsListReceiver = (postslist: PostGetReply[], error: any) => {
             if (error) {
-                console.log("ERROR useTheApi commentsReceiver has error",error)
+                console.log("ERROR useTheApi postsListReceiver has error",error)
             } else {
                 var client = this.getClient(ref)
                 // just clear the ones that match: 
-                client.pending.clear()
-                // but the pending keys are unavailable 
-                // and the dates don't match.
-
-                // var clearkeys = []
-                // client.pending.forEach((value: PostNeed, key: string) => {
-                //     console.log("postsListReceiver kdjdhbfuf", key, value);
-                //     if ( value.username ==  )
-                // });
-                 
+                for ( const pgr of postslist ) {
+                    client.pending.delete(this.keyofG(pgr))
+                }
                 cb(postslist)
             }
         }
         for ( var need of needing) {
-            IssueTheCommand(need.username, ""+need.when, need.amt, postsListReceiver)
+            IssueTheCommand(need, postsListReceiver)
         }
     }
 }
@@ -83,21 +80,20 @@ export var PostGetter: PostGetterClass = new PostGetterClass()
 export default interface GetPostsCmd extends ApiCommand {
     // posts are in reverse order, id's are YYMMDDHHMMSSmmm
 
-    top: string // a newer data, typically now()
-    //fold: string // folder to use eg. data/alice/posts
-
+    top: s.DateNumber // a newer data, typically now() or a year from now
     count: number // get this many
-  //  old: string // or, if no count, collect posts back to this time
+   // trackingId: string
 }
 
-export type PostsListReceiver = (postslist: s.Post[], countRequested:number, error: any) => any
+export type PostsListReceiver = ( postsreply: PostGetReply[], error: any) => any
 
-export function IssueTheCommand(username: string, top: string, count: number, receiver: PostsListReceiver) {
+export function IssueTheCommand(need: PostNeed , receiver: PostsListReceiver) {
 
     var cmd: GetPostsCmd = {
         cmd: "getPosts",
-        top: top,
-        count: count,
+        top: need.when,
+        count: need.amt,
+      //  trackingId : need.trackingId
     }
  
     const jsonstr = JSON.stringify(cmd)
@@ -108,24 +104,24 @@ export function IssueTheCommand(username: string, top: string, count: number, re
 
     //console.log("GtePosts SendApiCommandOut calling with user", username )
 
-    api.SendApiCommandOut(wr, username, jsonstr, (data: Uint8Array, error: any) => {
+    api.SendApiCommandOut(wr, need.username, jsonstr, (data: Uint8Array, error: any) => {
 
         var strdata = new TextDecoder().decode(data)
         
         console.log("GetPostsCmd returns w err ", error)
 
-        var postslist: s.Post[] = strdata.length>0 ? JSON.parse(strdata) : []
+        var postsReply: PostGetReply = strdata.length>0 ? JSON.parse(strdata) : []
 
         if ( error !== undefined  ){
-            console.log("GetPostsCmd SendApiCommandOut have error,user " ,error, username, util.getSecondsDisplay())
+            console.log("GetPostsCmd SendApiCommandOut have error,user " ,error, need.username, util.getSecondsDisplay())
             // try again, in a sec.
             setTimeout(()=>{
                 console.log("GetPostsCmd SendApiCommandOut timer done. IssueTheCommand AGAIN. " )
-                IssueTheCommand(username, top, count, receiver)
+                IssueTheCommand(need, receiver)
             },9000 )
         } else {
             //console.log("GtePosts SendApiCommandOut receiver " )
-            receiver(postslist, count ,error)
+            receiver([postsReply] ,error)
         }
     })
 }
@@ -143,20 +139,9 @@ const getPostsWaitingRequest: WaitingRequest = {
     //callerPublicKey64 : "unknown+now" 
     //debug: true
 }
-
-//   function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
-
-//     getPostsWaitingRequest.options.set("api1", getPostsWaitingRequest.id)
-//      // returnsWaitingMap map is handling incoming packets in mqttclient 
-//     returnsWaitingMap.set(getPostsWaitingRequest.id, getPostsWaitingRequest)
-// }
-
-//mqttclient.returnsWaitingMapset(getPostsWaitingRequest.id, getPostsWaitingRequest)
-
 export function getWr(): WaitingRequest {
     return getPostsWaitingRequest
 }
-
 
 function handleGetPostApi(wr: WaitingRequest, err: any) {
 
@@ -166,9 +151,11 @@ function handleGetPostApi(wr: WaitingRequest, err: any) {
 
     var getPostCmd: GetPostsCmd = JSON.parse(wr.message.toString())
 
-    const top = getPostCmd.top // the newest date inclusive
-    const count = getPostCmd.count
-    //const folder = "lists/posts/"//getPostCmd.fold
+    //const top = getPostCmd.top // the newest date inclusive
+    //const count = getPostCmd.count
+     
+    //const tracking = getPostCmd.trackingId
+  
 
     var cryptoContext = util.getHashedTopic2Context( wr.topic )
     var configItem =  config.GetName2Config(cryptoContext.username)
@@ -177,8 +164,7 @@ function handleGetPostApi(wr: WaitingRequest, err: any) {
     // make the directories if missing.
     fs.mkdirs(path,fs.dummyCb)
 
-    if (count !== 0) {
-        // add end date ? 
+    if (getPostCmd.count !== 0) {
         var items: s.Post[] = []
         var done = false
 
@@ -190,18 +176,25 @@ function handleGetPostApi(wr: WaitingRequest, err: any) {
             var apost: s.Post = JSON.parse(data.toString("utf8"))
             items.push(apost)
 
-            if (items.length >= count && done === false) {
-                var listBytes = JSON.stringify(items)
-                //console.log("GetPosts calling handleSendReplyCallback with",listBytes )
-                SendApiReplyBack(wr, Buffer.from(listBytes), null)
+            if (items.length >= getPostCmd.count && done === false) {
+
+                var reply : PostGetReply = {
+                    username : cryptoContext.username,
+                    when: getPostCmd.top,
+                    posts: items,
+                    //
+                }
+                var replyBytes = JSON.stringify(reply)
+                //console.log("GetPosts calling handleSendReplyCallback with",replyBytes )
+                SendApiReplyBack(wr, Buffer.from(replyBytes), null)
                 // and, we're done here
                 done = true
             }
             return items.length
         }
         var context: fsApi.fsGetContext = {
-            countNeeded: count,
-            newer: top,
+            countNeeded: getPostCmd.count,
+            newer: "" + getPostCmd.top,
             basePath: path,
             haveOne: haveOne,
             done: false

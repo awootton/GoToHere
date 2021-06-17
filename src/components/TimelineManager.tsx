@@ -110,12 +110,14 @@ export const TimelineManager: FC<Props> = (props: Props): ReactElement => {
 
   useEffect(() => {
     const n = "timeline" + props.username + state.random
-    timeapi.TimelineGetter.subscribe(n, (ready: s.TimelineItem[])=>{
+    timeapi.TimelineGetter.subscribe(n, (ready: timeapi.TimelineGetReply[])=>{
       var newState = cloneState(state)
-      for (var tli of ready) {
-        newState.timeItems.push(tli)
+      for (var treply of ready) {
+        for ( const tli of treply.items) {
+          newState.timeItems.push(tli)
+        }
       }
-      if (ready.length !== 10) { // 10 is  the amt in in teh Need type
+      if (ready.length !== 10) { // 10 is  the amt in in the Need type
         // we must have run out. 
         newState.full = true
       }
@@ -156,87 +158,6 @@ export const TimelineManager: FC<Props> = (props: Props): ReactElement => {
     };
   }, [state,props.username]);
 
-  // const addCommentChildren = (newState: State, tli: s.Reference, depth: number) => {
-  //   const ref = s.StringRefNew(tli)
-  //   const post = newState.pomments.get(ref)
-  //   if (post !== undefined) {
-  //     if (post.comments.length > 0) {
-  //       const opened = newState.opened.get(ref)
-  //       if (opened) {
-  //         for (const child of post.comments) {
-  //           const childref = s.ReferenceFromStr(child)
-  //           const tli: IndentedItem = {
-  //             ...childref,
-  //             why: "",
-  //             depth: depth
-  //           }
-  //           newState.references.push(tli)
-  //           addCommentChildren(newState, s.ReferenceFromStr(child), depth + 1)
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-
-  // const addCommentParent = (newState: State, tli: s.Reference, depth: number): number => {
-  //   var finalDepth = depth
-  //   const ref = s.StringRefNew(tli)
-  //   const post = newState.pomments.get(ref)
-  //   if (post !== undefined) {
-  //     if (post.parent !== undefined) {
-  //       const opened = newState.parentOpened.get(ref)
-  //       if (opened) {
-  //         var d = addCommentParent(newState, s.ReferenceFromStr(post.parent), depth + 1)
-  //         finalDepth += d
-  //         // now we can add ourselves to the list
-
-  //         const parentref = s.ReferenceFromStr(post.parent)
-  //         const tli: IndentedItem = {
-  //           ...parentref,
-  //           why: "",
-  //           depth: depth
-  //         }
-  //         newState.references.push(tli)
-  //       }
-  //     }
-  //   }
-  //   return finalDepth
-  // }
-
-  // const recalculate = (newState: State) => {
-
-  //   console.log("ReactListTest recalculate ")
-
-  //   var sortedArray: s.TimelineItem[] = newState.timeItems.sort((n1, n2) => (n2.id > n1.id) ? 1 : ((n2.id === n1.id) ? 0 : -1));
-  //   var prev: s.TimelineItem = {
-  //     id: 0,
-  //     by: "",
-  //     why: ""
-  //   }
-  //   var deduped: s.TimelineItem[] = []
-  //   for (const tli of sortedArray) {
-  //     if (tli !== prev) {
-  //       deduped.push(tli)
-  //     }
-  //     prev = tli
-  //   }
-  //   newState.timeItems = deduped
-
-  //   var references: IndentedItem[] = []
-  //   newState.references = references
-  //   for (const tli of newState.timeItems) {
-  //     var parentDepth = addCommentParent(newState, tli, 0)
-  //     // check for parents
-  //     const indented: IndentedItem = {
-  //       ...tli,
-  //       depth: 0 + parentDepth
-  //     }
-  //     references.push(indented)
-  //     addCommentChildren(newState, tli, 1 + parentDepth)
-  //   }
-  //   setState(newState)
-  // }
-
   const toggleOpened = (ref: s.StringRef) => {
     var newState: State = cloneState(state)
     //console.log("renderItem timeline toggleOpened")
@@ -268,7 +189,7 @@ export const TimelineManager: FC<Props> = (props: Props): ReactElement => {
       var post = state.pomments.get(s.StringRefNew(indentedTli))
       if (post === undefined) {
         post = cards.makeTopCard(props.username)
-        post.theText = "Loading:" + indentedTli.why + ". Who might be offline." + indentedTli.id + " by " + indentedTli.by
+        post.theText = "Loading:" + indentedTli.why + ". They might be offline. On " + indentedTli.id + " by " + indentedTli.by
         const isNew = commentsapi.CommentGetter.need(n, [indentedTli])
         if (isNew) {
           console.log("Need new comment loaded", indentedTli)

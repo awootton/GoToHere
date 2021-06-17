@@ -138,18 +138,11 @@ function deletePostFile(path: string, id: s.DateNumber) {
 
     fs.unlink(wholepath, function (err: any) {
         if (err) {
-            console.log("ERROR deletePostFile");
-        }
-        console.log(" deletePostFile File deleted!");
+            console.log("ERROR deletePostFile",wholepath);
+        } else {
+            console.log(" deletePostFile File deleted!",wholepath);
+        }  
     });
-
-    // unlink(filepath: string)
-    // RNFS.unlink(`${RNFS.DocumentDirectoryPath}/temp/`).then(res => {
-    //     console.log(" deletePostFile File deleted2!");
-    // }).catch(err => {
-    //     console.log("deletePostFile", err.message, err.code);
-    // });
-
 }
 
 function handleDeletePostApi(wr: api.WaitingRequest, err: any) {

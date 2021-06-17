@@ -20,6 +20,7 @@ import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import * as s from "../gotohere/knotservice/SocialTypes"
 
 import Box from "@material-ui/core/Box";
+import Grid from "@material-ui/core/Grid";
 
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
@@ -123,15 +124,17 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
         if (post.comments.length !== 0) {
             // return (  
             //     <a href="none" onClick={handleCommentClick}>{props.commentsOpen ? "🔼" : "🔽" } {"  "}</a>
+          //  display: "flex",
+           // justifyContent: "space-between"   , float:"right"
             // )
             return (
-                <div style={{  width:"12px", margin:"0 0",  padding: "0px 0px" } } >
+                <div style={{  maxHeight : "20px", margin:"0 0",  padding: "0px 0px" } } >
                 <Tooltip title={props.commentsOpen?"Hide comments":"Show comments"}  >
                 <Button variant="contained"
                     size="small"
                     color="secondary"
                     className={classes.button}
-                    style={{backgroundColor:"transparent", color:"black" , margin:"0 0", float:"right", minWidth: "20px", maxWidth: "20px"} }
+                    style={{backgroundColor:"transparent", color:"black" , margin:"0 0",  minWidth: "20px", maxWidth: "20px"} }
                     disableElevation
                     onClick={handleCommentClick} >
                     {/* {props.commentsOpen ? <ExpandLessIcon /> : <ExpandMoreIcon /> } */}
@@ -203,8 +206,6 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
                 <span className={classes.pushedright} >
                     {post.id !== 0 ? (
                         <>
-                            {/* {getOpenButton(post)} */}
-
                             <Tooltip title={post.likes.toString() + " likes"}  >
 
                                 <Button onClick={handleClickHeart} className={classes.button} style = {{ minWidth: "24px", maxWidth: "24px"}}>
@@ -212,13 +213,60 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
                                 </Button>
 
                             </Tooltip>
-                            <menus_card.CardMenu post={post} username={props.username} />
+                            {/* <Tooltip title={"Menu for new,edit,delete"}  > */}
+                                <div>
+                                <menus_card.CardMenu post={post} username={props.username} />
+                                </div>
+                            {/* </Tooltip> */}
                             {getParentButton(post)}
                         </>
                     ) : (<></>)
                     }
                 </span>
             </Box>
+        )
+        return dom
+    }
+
+    //  display: "flex", justifyContent:"center", alignContent : "flex-end" , alignItems:"flex-end"
+
+    const getBottomLine = (post: s.Post) : ReactElement => {
+        if ( post.id === 0 || post.comments.length === 0 ){
+            return (<></>)
+        }
+        //  {getOpenButton(post)} not A    justifyContent: "right" 
+        var dom = (
+            <Grid
+
+            container
+            direction="column"
+            justify="flex-end"
+            alignItems="flex-end"
+
+
+            //     component = "div"
+             //     display="flex"
+                 //   flexDirection="row"
+            //     alignContent = "flex-end"
+               //  alignItems = "flex-end"
+
+             //   p={1}
+             //   m={1}
+             //   bgcolor="background.paper"
+             //   component="span"
+             //   className={classes.pushedright}
+                style={{ maxHeight:"32px"}} // flex-end
+              //  alignItems="center"
+            >  
+                {getOpenButton(post)}
+
+                 {/* <span style={{ maxHeight:"32px"  }} >
+                 {getOpenButton(post)}
+                </span>
+               <span className={classes.pushedright}  style={{ maxHeight:"20px"  }} >
+                   B
+                </span>  */}
+            </Grid>
         )
         return dom
     }
@@ -238,19 +286,6 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
     const handleParentClick = () => {
         props.toggleParent(s.StringRefNew(props.post))
     }
-
-    // type funtype = () => any
-
-    // const stringToFunction = ( fname: any ) : funtype => {
-    //     if ( fname === "handleCommentClick" ){
-    //         console.log("stringToFunction returning " + fname)
-    //         return handleCommentClick
-    //     }
-    //     console.log("ERROR unhandled fname " + fname)
-    //     return () => {}
-    // }
-
-    // <a href="#" onClick={handleCommentClick}>{props.commentsOpen ? "🔼" : "🔽" } {"  "}</a>
 
     const renderTheCard = (post: s.Post) => {
 
@@ -279,40 +314,24 @@ export const PostItem: FC<Props> = (props: Props): ReactElement => {
                         <Typography variant="body2" color="textSecondary" component="div" className={classes.theTextStyle}  >
                             <ReactMarkdown className={classes.theTextStyle} 
                             children={TheText}
-                            // components={{
-                            //     // Map `h1` (`# heading`) to use `h2`s.
-                            //    // h1: 'h4',
-                            //     // Rewrite links to be onClick
-                            //     a: ({node, ...props}) => <a  href="#dummy" onClick={stringToFunction(props.href)}  >{props.children}</a>
-                            //   }}
                             />
                             {/* {getOpenButton(post)} */}
                         </Typography>
                     </CardContent>
-                    <CardActions style={{justifyContent:"center", height: "4", width:"8px", margin:"0 0",  padding: "0px 0px" }}>
-                    {getOpenButton(post)} 
-                    </CardActions> 
+                    {getBottomLine(post)}
+                    {/* <CardActions style={{justifyContent:"center", height: "4", width:"8px", margin:"0 0",  padding: "0px 0px" }}> 
+                    {getBottomLine(post)}
+                    </CardActions>  */}
                 </Card>
             </>
         )
     }
-
-    //const dummy = () => { }
-
-    // if (props.post.editable) {
-    //     return (
-    //         <>
-    //             {renderEditCard(props.post)}
-    //         </>
-    //     );
-    // } else 
-   // {
         return (
             <>
                 {renderTheCard(props.post)}
             </>
         );
-   // }
+    
 };
 
 

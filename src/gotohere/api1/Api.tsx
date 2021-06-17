@@ -40,6 +40,8 @@ export function SetFs( anFs : fsutil.OurFsAdapter ){
 export function getAllHooks(): WaitingRequest[] {
     var res: WaitingRequest[] = []
 
+    // load up the api with handlers for the various api's
+    // add every api here.
     res.push(eventapi.getWr())
     res.push(deletepostapi.getWr())
     res.push(generalapi.getWr())
@@ -198,6 +200,10 @@ export function SendApiCommandOut(commandWr: WaitingRequest, topic: string, json
 
         console.log("sending api1 call topic,id ", topic, random24, " with " + message, "pubk ", util.getPubkToName(context.ourPublicKey[0]), util.getSecondsDisplay())
         const ourSecret: Buffer = util.getSignedInContext().ourSecretKey[0]
+
+        if ( (message.length === 0) ||  (random24.length === 0) ||  (theirPubk.length === 0) ||  (ourSecret.length === 0) ){
+            console.log("SendApiCommandOut util.BoxItItUp bad args" )
+        }
 
         const boxed: Buffer = util.BoxItItUp(Buffer.from(message), Buffer.from(random24), theirPubk, ourSecret)
 

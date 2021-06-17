@@ -150,7 +150,7 @@ export const FillEditPost: FC<Props> = (props: Props) => {
 
         } else {
             const savePostReceiver = (reply: savepostapi.SavePostReply, error: any) => {
-                console.log(" back from saving with err ", error, " and ", reply)
+                console.log(" back from saving EditPost with err ", error, " and ", reply)
                 if (error !== undefined) {
                     //add error to invisible note
                     console.log("ERROR SavePost ", error, " and ", reply)

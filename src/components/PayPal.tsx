@@ -97,8 +97,7 @@ export const PalPalDialog: FC<Props> = (props: Props): ReactElement => {
         <div style={{ width: 500, height: 700, padding: 24 }} >
             <div style={{ width: 400, height: 400, padding: 12 }} >
                 <h3>{props.title}</h3>
-                For a $5 you will receive a monster, 5xlarge, token which is good for 5000 profiles and 500 connections. It doesn't expire for a year.
-
+                For $5 you will receive a monster, 5xlarge, token which is good for 2500 profiles and 500 connections. It doesn't expire for a year.
                 <PayPalButton
                     amount="5.00"
                     shippingPreference="NO_SHIPPING" // default is "GET_FROM_FILE"
@@ -128,7 +127,7 @@ export const PalPalDialog: FC<Props> = (props: Props): ReactElement => {
                     }}
                     options={{
                         // sandbox clientId: "AV0OVlxl84D_i5XxkhbJWYLEJKj1S03A-shkckJjLC9RBTXyHvUhGG0KCnPcSqtVOp_c7u5_5U3Qzkmi",
-                        clientId: "ARoX8jMu0bzy6YCspsr9PUsO5pHYgKZCpR_uDKNxCrwkOK6aTm1GTZ03IlHW_n8AW6pId7EsNyvykiDS",
+                        clientId: "ARoX8jMu0bzy6YCspsr9PUsO5pHYgKZCpR_uDKNxCrwkOK6aTm1GTZ03IlHW_n8AW6pId7EsNyvykiDS", // production
                     }}
                 />
                 {showToken()}

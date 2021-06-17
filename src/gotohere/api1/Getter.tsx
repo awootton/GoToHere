@@ -82,12 +82,19 @@ export class Getter<NeedType, GotType> {
         for (const r of array) {
             const key = this.keyofN(r)
             const ispending = client.pending.get(key)
-            if (ispending === undefined) {
+            const isneeded = client.needed.get(key)
+            if (ispending === undefined && isneeded === undefined) {
                 client.needed.set(key, r)
                 isNew = true
             }
         }
         return isNew
+    }
+
+    clearCache(ref: string){
+        var client = this.getClient(ref)
+        client.pending = new Map()
+        client.owned = new Map()
     }
 
     subscribe(ref: string, callback: (ready: GotType[]) => any) {
@@ -139,8 +146,8 @@ export class Getter<NeedType, GotType> {
             
             // move the ready to the callback 
             if (client.callback && client.ready.length !== 0) {
+                // 
                 client.callback(client.ready)
-                // copy to owned?
                 client.ready = []
             }
         });

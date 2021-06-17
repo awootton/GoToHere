@@ -45,7 +45,7 @@ class OurNodeFsAdapter extends fsutil.OurFsAdapter {
 
     // override me
     unlink(fname: string, cb: (err: any) => any) {
-        fs.unlink(path, cb)
+        fs.unlink(fname, cb)
     }
     // make dirs as necessary
     mkdirs(dirpath: string, cb: (err: any) => any) {

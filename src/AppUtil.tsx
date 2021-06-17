@@ -74,7 +74,7 @@ var pingsDone = 0
 // }
 
 // only call increment at the end
-export function bootSequence( callback: (done:boolean) => any ) {
+export function bootSequence( callback: (done:boolean, why:string) => any ) {
 
   console.log("in bootSequence with ", bootPhase)
   if (pending) {
@@ -96,11 +96,11 @@ export function bootSequence( callback: (done:boolean) => any ) {
         // let's use the servername from the window serverName = sname
         setToken(savedToken)
         bootPhase = 1  // progress
-        callback(false)//reschedule() // back to top
+        callback(false,"Token verified.") // back to top
       } else {
         // bad token
         localStorage_setItem('knotfree_access_token_v2', "");
-        callback(false)//reschedule() // back to top
+        callback(false,"Bad token.") // back to top
       }
     } else {
       // no saved token
@@ -120,15 +120,15 @@ export function bootSequence( callback: (done:boolean) => any ) {
             if (ok) {
               console.log("have token , ", tok)
               bootPhase = 1
-              callback(false)//reschedule()
+              callback(false,"Got free token.")
             } else {
-              callback(false)//reschedule() // try again later. state remains the same
+              callback(false,"Get free token failed.") // try again later. state remains the same
             }
           })
         } else {
           // fail. crap. 
           console.log("apputil.pingServer fail with knotfree.net ")
-          callback(false)//reschedule() // try again later. state remains the same
+          callback(false,"Ping server failed.") // try again later. state remains the same
         }
       })
     }
@@ -142,9 +142,9 @@ export function bootSequence( callback: (done:boolean) => any ) {
       pending = false
       if (ok) {
         bootPhase = 2 // progress
-        callback(false)//reschedule()
+        callback(false,"MQTT started.")
       } else {
-        callback(false)//reschedule()
+        callback(false,"MQTT failure.")
       }
     })
   } else if (bootPhase === 2) {
@@ -158,12 +158,12 @@ export function bootSequence( callback: (done:boolean) => any ) {
         if (pingsDone > 4) {
           //increment(true)// we're done
           bootPhase = 3
-          callback(false)//reschedule()
+          callback(false, "Ping returned public key.")
         } else {
-          callback(false)//reschedule()// try again
+          callback(false,"Still trying ping.") 
         }
       } else {
-        callback(false)//reschedule()// try again
+        callback(false, "Ping failed.") 
       }
     })
   } else if (bootPhase === 3) {
@@ -177,9 +177,9 @@ export function bootSequence( callback: (done:boolean) => any ) {
         bootPhase = 4
         console.log("increment(true) // we're done ")
         //LatestCallbackPointer(true)// we're done
-        callback(true)
+        callback(true,"Success.")
       } else {
-        callback(false)//reschedule()// try again
+        callback(false,"Get friends failed.")// try again
       }
     })
   }

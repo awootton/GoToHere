@@ -167,7 +167,7 @@ function IssueTheCommandSorted(username: string, refs: s.Reference[], receiver: 
             setTimeout(() => {
                 console.log("GetComments SendApiCommandOut timer done. IssueTheCommand AGAIN. ")
                 IssueTheCommandSorted(username, refs, receiver)
-            }, 5000)
+            }, 1000)
         } else {
             console.log("GetComments SendApiCommandOut receiver ")
             receiver(commList, error)
@@ -188,22 +188,13 @@ const GetCommentsWaitingRequest: WaitingRequest = {
     //callerPublicKey64 : "unknown+now" 
 }
 
-//   function InitApiHandler(returnsWaitingMap: Map<string, WaitingRequest>) {
-
-//     GetCommentsWaitingRequest.options.set("api1", GetCommentsWaitingRequest.id)
-//      // returnsWaitingMap map is handling incoming packets in mqttclient 
-//     returnsWaitingMap.set(GetCommentsWaitingRequest.id, GetCommentsWaitingRequest)
-// }
-
 export function getWr(): WaitingRequest {
     return GetCommentsWaitingRequest
 }
 
-//mqttclient.returnsWaitingMapset(GetCommentsWaitingRequest.id, GetCommentsWaitingRequest)
-
 function handleGetCommentApi(wr: WaitingRequest, err: any) {
 
-    //console.log("in the handleGetCommentApi with ", util.getTopicName(wr.topic), wr.message.toString(), util.getSecondsDisplay() )
+    console.log("in the handleGetCommentApi with ", util.getTopicName(wr.topic), wr.message.toString(), util.getSecondsDisplay() )
     //console.log("in the handleGetCommentApi with ", util.getTopicName(wr.topic), " key id ", wr.options.get("nonc") , util.getSecondsDisplay())
 
     var cmd: GetCommentsCmd = JSON.parse(wr.message.toString())
@@ -224,10 +215,9 @@ function handleGetCommentApi(wr: WaitingRequest, err: any) {
         const day = ("" + ref.id).substr(0, 6)
         var fname = cpath + day + "/" + ref.id
         const fname2 = ppath + day + "/" + ref.id
-        // if (fs.existsSync(fname2)) { // FIXME: not sync
-        //     fname = fname2
-        // }
-        var comment = s.emptyComment
+        var comment: s.Comment = {
+            ...s.emptyComment
+        }
         comment.id = ref.id;
         fs.readFile(fname, (error: any, data: any) => {
             tried += 1
