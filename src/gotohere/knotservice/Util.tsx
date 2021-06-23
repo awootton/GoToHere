@@ -41,6 +41,7 @@ export function setisTestingNotClient() {
     isTestingNotClient = true
 }
 
+// aka crypto context
 export type Context = {
     username: string
     password: string[]  // might be "" in which case the ourSecretKey is "" and ourPublicKey must be set manually
@@ -576,7 +577,8 @@ export function emptyComment( username: string ) : s.Comment {
         retweets : [],
         comments: [] ,
         by : username,
-        parent: ""
+        parent: "",
+        permissions: s.DefaultPermissions
     }
     return apost
 }
@@ -590,7 +592,8 @@ export function makeEmptyCard( username: string ) : s.Post {
         likes: 0,
         retweets : [],
         comments: [] ,
-        by : username
+        by : username,
+        permissions: s.DefaultPermissions
     }
     return apost
 }

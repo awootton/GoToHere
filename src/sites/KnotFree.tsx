@@ -32,6 +32,7 @@ import ReactGA from 'react-ga';
 
 import * as getfree from "../components/FreeToken"
 import * as util from "../gotohere/knotservice/Util"
+import * as test2 from "./LayoutTest2"
 
 //ReactGA.initialize('UA-62339543-1');
 ReactGA.initialize('UA-198012996-1', {
@@ -148,6 +149,14 @@ export const KnotFreeApp: FC<Props> = (props: Props) => {
     const stos = (s: any): string => { return "" + s }
 
     return (
+
+        <> 
+        {test2.LayoutTest2({})}
+        </>
+
+    )
+
+    return (
         <div style={aStyle} >
 
             <Grid className={classes.root} container direction="column" component="div"   >
@@ -215,8 +224,7 @@ You can [buy tokens](buyToken) here and the small ones are being [given out for 
 
 The main user of this network is the decentralised social platform [GoToHere.com](http://GoToHere.com).
 
-#### If you are in favor of this movement, and you wish it to grow, [follow it on Twitter](https://twitter.com/GotohereC?ref_src=twsrc%5Etfw"). 
-This is the single most important thing to do.
+#### If you are in favor of this movement, and you wish it to grow, [follow it on Twitter](https://twitter.com/GotohereC?ref_src=twsrc%5Etfw").
 
 [All the code is open source](https://github.com/awootton/knotfreeiot).
 

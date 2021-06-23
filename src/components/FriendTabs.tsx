@@ -67,14 +67,16 @@ const useStyles = makeStyles((theme) => ({
     friendItem: {
         margin: 0,
         textTransform: 'none',
+        fontSize: 12,
+        fontFamily : "Noto Serif"
     },
 
-    appbar: {
+    // appbar: {
 
-        width: "100%",
-        height: theme.spacing(4)
+    //     width: "100%",
+    //     height: theme.spacing(4)
 
-    },
+    // },
     tabLabel: {
         fontSize: 12,
         height: 14,
@@ -126,7 +128,7 @@ export const LinkedName: FC<NameProps> = (props: NameProps) => {
     const item = (
 
         <div key={props.index} className={classes.friendItem} >
-            <Button
+            <Button style={{maxHeight : 20 }}
                 onClick={showTheAppDialog}
                 className={classes.friendItem}
             >

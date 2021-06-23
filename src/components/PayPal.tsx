@@ -22,6 +22,8 @@ import * as util from "../gotohere/knotservice/Util"
 import Paper from '@material-ui/core/Paper';
 
 import { CopyToClipboard } from 'react-copy-to-clipboard';
+ 
+import * as apputil from "../AppUtil"
 
 
 
@@ -97,7 +99,7 @@ export const PalPalDialog: FC<Props> = (props: Props): ReactElement => {
         <div style={{ width: 500, height: 700, padding: 24 }} >
             <div style={{ width: 400, height: 400, padding: 12 }} >
                 <h3>{props.title}</h3>
-                For $5 you will receive a monster, 5xlarge, token which is good for 2500 profiles and 500 connections. It doesn't expire for a year.
+                For $5 you will receive a monster, 5xlarge, token which is enough for a small village and expires in 12 months..
                 <PayPalButton
                     amount="5.00"
                     shippingPreference="NO_SHIPPING" // default is "GET_FROM_FILE"
@@ -121,20 +123,23 @@ export const PalPalDialog: FC<Props> = (props: Props): ReactElement => {
                                     // data is TokenReply  ?? 
                                     console.log("have get buy token fetch result ", repl)
                                     setTheToken(repl)
+                                    apputil.localStorage_setItem('knotfree_access_token_v2', repl);
                                 })
                             }
                         })
                     }}
                     options={{
-                        // sandbox clientId: "AV0OVlxl84D_i5XxkhbJWYLEJKj1S03A-shkckJjLC9RBTXyHvUhGG0KCnPcSqtVOp_c7u5_5U3Qzkmi",
-                        clientId: "ARoX8jMu0bzy6YCspsr9PUsO5pHYgKZCpR_uDKNxCrwkOK6aTm1GTZ03IlHW_n8AW6pId7EsNyvykiDS", // production
+                        // sandbox 
+                        clientId: "AV0OVlxl84D_i5XxkhbJWYLEJKj1S03A-shkckJjLC9RBTXyHvUhGG0KCnPcSqtVOp_c7u5_5U3Qzkmi", // sandbox
+                        //clientId: "ARoX8jMu0bzy6YCspsr9PUsO5pHYgKZCpR_uDKNxCrwkOK6aTm1GTZ03IlHW_n8AW6pId7EsNyvykiDS", // production
+                        //amt:1,
+                        //type:"4xl"
                     }}
                 />
                 {showToken()}
             </div>
         </div>
     )
-
 }
 
 

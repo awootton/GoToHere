@@ -54,6 +54,7 @@ type Props = {
     username: string
     editing: boolean
     cancel: (value: any) => any
+    mobile: boolean
 }
 
 type ItemProps = {
@@ -89,6 +90,10 @@ export const GeneralInfoLayout: FC<Props> = (props: Props) => {
     if (props.editing === false) {
         theCardStyle.height = "200px"
         theCardStyle.width = "200px"
+    }
+    if ( props.mobile ) {
+        theCardStyle.height = "128px"
+        theCardStyle.width = "150px"
     }
 
     useEffect(() => {

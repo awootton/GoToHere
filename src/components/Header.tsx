@@ -64,13 +64,6 @@ const useStyles = makeStyles((theme: Theme) =>
     },
 
     aboutdialog: {
-
-      //flexGrow: 1,
-      // margin: "20 20px",
-      // padding: "20 20px",
-      // width: 800,
-      // height: 800,
-      // minWidth: 800
     }
 
   })
@@ -86,15 +79,9 @@ const Header: FC<Props> = (props: Props): ReactElement => {
 
   const [anchorEl, setAnchorEl] = React.useState(null);
 
-  //const [openEditSettings, setOpenEditSettings] = React.useState(false);
   const [openAbout, setOpenAbout] = React.useState(false);
-
-  //const [openAppTest, setOpenAppTest] = React.useState(false);
-
   const [openNewPost, setOpenNewPost] = React.useState(false);
-
   const [openEditGeneral, setOpenEditGeneral ] = React.useState(false);
-
 
   const handleClick = (event: any) => {
     setAnchorEl(event.currentTarget);
@@ -104,16 +91,10 @@ const Header: FC<Props> = (props: Props): ReactElement => {
     setAnchorEl(null);
   };
 
-  // const handleClickOpenEditSettings = () => {
-  //   setOpenEditSettings(true);
-  //   handleClose()
-  // };
-
   const handleClickOpenNewPost = () => {
     setOpenNewPost(true);
     handleClose()
   };
-
 
   const handleClickOpenAbout = () => {
     setOpenAbout(true);
@@ -125,20 +106,13 @@ const Header: FC<Props> = (props: Props): ReactElement => {
     handleClose()
   };
 
-  // const handleClickOpenAppTest = () => {
-  //   setOpenAppTest(true);
-  //   handleClose()
-  // };
-
   const handleDialogClose = (value: any) => {
-    //setOpenEditSettings(false);
     setOpenAbout(false);
-   // setOpenAppTest(false);
    setOpenNewPost(false)
    setOpenEditGeneral(false)
   };
 
-  var ourName = props.username// "building_bob_bottomline_boldness"
+  var ourName = props.username// eg "building_bob_bottomline_boldness"
 
   const classes = useStyles();
 
@@ -171,17 +145,15 @@ const Header: FC<Props> = (props: Props): ReactElement => {
         <about.FillAbout></about.FillAbout>
       </Dialog>
 
-
       <Dialog
       className={classes.editgeneral}
         onClose={handleDialogClose}
         open={openEditGeneral}
         
       > <div className={classes.editgeneral}>
-        <general.GeneralInfoLayout username = {props.username} editing= {true} cancel={handleDialogClose} />
+        <general.GeneralInfoLayout username = {props.username} editing= {true} mobile={false} cancel={handleDialogClose} />
         </div>
       </Dialog>
-
 
       <Dialog
         className = {classes.editdialog}
@@ -191,7 +163,6 @@ const Header: FC<Props> = (props: Props): ReactElement => {
         <DialogTitle>New Post</DialogTitle>
         <editpost.FillEditPost username={ourName} 
                     post={cardutil.makeEditCard(props.username)} 
-                 //   parent={cardutil.makeEmptyCard(props.username)}
                     cancel={handleDialogClose}/>
       </Dialog>
 

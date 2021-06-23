@@ -15,7 +15,7 @@
 
 
 import React, { FC, ReactElement, useEffect } from "react";
-import { PayPalButton } from "react-paypal-button-v2";
+//import { PayPalButton } from "react-paypal-button-v2";
 import ReactGA from 'react-ga';
 
 import * as util from "../gotohere/knotservice/Util"
@@ -35,8 +35,8 @@ type Props = {
 export const FreeToken: FC<Props> = (props: Props): ReactElement => {
 
     const serverName = util.getServerName() // eg. gotolocal.com:3000
-    var host = "http://" + serverName
-    host = host.replace("3000", "8085") // for local dev
+    // var host = "http://" + serverName
+    // host = host.replace("3000", "8085") // for local dev
 
     const [theToken, setTheToken] = React.useState("");
     const [pending, setPending] = React.useState(false);

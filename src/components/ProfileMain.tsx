@@ -125,7 +125,7 @@ export const ProfileMain: FC<ProfileProps> = (props: ProfileProps) => {
 
   function getGeneralInfo() {
     return (
-      <GeneralInfoLayout username={props.username} cancel={() => { }} editing={false} />
+      <GeneralInfoLayout username={props.username} mobile={false} cancel={() => { }} editing={false} />
     )
   }
 

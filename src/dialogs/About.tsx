@@ -13,9 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import DialogTitle from '@material-ui/core/DialogTitle';
+//import DialogTitle from '@material-ui/core/DialogTitle';
 
-import Paper from '@material-ui/core/Paper';
+//import Paper from '@material-ui/core/Paper';
 
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import ReactMarkdown from 'react-markdown'

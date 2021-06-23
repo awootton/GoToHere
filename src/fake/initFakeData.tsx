@@ -790,7 +790,11 @@ export function makeComment(username: string, id: number, theme: string, parent:
         retweets: [], // rt
         comments: [], // comm
         by: username,
-        parent: s.StringRefNew(parent)
+        parent: s.StringRefNew(parent),
+        permissions : s.DefaultPermissions
+    }
+    if ( (wordCount & 1) === 1){
+        comment.permissions = s.AllReadPermissions
     }
 
     return comment
@@ -814,7 +818,11 @@ export function makeFakePost(username: string, id: number, theme: string): s.Pos
         likes: 0,  // like
         retweets: [], // rt
         comments: [], // comm
-        by: username
+        by: username,
+        permissions : s.DefaultPermissions
+    }
+    if ( (wordCount & 1) === 1){
+        post.permissions = s.AllReadPermissions
     }
 
     return post

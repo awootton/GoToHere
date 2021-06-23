@@ -57,7 +57,7 @@ const useStyles = makeStyles((theme: Theme) =>
             // bottom: '22rem',
             //  margin: 'auto' ,
             padding: '10.5rem',
-            fontFamily: 'sans-serif',
+        //    fontFamily: 'sans-serif',
             fontSize: '1.0rem',
             //boxShadow: '0 0 10px rgba(0, 0, 0, 0.3)',
             boxShadow: '0 0 0px rgba(0, 0, 0, 0.0)',

@@ -27,7 +27,8 @@ export function makeTopCard( username: string ) : s.Post {
         likes: 0,
         retweets : [],
         comments: [] ,
-        by : username
+        by : username,
+        permissions : s.DefaultPermissions
     }
     return apost
 }
@@ -41,8 +42,9 @@ export function makeEditCard(username: string) : s.Post {
         likes: 0,
         retweets : [],
         comments: []    , 
-        editable : true,
-        by : username
+     //   editable : true,
+        by : username,
+        permissions : s.DefaultPermissions
     }
     return apost
 }
@@ -56,9 +58,10 @@ export function makeEditComment(username: string, parent : s.Reference) : s.Comm
         likes: 0,
         retweets : [],
         comments: []    , 
-        editable : true,
+    //    editable : true,
         by : username,
-        parent: s.StringRefNew(parent)
+        parent: s.StringRefNew(parent),
+        permissions : s.DefaultPermissions
     }
     return apost
 }
@@ -73,7 +76,8 @@ export function makeEmptyCard( username: string ) : s.Post {
         likes: 0,
         retweets : [],
         comments: [] ,
-        by : username
+        by : username,
+        permissions : s.DefaultPermissions
     }
     return apost
 }
@@ -88,7 +92,8 @@ export function emptyComment( username: string ) : s.Comment {
         retweets : [],
         comments: [] ,
         by : username,
-        parent: ""
+        parent: "",
+        permissions : s.DefaultPermissions
     }
     return apost
 }
