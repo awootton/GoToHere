@@ -18,6 +18,8 @@ There are instructions for most platforms.
 Clone this repo. cd to the new directory.
     `yarn install` 
 
+See the documentation for [more instructions.](https://github.com/awootton/GoToHere/wiki)
+
 ## Available Scripts
 
 In the project directory, you can run:
