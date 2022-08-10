@@ -1,4 +1,6 @@
 
+The demos (eg http://alice_vociferous_mcgrath.gotohere.com/) are not maintained and may not be up. 
+
 # GoToHere.com
 
 This is the source code for the GoToHere.com social network. 
